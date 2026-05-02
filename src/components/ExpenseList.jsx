@@ -1,13 +1,3 @@
-const CATEGORY_EMOJI = {
-  'Food': '🍔',
-  'Transport': '🚗',
-  'Rent/Fixed': '🏠',
-  'Social/Going Out': '🎉',
-  'Shopping': '🛍️',
-  'Travel': '✈️',
-  'Miscellaneous': '📦',
-}
-
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-IN', {
     day: 'numeric',
@@ -15,7 +5,8 @@ function formatDate(iso) {
   })
 }
 
-export default function ExpenseList({ expenses }) {
+export default function ExpenseList({ expenses, categories }) {
+  const emojiMap = Object.fromEntries((categories ?? []).map(c => [c.name, c.emoji]))
   if (expenses.length === 0) {
     return (
       <div className="text-center py-24" style={{ color: '#94a3b8' }}>
@@ -41,7 +32,7 @@ export default function ExpenseList({ expenses }) {
               className="text-xl w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0"
               style={{ background: '#f1f5f9' }}
             >
-              {CATEGORY_EMOJI[exp.category] ?? '📦'}
+              {emojiMap[exp.category] ?? '📦'}
             </span>
             <div>
               <p className="font-semibold text-sm" style={{ color: '#0f172a' }}>

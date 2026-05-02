@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react'
-import { loadExpenses, saveExpenses } from './utils/storage'
+import { loadExpenses, saveExpenses, loadCategories } from './utils/storage'
 import AddExpenseModal from './components/AddExpenseModal'
 import ExpenseList from './components/ExpenseList'
+import CategoryManager from './components/CategoryManager'
 
 const FILTERS = ['Today', 'Week', 'Month']
 
@@ -27,8 +28,10 @@ function currentMonth() {
 
 export default function App() {
   const [expenses, setExpenses] = useState(() => loadExpenses())
+  const [categories, setCategories] = useState(() => loadCategories())
   const [showModal, setShowModal] = useState(false)
-  const [filter, setFilter] = useState('Month')
+  const [showCategoryManager, setShowCategoryManager] = useState(false)
+  const [filter, setFilter] = useState('Today')
 
   function handleSave(expense) {
     const updated = [expense, ...expenses]
@@ -43,11 +46,23 @@ export default function App() {
       <div className="max-w-[480px] mx-auto px-4 pb-28">
 
         <header className="pt-8 pb-4">
-          <p className="text-xs font-medium tracking-wide" style={{ color: '#64748b' }}>HeathLedger</p>
-          <h1 className="text-2xl font-bold mt-1" style={{ color: '#0f172a' }}>
-            Firse Kharcha?
-          </h1>
-          <p className="text-sm mt-0.5" style={{ color: '#64748b' }}>{currentMonth()}</p>
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs font-medium tracking-wide" style={{ color: '#64748b' }}>HeathLedger</p>
+              <h1 className="text-2xl font-bold mt-1" style={{ color: '#0f172a' }}>
+                Firse Kharcha?
+              </h1>
+              <p className="text-sm mt-0.5" style={{ color: '#64748b' }}>{currentMonth()}</p>
+            </div>
+            <button
+              onClick={() => setShowCategoryManager(true)}
+              className="mt-1 w-9 h-9 flex items-center justify-center rounded-full text-lg"
+              style={{ background: '#ffffff', border: '1px solid #e2e8f0', color: '#64748b' }}
+              aria-label="Manage categories"
+            >
+              ⚙️
+            </button>
+          </div>
 
           <div
             className="flex gap-1 mt-4 w-fit rounded-full p-1"
@@ -69,7 +84,7 @@ export default function App() {
           </div>
         </header>
 
-        <ExpenseList expenses={filtered} />
+        <ExpenseList expenses={filtered} categories={categories} />
       </div>
 
       <button
@@ -83,9 +98,14 @@ export default function App() {
 
       {showModal && (
         <AddExpenseModal
+          categories={categories}
           onSave={handleSave}
           onClose={() => setShowModal(false)}
         />
+      )}
+
+      {showCategoryManager && (
+        <CategoryManager onClose={() => { setCategories(loadCategories()); setShowCategoryManager(false) }} />
       )}
     </div>
   )

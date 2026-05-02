@@ -1,16 +1,6 @@
 import { useState } from 'react'
 import { inferCategory } from '../utils/categoryMapper'
 
-const CATEGORIES = [
-  'Food',
-  'Transport',
-  'Rent/Fixed',
-  'Social/Going Out',
-  'Shopping',
-  'Travel',
-  'Miscellaneous',
-]
-
 function todayString() {
   const d = new Date()
   return [
@@ -20,7 +10,7 @@ function todayString() {
   ].join('-')
 }
 
-export default function AddExpenseModal({ onSave, onClose }) {
+export default function AddExpenseModal({ categories, onSave, onClose }) {
   const [amount, setAmount] = useState('')
   const [category, setCategory] = useState(
     () => localStorage.getItem('heath_ledger_last_category') || ''
@@ -94,19 +84,20 @@ export default function AddExpenseModal({ onSave, onClose }) {
               Category
             </p>
             <div className="flex flex-wrap gap-2">
-              {CATEGORIES.map(cat => (
+              {categories.map(cat => (
                 <button
-                  key={cat}
+                  key={cat.name}
                   type="button"
-                  onClick={() => setCategory(cat)}
-                  className="px-3 py-2 rounded-full text-sm font-medium border transition-colors"
+                  onClick={() => setCategory(cat.name)}
+                  className="px-3 py-2 rounded-full text-sm font-medium border transition-colors flex items-center gap-1.5"
                   style={
-                    category === cat
+                    category === cat.name
                       ? { background: '#2563eb', color: '#ffffff', borderColor: '#2563eb' }
                       : { background: 'transparent', color: '#64748b', borderColor: '#e2e8f0' }
                   }
                 >
-                  {cat}
+                  <span>{cat.emoji}</span>
+                  {cat.name}
                 </button>
               ))}
             </div>
