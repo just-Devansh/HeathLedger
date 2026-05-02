@@ -42,7 +42,7 @@ export default function CategoryManager({ onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col" style={{ background: '#f8fafc' }}>
+    <div className="fixed inset-0 z-50 flex flex-col" style={{ background: '#f1f5ff' }}>
       <div className="max-w-[480px] w-full mx-auto flex flex-col flex-1 min-h-0">
 
         <div
@@ -50,8 +50,8 @@ export default function CategoryManager({ onClose }) {
           style={{ borderBottom: '1px solid #e2e8f0' }}
         >
           <div>
-            <p className="text-xs font-medium tracking-wide" style={{ color: '#64748b' }}>HeathLedger</p>
-            <h2 className="text-2xl font-bold mt-1" style={{ color: '#0f172a' }}>Categories</h2>
+            <p className="text-xs font-medium tracking-wide" style={{ color: '#6366f1' }}>HeathLedger</p>
+            <h2 className="text-2xl font-bold mt-1" style={{ color: '#1e1b4b' }}>Categories</h2>
           </div>
           <button
             onClick={onClose}
@@ -73,7 +73,7 @@ export default function CategoryManager({ onClose }) {
             <li
               key={idx}
               className="flex items-center gap-2 px-4 py-3 rounded-2xl"
-              style={{ background: '#ffffff', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+              style={{ background: '#ffffff', boxShadow: '0 2px 12px rgba(79,70,229,0.10)' }}
             >
               {editingIdx === idx ? (
                 <>
@@ -100,14 +100,14 @@ export default function CategoryManager({ onClose }) {
                   <button
                     onClick={() => handleEditSave(idx)}
                     className="text-xs font-semibold px-3 py-1.5 rounded-lg"
-                    style={{ background: '#2563eb', color: '#ffffff' }}
+                    style={{ background: '#4f46e5', color: '#ffffff' }}
                   >
                     Save
                   </button>
                   <button
                     onClick={() => setEditingIdx(null)}
                     className="text-xs font-semibold px-3 py-1.5 rounded-lg"
-                    style={{ background: '#f1f5f9', color: '#64748b' }}
+                    style={{ background: '#ede9fe', color: '#6366f1' }}
                   >
                     Cancel
                   </button>
@@ -116,7 +116,7 @@ export default function CategoryManager({ onClose }) {
                 <>
                   <span
                     className="w-9 h-9 flex items-center justify-center rounded-xl text-lg flex-shrink-0"
-                    style={{ background: '#f1f5f9' }}
+                    style={{ background: '#ede9fe' }}
                   >
                     {cat.emoji}
                   </span>
@@ -124,7 +124,7 @@ export default function CategoryManager({ onClose }) {
                   <button
                     onClick={() => startEdit(idx)}
                     className="w-9 h-9 flex items-center justify-center rounded-xl text-base"
-                    style={{ background: '#eff6ff', color: '#2563eb' }}
+                    style={{ background: '#ede9fe', color: '#7c3aed' }}
                     aria-label={`Edit ${cat.name}`}
                   >
                     ✏️
@@ -169,7 +169,7 @@ export default function CategoryManager({ onClose }) {
               onClick={handleAdd}
               disabled={!newName.trim()}
               className="px-5 py-3 rounded-xl text-sm font-semibold text-white disabled:opacity-30 active:scale-95 transition-transform"
-              style={{ background: '#2563eb' }}
+              style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)' }}
             >
               Add
             </button>

@@ -63,7 +63,7 @@ export default function AddExpenseModal({ categories, onSave, onClose }) {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <div className="flex items-center gap-1 py-2">
-            <span className="text-4xl font-bold" style={{ color: '#94a3b8' }}>₹</span>
+            <span className="text-4xl font-bold" style={{ color: '#a855f7' }}>₹</span>
             <input
               type="number"
               inputMode="decimal"
@@ -92,8 +92,8 @@ export default function AddExpenseModal({ categories, onSave, onClose }) {
                   className="px-3 py-2 rounded-full text-sm font-medium border transition-colors flex items-center gap-1.5"
                   style={
                     category === cat.name
-                      ? { background: '#2563eb', color: '#ffffff', borderColor: '#2563eb' }
-                      : { background: 'transparent', color: '#64748b', borderColor: '#e2e8f0' }
+                      ? { background: '#4f46e5', color: '#ffffff', borderColor: '#4f46e5' }
+                      : { background: '#f5f3ff', color: '#4f46e5', borderColor: '#ddd6fe' }
                   }
                 >
                   <span>{cat.emoji}</span>
@@ -124,7 +124,7 @@ export default function AddExpenseModal({ categories, onSave, onClose }) {
             type="submit"
             disabled={!amount || !category}
             className="py-4 rounded-xl text-base font-semibold text-white disabled:opacity-30 active:scale-95 transition-transform"
-            style={{ background: '#2563eb' }}
+            style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)' }}
           >
             Save Expense
           </button>

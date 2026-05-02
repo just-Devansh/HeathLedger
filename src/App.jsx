@@ -42,14 +42,14 @@ export default function App() {
   const filtered = useMemo(() => filterExpenses(expenses, filter), [expenses, filter])
 
   return (
-    <div className="min-h-screen" style={{ background: '#f8fafc' }}>
+    <div className="min-h-screen" style={{ background: '#f1f5ff' }}>
       <div className="max-w-[480px] mx-auto px-4 pb-28">
 
         <header className="pt-8 pb-4">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs font-medium tracking-wide" style={{ color: '#64748b' }}>HeathLedger</p>
-              <h1 className="text-2xl font-bold mt-1" style={{ color: '#0f172a' }}>
+              <p className="text-xs font-medium tracking-wide" style={{ color: '#6366f1' }}>HeathLedger</p>
+              <h1 className="text-2xl font-bold mt-1" style={{ color: '#1e1b4b' }}>
                 Firse Kharcha?
               </h1>
               <p className="text-sm mt-0.5" style={{ color: '#64748b' }}>{currentMonth()}</p>
@@ -57,7 +57,7 @@ export default function App() {
             <button
               onClick={() => setShowCategoryManager(true)}
               className="mt-1 w-9 h-9 flex items-center justify-center rounded-full text-lg"
-              style={{ background: '#ffffff', border: '1px solid #e2e8f0', color: '#64748b' }}
+              style={{ background: '#ede9fe', border: '1px solid #c4b5fd', color: '#7c3aed' }}
               aria-label="Manage categories"
             >
               ⚙️
@@ -66,7 +66,7 @@ export default function App() {
 
           <div
             className="flex gap-1 mt-4 w-fit rounded-full p-1"
-            style={{ background: '#ffffff', border: '1px solid #e2e8f0' }}
+            style={{ background: '#ffffff', border: '1px solid #ddd6fe' }}
           >
             {FILTERS.map(f => (
               <button
@@ -74,8 +74,8 @@ export default function App() {
                 onClick={() => setFilter(f)}
                 className="px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
                 style={{
-                  background: filter === f ? '#2563eb' : 'transparent',
-                  color: filter === f ? '#ffffff' : '#64748b',
+                  background: filter === f ? '#4f46e5' : 'transparent',
+                  color: filter === f ? '#ffffff' : '#6366f1',
                 }}
               >
                 {f}
@@ -90,7 +90,7 @@ export default function App() {
       <button
         onClick={() => setShowModal(true)}
         className="fixed bottom-6 right-6 w-14 h-14 rounded-full flex items-center justify-center text-white text-3xl active:scale-95 transition-transform"
-        style={{ background: '#2563eb', boxShadow: '0 4px 16px rgba(37,99,235,0.45)' }}
+        style={{ background: 'linear-gradient(135deg, #4f46e5, #a855f7)', boxShadow: '0 4px 20px rgba(79,70,229,0.5)' }}
         aria-label="Add expense"
       >
         +

@@ -24,18 +24,18 @@ export default function ExpenseList({ expenses, categories }) {
           className="flex items-center justify-between p-4 rounded-2xl"
           style={{
             background: '#ffffff',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+            boxShadow: '0 2px 12px rgba(79,70,229,0.10)',
           }}
         >
           <div className="flex items-center gap-3">
             <span
               className="text-xl w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0"
-              style={{ background: '#f1f5f9' }}
+              style={{ background: '#ede9fe' }}
             >
               {emojiMap[exp.category] ?? '📦'}
             </span>
             <div>
-              <p className="font-semibold text-sm" style={{ color: '#0f172a' }}>
+              <p className="font-semibold text-sm" style={{ color: '#1e1b4b' }}>
                 {exp.category}
               </p>
               {exp.note && (
@@ -44,7 +44,7 @@ export default function ExpenseList({ expenses, categories }) {
               <p className="text-xs mt-0.5" style={{ color: '#94a3b8' }}>{formatDate(exp.date)}</p>
             </div>
           </div>
-          <p className="text-base font-bold ml-4" style={{ color: '#0f172a' }}>
+          <p className="text-base font-bold ml-4" style={{ color: '#4f46e5' }}>
             ₹{exp.amount}
           </p>
         </li>
