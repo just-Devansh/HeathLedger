@@ -1,0 +1,203 @@
+You are building a fast, minimal, mobile-first web application for personal expense tracking.
+
+This is NOT a generic finance app. It is a highly opinionated, single-user tool optimized for speed and simplicity.
+
+----------------------------------------
+🧠 CORE PRODUCT IDEA
+----------------------------------------
+
+The user currently tracks expenses in raw text format like:
+
+"1 Apr - 236 (Biriyani) + 45 (Rapido)"
+
+Multiple expenses can exist in one line, separated by "+".
+
+Each expense has:
+- Amount
+- A label (inside brackets), which may include:
+  - Category (implicit)
+  - Vendor (e.g. Zepto, Rapido, Netflix)
+  - Notes (e.g. Lunch, Dinner, Lucky, etc.)
+
+The app must replicate and IMPROVE this workflow digitally.
+
+----------------------------------------
+🎯 PRIMARY GOAL
+----------------------------------------
+
+Allow user to log an expense in under 5 seconds on mobile.
+
+----------------------------------------
+⚡ CORE FEATURES (STRICT MVP)
+----------------------------------------
+
+1. ADD EXPENSE (MOST IMPORTANT)
+
+- Large "+" floating button
+- On click → open minimal input form
+
+Fields:
+- Amount (number, required)
+- Category (required, dropdown or quick select)
+- Note (optional, free text)
+- Date (default = today)
+
+UX requirements:
+- Minimal typing
+- Fast interaction
+- Mobile-first design
+
+----------------------------------------
+
+2. CATEGORY SYSTEM
+
+Use simple predefined categories:
+
+- Rent / Fixed
+- Food
+- Transport
+- Social / Going Out
+- Shopping
+- Travel
+- Miscellaneous
+
+IMPORTANT:
+- DO NOT overcomplicate categories
+- DO NOT build nested systems yet
+- Mapping from real-world labels:
+    - "Rapido" → Transport
+    - "Zepto", "Blinkit" → Food or Misc (user decides)
+    - "Netflix", "JioFiber" → Fixed
+    - "Lunch", "Dinner" → Food
+    - "To Lucky" → Misc or Transfers (keep simple: Misc)
+
+----------------------------------------
+
+3. TRANSACTION LIST VIEW
+
+- Show all expenses (reverse chronological)
+- Each item shows:
+    - Amount
+    - Category
+    - Note
+    - Date
+
+----------------------------------------
+
+4. MONTHLY SUMMARY (MOST IMPORTANT OUTPUT)
+
+For selected month:
+
+A. Total Spend (top)
+
+B. Category Breakdown Table:
+
+| Category | Total |
+|----------|-------|
+| Food     | ₹X    |
+| Transport| ₹X    |
+| ...      | ...   |
+
+C. (Optional) percentage share
+
+----------------------------------------
+
+5. DATA STORAGE
+
+Start SIMPLE:
+
+Option 1 (preferred MVP):
+- Use browser LocalStorage
+
+No backend required initially.
+
+----------------------------------------
+
+6. DATA MODEL
+
+Expense object:
+
+{
+  id: string,
+  amount: number,
+  category: string,
+  note: string,
+  date: ISO string
+}
+
+----------------------------------------
+
+7. UI REQUIREMENTS
+
+- Mobile-first (primary use case)
+- Clean, minimal UI
+- Large tap targets
+- Floating "+" button always visible
+- Fast load time
+
+----------------------------------------
+
+8. NON-GOALS (DO NOT BUILD)
+
+- No authentication
+- No multi-user support
+- No bank integrations
+- No credit/debit accounting
+- No AI insights
+- No complex analytics
+
+----------------------------------------
+
+9. NICE-TO-HAVE (IF EASY)
+
+- Quick-add chips (e.g. "Rapido", "Lunch", "Zepto")
+- Auto-fill category based on note
+- Export monthly data as CSV
+
+----------------------------------------
+
+10. TECH STACK (SIMPLE + FAST)
+
+- Frontend: React (or Next.js)
+- Styling: Tailwind CSS
+- State: useState/useReducer
+- Storage: LocalStorage
+
+----------------------------------------
+
+11. FILE STRUCTURE (SUGGESTED)
+
+- /components
+  - AddExpenseModal
+  - ExpenseList
+  - SummaryTable
+- /utils
+  - storage.js
+  - categoryMapper.js
+- /pages or /app
+  - main page
+
+----------------------------------------
+
+12. SUCCESS CRITERIA
+
+The app is successful if:
+- User logs expense in <5 seconds
+- Monthly summary gives instant clarity
+- User prefers this over notes app
+
+----------------------------------------
+
+13. IMPORTANT BEHAVIORAL INSIGHT
+
+User currently logs data like:
+"multiple expenses per line", "implicit categories", "vendor-based tracking"
+
+Your job is NOT to replicate that UI,
+but to make logging EVEN FASTER and STRUCTURED.
+
+----------------------------------------
+
+Build the MVP with clean, readable code and minimal dependencies.
+Do not over-engineer.
+Focus on speed, clarity, and usability.
