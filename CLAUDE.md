@@ -17,37 +17,61 @@ HeathLedger is a fast, minimal, mobile-first expense tracking web app for a sing
 
 ## Build Commands
 
-> Project is pre-implementation (PRD only). Once scaffolded with Vite/Next.js these will apply:
-
 ```bash
 npm install       # install dependencies
-npm run dev       # start dev server
-npm run build     # production build
-npm run lint      # lint
+npm run dev       # start dev server (Vite, http://localhost:5173)
+npm run build     # production build → dist/
+npm run preview   # serve production build locally
 ```
 
 ## Architecture
 
 ```
-/components
-  AddExpenseModal   # floating "+" → quick input form (amount, category, note, date)
-  ExpenseList       # reverse-chronological transaction list
-  SummaryTable      # monthly totals broken down by category
-/utils
-  storage.js        # localStorage read/write helpers
-  categoryMapper.js # maps vendor/note strings to categories
-/pages or /app
-  index             # main page — mounts all three components
+HeathLedger/
+├── index.html
+├── package.json
+├── vite.config.js
+├── tailwind.config.js
+├── postcss.config.js
+└── src/
+    ├── index.css                    # Tailwind base/components/utilities
+    ├── main.jsx                     # React entry point
+    ├── App.jsx                      # Root — holds expenses state, mounts layout
+    ├── components/
+    │   ├── AddExpenseModal.jsx      # Bottom-sheet modal: amount, category chips, note, date
+    │   ├── ExpenseList.jsx          # Reverse-chronological list with emoji + date
+    │   └── SummaryTable.jsx        # Monthly summary (stub — not yet implemented)
+    └── utils/
+        ├── storage.js               # loadExpenses() / saveExpenses() via localStorage
+        └── categoryMapper.js        # inferCategory(note) → category string
 ```
 
-**Data model** (stored in `localStorage`):
+**Data model** (stored in `localStorage` under key `heath_ledger_expenses`):
 ```js
 { id: string, amount: number, category: string, note: string, date: ISO string }
 ```
 
 **Categories** (fixed, no nesting): `Rent/Fixed`, `Food`, `Transport`, `Social/Going Out`, `Shopping`, `Travel`, `Miscellaneous`
 
-**Category mapping hints**: Rapido → Transport; Zepto/Blinkit → Food; Netflix/JioFiber → Fixed; Lunch/Dinner → Food; transfers/misc → Miscellaneous.
+**Category mapping** (`categoryMapper.js` keyword → category):
+- Rapido, Ola, Uber, Metro, Auto → Transport
+- Zepto, Blinkit, Swiggy, Zomato, Lunch, Dinner, Breakfast → Food
+- Netflix, JioFiber, Hotstar, Spotify, Rent → Rent/Fixed
+- Amazon, Flipkart → Shopping
+- Everything else → user picks manually
+
+## Implementation Status
+
+| Feature | Status |
+|---|---|
+| Vite + React + Tailwind scaffold | Done |
+| localStorage persistence | Done |
+| Floating "+" button | Done |
+| Add Expense modal (bottom-sheet) | Done |
+| Category chip selection | Done |
+| Auto-infer category from note | Done |
+| Expense list (reverse-chron) | Done |
+| Monthly summary (SummaryTable) | Not started |
 
 ## Product Constraints
 

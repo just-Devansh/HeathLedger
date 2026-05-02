@@ -18,30 +18,44 @@ function formatDate(iso) {
 export default function ExpenseList({ expenses }) {
   if (expenses.length === 0) {
     return (
-      <div className="text-center text-gray-400 py-20">
+      <div className="text-center py-24" style={{ color: '#94a3b8' }}>
         <p className="text-5xl mb-3">📋</p>
-        <p className="text-sm">No expenses yet. Tap + to add one.</p>
+        <p className="text-sm">No expenses here. Tap + to add one.</p>
       </div>
     )
   }
 
   return (
-    <ul className="divide-y divide-gray-50">
+    <ul className="flex flex-col gap-3">
       {expenses.map(exp => (
-        <li key={exp.id} className="flex items-center justify-between py-4 px-4">
+        <li
+          key={exp.id}
+          className="flex items-center justify-between p-4 rounded-2xl"
+          style={{
+            background: '#ffffff',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+          }}
+        >
           <div className="flex items-center gap-3">
-            <span className="text-2xl w-8 text-center">
+            <span
+              className="text-xl w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0"
+              style={{ background: '#f1f5f9' }}
+            >
               {CATEGORY_EMOJI[exp.category] ?? '📦'}
             </span>
             <div>
-              <p className="font-medium text-gray-900 text-sm">{exp.category}</p>
+              <p className="font-semibold text-sm" style={{ color: '#0f172a' }}>
+                {exp.category}
+              </p>
               {exp.note && (
-                <p className="text-sm text-gray-500">{exp.note}</p>
+                <p className="text-xs mt-0.5" style={{ color: '#64748b' }}>{exp.note}</p>
               )}
-              <p className="text-xs text-gray-400 mt-0.5">{formatDate(exp.date)}</p>
+              <p className="text-xs mt-0.5" style={{ color: '#94a3b8' }}>{formatDate(exp.date)}</p>
             </div>
           </div>
-          <p className="text-base font-semibold text-gray-900">₹{exp.amount}</p>
+          <p className="text-base font-bold ml-4" style={{ color: '#0f172a' }}>
+            ₹{exp.amount}
+          </p>
         </li>
       ))}
     </ul>
