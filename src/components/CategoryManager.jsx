@@ -1,7 +1,10 @@
 import { useState } from 'react'
 import { loadCategories, saveCategories } from '../utils/storage'
+import { useTheme } from '../context/ThemeContext'
+import { THEME_META } from '../utils/theme'
 
 export default function CategoryManager({ onClose }) {
+  const { theme, themeName, setTheme } = useTheme()
   const [categories, setCategories] = useState(() => loadCategories())
   const [newName, setNewName] = useState('')
   const [newEmoji, setNewEmoji] = useState('')
@@ -42,16 +45,17 @@ export default function CategoryManager({ onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col" style={{ background: '#f1f5ff' }}>
+    <div className="fixed inset-0 z-50 flex flex-col" style={{ background: theme.pageBg }}>
       <div className="max-w-[480px] w-full mx-auto flex flex-col flex-1 min-h-0">
 
+        {/* Header */}
         <div
           className="flex items-center justify-between px-6 pt-8 pb-4"
           style={{ borderBottom: '1px solid #e2e8f0' }}
         >
           <div>
-            <p className="text-xs font-medium tracking-wide" style={{ color: '#6366f1' }}>HeathLedger</p>
-            <h2 className="text-2xl font-bold mt-1" style={{ color: '#1e1b4b' }}>Categories</h2>
+            <p className="text-xs font-medium tracking-wide" style={{ color: theme.accent }}>HeathLedger</p>
+            <h2 className="text-2xl font-bold mt-1" style={{ color: theme.heading }}>Settings</h2>
           </div>
           <button
             onClick={onClose}
@@ -63,86 +67,139 @@ export default function CategoryManager({ onClose }) {
           </button>
         </div>
 
-        <ul className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-2">
-          {categories.length === 0 && (
-            <p className="text-sm text-center py-8" style={{ color: '#94a3b8' }}>
-              No categories yet. Add one below.
-            </p>
-          )}
-          {categories.map((cat, idx) => (
-            <li
-              key={idx}
-              className="flex items-center gap-2 px-4 py-3 rounded-2xl"
-              style={{ background: '#ffffff', boxShadow: '0 2px 12px rgba(79,70,229,0.10)' }}
-            >
-              {editingIdx === idx ? (
-                <>
-                  <input
-                    type="text"
-                    placeholder="😀"
-                    value={editEmoji}
-                    onChange={e => setEditEmoji(e.target.value)}
-                    className="w-10 text-center text-lg outline-none rounded-lg bg-transparent"
-                    style={{ border: '1px solid #e2e8f0', padding: '2px' }}
-                  />
-                  <input
-                    type="text"
-                    className="flex-1 outline-none text-sm font-medium bg-transparent"
-                    style={{ color: '#0f172a' }}
-                    value={editName}
-                    onChange={e => setEditName(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') handleEditSave(idx)
-                      if (e.key === 'Escape') setEditingIdx(null)
-                    }}
-                    autoFocus
-                  />
-                  <button
-                    onClick={() => handleEditSave(idx)}
-                    className="text-xs font-semibold px-3 py-1.5 rounded-lg"
-                    style={{ background: '#4f46e5', color: '#ffffff' }}
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={() => setEditingIdx(null)}
-                    className="text-xs font-semibold px-3 py-1.5 rounded-lg"
-                    style={{ background: '#ede9fe', color: '#6366f1' }}
-                  >
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                <>
-                  <span
-                    className="w-9 h-9 flex items-center justify-center rounded-xl text-lg flex-shrink-0"
-                    style={{ background: '#ede9fe' }}
-                  >
-                    {cat.emoji}
-                  </span>
-                  <span className="flex-1 text-sm font-medium" style={{ color: '#0f172a' }}>{cat.name}</span>
-                  <button
-                    onClick={() => startEdit(idx)}
-                    className="w-9 h-9 flex items-center justify-center rounded-xl text-base"
-                    style={{ background: '#ede9fe', color: '#7c3aed' }}
-                    aria-label={`Edit ${cat.name}`}
-                  >
-                    ✏️
-                  </button>
-                  <button
-                    onClick={() => handleDelete(idx)}
-                    className="w-9 h-9 flex items-center justify-center rounded-xl text-lg font-bold leading-none"
-                    style={{ background: '#fef2f2', color: '#ef4444' }}
-                    aria-label={`Delete ${cat.name}`}
-                  >
-                    ×
-                  </button>
-                </>
-              )}
-            </li>
-          ))}
-        </ul>
+        <div className="flex-1 overflow-y-auto">
 
+          {/* Color theme picker */}
+          <div className="px-6 pt-5 pb-4" style={{ borderBottom: '1px solid #e2e8f0' }}>
+            <p className="text-xs uppercase tracking-wide font-medium mb-3" style={{ color: '#94a3b8' }}>
+              Color Theme
+            </p>
+            <div className="flex gap-4">
+              {THEME_META.map(({ id, label, swatch }) => {
+                const isActive = themeName === id
+                return (
+                  <button
+                    key={id}
+                    onClick={() => setTheme(id)}
+                    className="flex flex-col items-center gap-1.5"
+                    aria-label={`${label} theme`}
+                  >
+                    <span
+                      className="w-10 h-10 rounded-full flex items-center justify-center transition-transform active:scale-90"
+                      style={{
+                        background: swatch,
+                        boxShadow: isActive
+                          ? `0 0 0 3px #ffffff, 0 0 0 5px ${swatch}`
+                          : '0 2px 6px rgba(0,0,0,0.15)',
+                      }}
+                    >
+                      {isActive && (
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                          <path d="M3 8l3.5 3.5L13 5" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </span>
+                    <span
+                      className="text-xs font-medium"
+                      style={{ color: isActive ? theme.primary : '#94a3b8' }}
+                    >
+                      {label}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Categories list */}
+          <div className="px-6 pt-4">
+            <p className="text-xs uppercase tracking-wide font-medium mb-3" style={{ color: '#94a3b8' }}>
+              Categories
+            </p>
+          </div>
+
+          <ul className="px-6 pb-4 flex flex-col gap-2">
+            {categories.length === 0 && (
+              <p className="text-sm text-center py-8" style={{ color: '#94a3b8' }}>
+                No categories yet. Add one below.
+              </p>
+            )}
+            {categories.map((cat, idx) => (
+              <li
+                key={idx}
+                className="flex items-center gap-2 px-4 py-3 rounded-2xl"
+                style={{ background: '#ffffff', boxShadow: `0 2px 12px rgba(${theme.shadowRgb},0.10)` }}
+              >
+                {editingIdx === idx ? (
+                  <>
+                    <input
+                      type="text"
+                      placeholder="😀"
+                      value={editEmoji}
+                      onChange={e => setEditEmoji(e.target.value)}
+                      className="w-10 text-center text-lg outline-none rounded-lg bg-transparent"
+                      style={{ border: '1px solid #e2e8f0', padding: '2px' }}
+                    />
+                    <input
+                      type="text"
+                      className="flex-1 outline-none text-sm font-medium bg-transparent"
+                      style={{ color: '#0f172a' }}
+                      value={editName}
+                      onChange={e => setEditName(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') handleEditSave(idx)
+                        if (e.key === 'Escape') setEditingIdx(null)
+                      }}
+                      autoFocus
+                    />
+                    <button
+                      onClick={() => handleEditSave(idx)}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-lg"
+                      style={{ background: theme.primary, color: '#ffffff' }}
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setEditingIdx(null)}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-lg"
+                      style={{ background: theme.surface, color: theme.accent }}
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span
+                      className="w-9 h-9 flex items-center justify-center rounded-xl text-lg flex-shrink-0"
+                      style={{ background: theme.surface }}
+                    >
+                      {cat.emoji}
+                    </span>
+                    <span className="flex-1 text-sm font-medium" style={{ color: '#0f172a' }}>{cat.name}</span>
+                    <button
+                      onClick={() => startEdit(idx)}
+                      className="w-9 h-9 flex items-center justify-center rounded-xl text-base"
+                      style={{ background: theme.surface, color: theme.secondary }}
+                      aria-label={`Edit ${cat.name}`}
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={() => handleDelete(idx)}
+                      className="w-9 h-9 flex items-center justify-center rounded-xl text-lg font-bold leading-none"
+                      style={{ background: '#fef2f2', color: '#ef4444' }}
+                      aria-label={`Delete ${cat.name}`}
+                    >
+                      ×
+                    </button>
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Add new category */}
         <div
           className="px-6 py-4"
           style={{ borderTop: '1px solid #e2e8f0', background: '#ffffff' }}
@@ -169,7 +226,7 @@ export default function CategoryManager({ onClose }) {
               onClick={handleAdd}
               disabled={!newName.trim()}
               className="px-5 py-3 rounded-xl text-sm font-semibold text-white disabled:opacity-30 active:scale-95 transition-transform"
-              style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)' }}
+              style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})` }}
             >
               Add
             </button>

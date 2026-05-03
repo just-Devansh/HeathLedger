@@ -1,12 +1,13 @@
+import { useTheme } from '../context/ThemeContext'
+
 function formatDate(iso) {
-  return new Date(iso).toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'short',
-  })
+  return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
 }
 
 export default function ExpenseList({ expenses, categories }) {
+  const { theme } = useTheme()
   const emojiMap = Object.fromEntries((categories ?? []).map(c => [c.name, c.emoji]))
+
   if (expenses.length === 0) {
     return (
       <div className="text-center py-24" style={{ color: '#94a3b8' }}>
@@ -24,18 +25,18 @@ export default function ExpenseList({ expenses, categories }) {
           className="flex items-center justify-between p-4 rounded-2xl"
           style={{
             background: '#ffffff',
-            boxShadow: '0 2px 12px rgba(79,70,229,0.10)',
+            boxShadow: `0 2px 12px rgba(${theme.shadowRgb},0.10)`,
           }}
         >
           <div className="flex items-center gap-3">
             <span
               className="text-xl w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0"
-              style={{ background: '#ede9fe' }}
+              style={{ background: theme.surface }}
             >
               {emojiMap[exp.category] ?? '📦'}
             </span>
             <div>
-              <p className="font-semibold text-sm" style={{ color: '#1e1b4b' }}>
+              <p className="font-semibold text-sm" style={{ color: theme.heading }}>
                 {exp.category}
               </p>
               {exp.note && (
@@ -44,7 +45,7 @@ export default function ExpenseList({ expenses, categories }) {
               <p className="text-xs mt-0.5" style={{ color: '#94a3b8' }}>{formatDate(exp.date)}</p>
             </div>
           </div>
-          <p className="text-base font-bold ml-4" style={{ color: '#4f46e5' }}>
+          <p className="text-base font-bold ml-4" style={{ color: theme.primary }}>
             ₹{exp.amount}
           </p>
         </li>

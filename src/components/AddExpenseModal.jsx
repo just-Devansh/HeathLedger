@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { inferCategory } from '../utils/categoryMapper'
+import { useTheme } from '../context/ThemeContext'
 
 function todayString() {
   const d = new Date()
@@ -11,6 +12,7 @@ function todayString() {
 }
 
 export default function AddExpenseModal({ categories, onSave, onClose }) {
+  const { theme } = useTheme()
   const [amount, setAmount] = useState('')
   const [category, setCategory] = useState(
     () => localStorage.getItem('heath_ledger_last_category') || ''
@@ -63,7 +65,7 @@ export default function AddExpenseModal({ categories, onSave, onClose }) {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <div className="flex items-center gap-1 py-2">
-            <span className="text-4xl font-bold" style={{ color: '#a855f7' }}>₹</span>
+            <span className="text-4xl font-bold" style={{ color: theme.gradEnd }}>₹</span>
             <input
               type="number"
               inputMode="decimal"
@@ -92,8 +94,8 @@ export default function AddExpenseModal({ categories, onSave, onClose }) {
                   className="px-3 py-2 rounded-full text-sm font-medium border transition-colors flex items-center gap-1.5"
                   style={
                     category === cat.name
-                      ? { background: '#4f46e5', color: '#ffffff', borderColor: '#4f46e5' }
-                      : { background: '#f5f3ff', color: '#4f46e5', borderColor: '#ddd6fe' }
+                      ? { background: theme.primary, color: '#ffffff', borderColor: theme.primary }
+                      : { background: theme.surface, color: theme.primary, borderColor: theme.border }
                   }
                 >
                   <span>{cat.emoji}</span>
@@ -124,7 +126,7 @@ export default function AddExpenseModal({ categories, onSave, onClose }) {
             type="submit"
             disabled={!amount || !category}
             className="py-4 rounded-xl text-base font-semibold text-white disabled:opacity-30 active:scale-95 transition-transform"
-            style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)' }}
+            style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})` }}
           >
             Save Expense
           </button>
