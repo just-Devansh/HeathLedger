@@ -1,3 +1,30 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Settings gear button */
+.btn-settings {
+  transition: all 0.2s ease;
+}
+.btn-settings:hover {
+  background: rgba(79, 70, 229, 0.1) !important;
+  transform: scale(1.05);
+}
+.btn-settings:active {
+  transform: scale(0.92) !important;
+}
+
+/* Close X button (Settings page) */
+.btn-close {
+  background: #ffffff;
+  color: #64748b;
+  transition: all 0.2s ease;
+}
+.btn-close:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
+  color: #ef4444 !important;
+}
+.btn-close:active {
+  background: rgba(239, 68, 68, 0.2) !important;
+  transform: scale(0.9) !important;
+}

@@ -59,8 +59,8 @@ export default function CategoryManager({ onClose }) {
           </div>
           <button
             onClick={onClose}
-            className="w-9 h-9 flex items-center justify-center rounded-full text-xl leading-none"
-            style={{ background: '#ffffff', color: '#64748b', border: '1px solid #e2e8f0' }}
+            className="btn-close w-9 h-9 flex items-center justify-center rounded-full text-xl leading-none"
+            style={{ border: '1px solid #e2e8f0' }}
             aria-label="Close"
           >
             ×
@@ -154,14 +154,14 @@ export default function CategoryManager({ onClose }) {
                     />
                     <button
                       onClick={() => handleEditSave(idx)}
-                      className="text-xs font-semibold px-3 py-1.5 rounded-lg"
+                      className="text-xs font-semibold px-3 py-1.5 rounded-lg active:scale-95 transition-transform"
                       style={{ background: theme.primary, color: '#ffffff' }}
                     >
                       Save
                     </button>
                     <button
                       onClick={() => setEditingIdx(null)}
-                      className="text-xs font-semibold px-3 py-1.5 rounded-lg"
+                      className="text-xs font-semibold px-3 py-1.5 rounded-lg active:scale-95 transition-transform"
                       style={{ background: theme.surface, color: theme.accent }}
                     >
                       Cancel
@@ -178,7 +178,7 @@ export default function CategoryManager({ onClose }) {
                     <span className="flex-1 text-sm font-medium" style={{ color: '#0f172a' }}>{cat.name}</span>
                     <button
                       onClick={() => startEdit(idx)}
-                      className="w-9 h-9 flex items-center justify-center rounded-xl text-base"
+                      className="w-9 h-9 flex items-center justify-center rounded-xl text-base active:scale-90 transition-transform"
                       style={{ background: theme.surface, color: theme.secondary }}
                       aria-label={`Edit ${cat.name}`}
                     >
@@ -186,7 +186,7 @@ export default function CategoryManager({ onClose }) {
                     </button>
                     <button
                       onClick={() => handleDelete(idx)}
-                      className="w-9 h-9 flex items-center justify-center rounded-xl text-lg font-bold leading-none"
+                      className="w-9 h-9 flex items-center justify-center rounded-xl text-lg font-bold leading-none active:scale-90 transition-transform"
                       style={{ background: '#fef2f2', color: '#ef4444' }}
                       aria-label={`Delete ${cat.name}`}
                     >

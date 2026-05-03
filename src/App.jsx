@@ -55,20 +55,26 @@ export default function App() {
   const [showCategoryManager, setShowCategoryManager] = useState(false)
   const [filter, setFilter] = useState('Today')
   const [activeTab, setActiveTab] = useState('expenses')
+  const [toast, setToast] = useState({ visible: false, message: '' })
 
   function handleSave(expense) {
     const updated = [expense, ...expenses]
     setExpenses(updated)
     saveExpenses(updated)
+    const cat = categories.find(c => c.name === expense.category)
+    const emoji = cat?.emoji ?? '💸'
+    setToast({ visible: true, message: `Added ₹${expense.amount} to ${expense.category} ${emoji}` })
+    setTimeout(() => setToast({ visible: false, message: '' }), 2500)
   }
 
   const filtered = useMemo(() => filterExpenses(expenses, filter), [expenses, filter])
+  const filterIndex = FILTERS.indexOf(filter)
 
   return (
     <div className="min-h-screen" style={{ background: theme.pageBg }}>
 
       {activeTab === 'expenses' && (
-        <div className="max-w-[480px] mx-auto px-4 pb-28">
+        <div className="max-w-[480px] mx-auto px-4 pb-20">
           <header className="pt-8 pb-4">
             <div className="flex items-start justify-between">
               <div>
@@ -80,7 +86,7 @@ export default function App() {
               </div>
               <button
                 onClick={() => setShowCategoryManager(true)}
-                className="mt-1 w-9 h-9 flex items-center justify-center rounded-full text-lg"
+                className="btn-settings mt-1 w-9 h-9 flex items-center justify-center rounded-full text-lg"
                 style={{ background: theme.surface, border: `1px solid ${theme.border}`, color: theme.secondary }}
                 aria-label="Manage categories"
               >
@@ -89,17 +95,37 @@ export default function App() {
             </div>
 
             <div
-              className="flex gap-1 mt-4 w-fit rounded-full p-1"
-              style={{ background: '#ffffff', border: `1px solid ${theme.border}` }}
+              className="relative flex mt-4 rounded-full overflow-hidden"
+              style={{
+                background: 'rgba(255,255,255,0.6)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+                border: `1px solid ${theme.border}`,
+              }}
             >
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  width: `${100 / FILTERS.length}%`,
+                  background: theme.primary,
+                  borderRadius: '999px',
+                  transition: 'transform 0.3s cubic-bezier(0.4,0,0.2,1)',
+                  transform: `translateX(${filterIndex * 100}%)`,
+                }}
+              />
               {FILTERS.map(f => (
                 <button
                   key={f}
                   onClick={() => setFilter(f)}
-                  className="px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
+                  className="relative z-10 text-sm font-medium"
                   style={{
-                    background: filter === f ? theme.primary : 'transparent',
+                    flex: 1,
+                    padding: '7px 16px',
                     color: filter === f ? '#ffffff' : theme.accent,
+                    transition: 'color 0.2s ease',
+                    minWidth: '72px',
+                    textAlign: 'center',
                   }}
                 >
                   {f}
@@ -120,7 +146,7 @@ export default function App() {
         onClick={() => setShowModal(true)}
         className="fixed right-6 w-14 h-14 rounded-full flex items-center justify-center text-white text-3xl active:scale-95 transition-transform"
         style={{
-          bottom: '76px',
+          bottom: '96px',
           background: `linear-gradient(135deg, ${theme.primary}, ${theme.gradEnd})`,
           boxShadow: `0 4px 20px rgba(${theme.shadowRgb},0.5)`,
         }}
@@ -130,26 +156,45 @@ export default function App() {
       </button>
 
       <nav
-        className="fixed bottom-0 left-0 right-0 flex"
+        className="fixed z-40 flex"
         style={{
-          background: '#ffffff',
-          borderTop: '1px solid #e2e8f0',
-          boxShadow: `0 -2px 12px rgba(${theme.shadowRgb},0.08)`,
-          height: '60px',
+          bottom: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '90%',
+          maxWidth: '420px',
+          padding: '6px',
+          background: 'rgba(255,255,255,0.72)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          borderRadius: '999px',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.8)',
         }}
       >
         <button
           onClick={() => setActiveTab('expenses')}
-          className="flex-1 flex flex-col items-center justify-center gap-0.5"
-          style={{ color: activeTab === 'expenses' ? theme.primary : '#94a3b8' }}
+          className="flex-1 flex flex-col items-center justify-center gap-0.5 active:scale-95"
+          style={{
+            padding: '8px 0',
+            borderRadius: '999px',
+            background: activeTab === 'expenses' ? `rgba(${theme.shadowRgb},0.12)` : 'transparent',
+            color: activeTab === 'expenses' ? theme.primary : '#94a3b8',
+            transition: 'all 0.2s ease',
+          }}
         >
           <ListIcon active={activeTab === 'expenses'} color={theme.primary} />
           <span className="text-xs font-medium">Expenses</span>
         </button>
         <button
           onClick={() => setActiveTab('summary')}
-          className="flex-1 flex flex-col items-center justify-center gap-0.5"
-          style={{ color: activeTab === 'summary' ? theme.primary : '#94a3b8' }}
+          className="flex-1 flex flex-col items-center justify-center gap-0.5 active:scale-95"
+          style={{
+            padding: '8px 0',
+            borderRadius: '999px',
+            background: activeTab === 'summary' ? `rgba(${theme.shadowRgb},0.12)` : 'transparent',
+            color: activeTab === 'summary' ? theme.primary : '#94a3b8',
+            transition: 'all 0.2s ease',
+          }}
         >
           <ChartIcon
             active={activeTab === 'summary'}
@@ -160,6 +205,20 @@ export default function App() {
           <span className="text-xs font-medium">Summary</span>
         </button>
       </nav>
+
+      {toast.visible && (
+        <div className="fixed top-4 left-0 right-0 flex justify-center z-50 pointer-events-none">
+          <div
+            className="px-5 py-2.5 rounded-full text-sm font-semibold text-white"
+            style={{
+              background: `linear-gradient(135deg, ${theme.primary}, ${theme.gradEnd})`,
+              boxShadow: `0 4px 20px rgba(${theme.shadowRgb},0.45)`,
+            }}
+          >
+            {toast.message}
+          </div>
+        </div>
+      )}
 
       {showModal && (
         <AddExpenseModal
