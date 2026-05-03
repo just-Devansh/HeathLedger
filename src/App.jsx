@@ -52,19 +52,43 @@ export default function App() {
   const [expenses, setExpenses] = useState(() => loadExpenses())
   const [categories, setCategories] = useState(() => loadCategories())
   const [showModal, setShowModal] = useState(false)
+  const [editExpense, setEditExpense] = useState(null)
   const [showCategoryManager, setShowCategoryManager] = useState(false)
   const [filter, setFilter] = useState('Today')
   const [activeTab, setActiveTab] = useState('expenses')
   const [toast, setToast] = useState({ visible: false, message: '' })
 
+  function showToast(message) {
+    setToast({ visible: true, message })
+    setTimeout(() => setToast({ visible: false, message: '' }), 2500)
+  }
+
   function handleSave(expense) {
-    const updated = [expense, ...expenses]
+    const isUpdate = expenses.some(e => e.id === expense.id)
+    const updated = isUpdate
+      ? expenses.map(e => e.id === expense.id ? expense : e)
+      : [expense, ...expenses]
     setExpenses(updated)
     saveExpenses(updated)
     const cat = categories.find(c => c.name === expense.category)
     const emoji = cat?.emoji ?? '💸'
-    setToast({ visible: true, message: `Added ₹${expense.amount} to ${expense.category} ${emoji}` })
-    setTimeout(() => setToast({ visible: false, message: '' }), 2500)
+    showToast(`${isUpdate ? 'Updated' : 'Added'} ₹${expense.amount} to ${expense.category} ${emoji}`)
+  }
+
+  function handleDeleteExpense(id) {
+    const updated = expenses.filter(e => e.id !== id)
+    setExpenses(updated)
+    saveExpenses(updated)
+    showToast('Expense deleted')
+  }
+
+  function openEdit(expense) {
+    setEditExpense(expense)
+  }
+
+  function closeModal() {
+    setShowModal(false)
+    setEditExpense(null)
   }
 
   const filtered = useMemo(() => filterExpenses(expenses, filter), [expenses, filter])
@@ -74,7 +98,7 @@ export default function App() {
     <div className="min-h-screen" style={{ background: theme.pageBg }}>
 
       {activeTab === 'expenses' && (
-        <div className="max-w-[480px] mx-auto px-4 pb-20">
+        <div className="max-w-[480px] mx-auto px-4 pb-[100px]">
           <header className="pt-8 pb-4">
             <div className="flex items-start justify-between">
               <div>
@@ -134,7 +158,12 @@ export default function App() {
             </div>
           </header>
 
-          <ExpenseList expenses={filtered} categories={categories} />
+          <ExpenseList
+            expenses={filtered}
+            categories={categories}
+            onEdit={openEdit}
+            onDelete={handleDeleteExpense}
+          />
         </div>
       )}
 
@@ -143,7 +172,7 @@ export default function App() {
       )}
 
       <button
-        onClick={() => setShowModal(true)}
+        onClick={() => { setEditExpense(null); setShowModal(true) }}
         className="fixed right-6 w-14 h-14 rounded-full flex items-center justify-center text-white text-3xl active:scale-95 transition-transform"
         style={{
           bottom: '96px',
@@ -177,8 +206,10 @@ export default function App() {
           style={{
             padding: '8px 0',
             borderRadius: '999px',
-            background: activeTab === 'expenses' ? `rgba(${theme.shadowRgb},0.12)` : 'transparent',
-            color: activeTab === 'expenses' ? theme.primary : '#94a3b8',
+            background: activeTab === 'expenses'
+              ? `linear-gradient(135deg, rgba(${theme.shadowRgb},0.32) 0%, rgba(${theme.shadowRgb},0.14) 100%)`
+              : 'transparent',
+            color: activeTab === 'expenses' ? theme.primary : '#64748b',
             transition: 'all 0.2s ease',
           }}
         >
@@ -220,11 +251,12 @@ export default function App() {
         </div>
       )}
 
-      {showModal && (
+      {(showModal || editExpense) && (
         <AddExpenseModal
           categories={categories}
           onSave={handleSave}
-          onClose={() => setShowModal(false)}
+          onClose={closeModal}
+          editExpense={editExpense}
         />
       )}
 

@@ -52,7 +52,7 @@ export default function SummaryScreen({ expenses, categories }) {
   const biggest = breakdown[0]
 
   return (
-    <div className="max-w-[480px] mx-auto px-4 pb-20">
+    <div className="max-w-[480px] mx-auto px-4 pb-[100px]">
       <header className="pt-8 pb-4">
         <p className="text-xs font-medium tracking-wide" style={{ color: theme.accent }}>HeathLedger</p>
         <h1 className="text-2xl font-bold tracking-tight mt-1" style={{ color: theme.heading }}>Firse Kharcha?</h1>

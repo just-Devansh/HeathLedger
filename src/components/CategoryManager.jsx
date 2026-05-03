@@ -11,6 +11,7 @@ export default function CategoryManager({ onClose }) {
   const [editingIdx, setEditingIdx] = useState(null)
   const [editName, setEditName] = useState('')
   const [editEmoji, setEditEmoji] = useState('')
+  const [confirmDeleteIdx, setConfirmDeleteIdx] = useState(null)
 
   function persist(cats) {
     setCategories(cats)
@@ -27,9 +28,11 @@ export default function CategoryManager({ onClose }) {
 
   function handleDelete(idx) {
     persist(categories.filter((_, i) => i !== idx))
+    setConfirmDeleteIdx(null)
   }
 
   function startEdit(idx) {
+    setConfirmDeleteIdx(null)
     setEditingIdx(idx)
     setEditName(categories[idx].name)
     setEditEmoji(categories[idx].emoji)
@@ -46,6 +49,16 @@ export default function CategoryManager({ onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col" style={{ background: theme.pageBg }}>
+
+      {/* Click-outside backdrop for confirmation popup */}
+      {confirmDeleteIdx !== null && (
+        <div
+          className="fixed inset-0"
+          style={{ zIndex: 51 }}
+          onClick={() => setConfirmDeleteIdx(null)}
+        />
+      )}
+
       <div className="max-w-[480px] w-full mx-auto flex flex-col flex-1 min-h-0">
 
         {/* Header */}
@@ -128,7 +141,12 @@ export default function CategoryManager({ onClose }) {
               <li
                 key={idx}
                 className="flex items-center gap-2 px-4 py-3 rounded-2xl"
-                style={{ background: '#ffffff', boxShadow: `0 2px 12px rgba(${theme.shadowRgb},0.10)` }}
+                style={{
+                  background: '#ffffff',
+                  boxShadow: `0 2px 12px rgba(${theme.shadowRgb},0.10)`,
+                  position: 'relative',
+                  zIndex: confirmDeleteIdx === idx ? 52 : 'auto',
+                }}
               >
                 {editingIdx === idx ? (
                   <>
@@ -176,22 +194,46 @@ export default function CategoryManager({ onClose }) {
                       {cat.emoji}
                     </span>
                     <span className="flex-1 text-sm font-medium" style={{ color: '#0f172a' }}>{cat.name}</span>
-                    <button
-                      onClick={() => startEdit(idx)}
-                      className="w-9 h-9 flex items-center justify-center rounded-xl text-base active:scale-90 transition-transform"
-                      style={{ background: theme.surface, color: theme.secondary }}
-                      aria-label={`Edit ${cat.name}`}
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      onClick={() => handleDelete(idx)}
-                      className="w-9 h-9 flex items-center justify-center rounded-xl text-lg font-bold leading-none active:scale-90 transition-transform"
-                      style={{ background: '#fef2f2', color: '#ef4444' }}
-                      aria-label={`Delete ${cat.name}`}
-                    >
-                      ×
-                    </button>
+
+                    {confirmDeleteIdx === idx ? (
+                      <div className="confirm-popup flex gap-2">
+                        <button
+                          onClick={() => handleDelete(idx)}
+                          className="action-btn w-9 h-9 flex items-center justify-center rounded-xl font-bold"
+                          style={{ background: '#22c55e', color: '#ffffff', fontSize: '18px' }}
+                          aria-label="Confirm delete"
+                        >
+                          ✓
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteIdx(null)}
+                          className="action-btn w-9 h-9 flex items-center justify-center rounded-xl font-bold"
+                          style={{ background: '#ef4444', color: '#ffffff', fontSize: '18px' }}
+                          aria-label="Cancel delete"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => startEdit(idx)}
+                          className="action-btn w-9 h-9 flex items-center justify-center rounded-xl text-base"
+                          style={{ background: theme.surface, color: theme.secondary }}
+                          aria-label={`Edit ${cat.name}`}
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteIdx(idx)}
+                          className="action-btn w-9 h-9 flex items-center justify-center rounded-xl text-base"
+                          style={{ background: '#fef2f2', color: '#ef4444' }}
+                          aria-label={`Delete ${cat.name}`}
+                        >
+                          🗑️
+                        </button>
+                      </>
+                    )}
                   </>
                 )}
               </li>

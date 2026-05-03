@@ -11,14 +11,22 @@ function todayString() {
   ].join('-')
 }
 
-export default function AddExpenseModal({ categories, onSave, onClose }) {
+export default function AddExpenseModal({ categories, onSave, onClose, editExpense }) {
   const { theme } = useTheme()
-  const [amount, setAmount] = useState('')
-  const [category, setCategory] = useState(
-    () => localStorage.getItem('heath_ledger_last_category') || ''
+  const isEditing = !!editExpense
+
+  const [amount, setAmount] = useState(() =>
+    isEditing ? String(editExpense.amount) : ''
   )
-  const [note, setNote] = useState('')
-  const [date, setDate] = useState(todayString())
+  const [category, setCategory] = useState(() =>
+    isEditing
+      ? editExpense.category
+      : (localStorage.getItem('heath_ledger_last_category') || '')
+  )
+  const [note, setNote] = useState(() => isEditing ? editExpense.note : '')
+  const [date, setDate] = useState(() =>
+    isEditing ? editExpense.date.split('T')[0] : todayString()
+  )
 
   function handleNoteChange(e) {
     const val = e.target.value
@@ -30,9 +38,9 @@ export default function AddExpenseModal({ categories, onSave, onClose }) {
   function handleSubmit(e) {
     e.preventDefault()
     if (!amount || !category) return
-    localStorage.setItem('heath_ledger_last_category', category)
+    if (!isEditing) localStorage.setItem('heath_ledger_last_category', category)
     onSave({
-      id: crypto.randomUUID(),
+      id: isEditing ? editExpense.id : crypto.randomUUID(),
       amount: parseFloat(amount),
       category,
       note: note.trim(),
@@ -51,7 +59,9 @@ export default function AddExpenseModal({ categories, onSave, onClose }) {
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-semibold" style={{ color: '#0f172a' }}>Add Expense</h2>
+          <h2 className="text-lg font-semibold" style={{ color: '#0f172a' }}>
+            {isEditing ? 'Edit Expense' : 'Add Expense'}
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -128,7 +138,7 @@ export default function AddExpenseModal({ categories, onSave, onClose }) {
             className="py-4 rounded-xl text-base font-semibold text-white disabled:opacity-30 active:scale-95 transition-transform"
             style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})` }}
           >
-            Save Expense
+            {isEditing ? 'Update Expense' : 'Save Expense'}
           </button>
         </form>
       </div>
