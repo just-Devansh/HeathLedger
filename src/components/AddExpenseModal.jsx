@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { inferCategory } from '../utils/categoryMapper'
 import { useTheme } from '../context/ThemeContext'
+import { getIcon } from '../utils/icons'
 
 function todayString() {
   const d = new Date()
@@ -51,22 +52,24 @@ export default function AddExpenseModal({ categories, onSave, onClose, editExpen
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex items-end z-50"
+      className="fixed inset-0 flex items-end z-50"
+      style={{ background: theme.modalBg }}
       onClick={onClose}
     >
       <div
-        className="bg-white w-full rounded-t-2xl p-6 max-w-[480px] mx-auto"
+        className="w-full rounded-t-2xl p-6 max-w-[480px] mx-auto"
+        style={{ background: theme.cardBg }}
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-semibold" style={{ color: '#0f172a' }}>
+          <h2 className="text-lg font-semibold" style={{ color: theme.text }}>
             {isEditing ? 'Edit Expense' : 'Add Expense'}
           </h2>
           <button
             type="button"
             onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded-full text-xl leading-none"
-            style={{ background: '#f1f5f9', color: '#64748b' }}
+            style={{ background: theme.inputBg, color: theme.textMuted }}
             aria-label="Close"
           >
             ×
@@ -82,8 +85,8 @@ export default function AddExpenseModal({ categories, onSave, onClose, editExpen
               placeholder="0"
               value={amount}
               onChange={e => setAmount(e.target.value)}
-              className="text-4xl font-bold outline-none w-full"
-              style={{ color: '#0f172a' }}
+              className="text-4xl font-bold outline-none w-full bg-transparent"
+              style={{ color: theme.text }}
               autoFocus
               required
               min="0"
@@ -92,7 +95,7 @@ export default function AddExpenseModal({ categories, onSave, onClose, editExpen
           </div>
 
           <div>
-            <p className="text-xs uppercase tracking-wide mb-2" style={{ color: '#94a3b8' }}>
+            <p className="text-xs uppercase tracking-wide mb-2" style={{ color: theme.textFaint }}>
               Category
             </p>
             <div className="flex flex-wrap gap-2">
@@ -108,7 +111,7 @@ export default function AddExpenseModal({ categories, onSave, onClose, editExpen
                       : { background: theme.surface, color: theme.primary, borderColor: theme.border }
                   }
                 >
-                  <span>{cat.emoji}</span>
+                  {getIcon(cat.icon, { size: 14, color: category === cat.name ? '#ffffff' : theme.primary })}
                   {cat.name}
                 </button>
               ))}
@@ -120,16 +123,16 @@ export default function AddExpenseModal({ categories, onSave, onClose, editExpen
             placeholder="Note (optional)"
             value={note}
             onChange={handleNoteChange}
-            className="border-b outline-none py-2 text-base"
-            style={{ borderColor: '#e2e8f0', color: '#0f172a' }}
+            className="border-b outline-none py-2 text-base bg-transparent"
+            style={{ borderColor: theme.border, color: theme.text }}
           />
 
           <input
             type="date"
             value={date}
             onChange={e => setDate(e.target.value)}
-            className="border-b outline-none py-2 text-base"
-            style={{ borderColor: '#e2e8f0', color: '#0f172a' }}
+            className="border-b outline-none py-2 text-base bg-transparent"
+            style={{ borderColor: theme.border, color: theme.text }}
           />
 
           <button

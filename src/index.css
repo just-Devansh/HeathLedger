@@ -7,7 +7,7 @@
   transition: all 0.2s ease;
 }
 .btn-settings:hover {
-  background: rgba(79, 70, 229, 0.1) !important;
+  filter: brightness(0.92);
   transform: scale(1.05);
 }
 .btn-settings:active {
@@ -16,12 +16,11 @@
 
 /* Close X button (Settings page) */
 .btn-close {
-  background: #ffffff;
-  color: #64748b;
+  background: var(--card-bg);
   transition: all 0.2s ease;
 }
 .btn-close:hover {
-  background: rgba(239, 68, 68, 0.1) !important;
+  background: rgba(239, 68, 68, 0.12) !important;
   color: #ef4444 !important;
 }
 .btn-close:active {
@@ -40,12 +39,12 @@
   transform: scale(0.88) !important;
 }
 
-/* Three-dots (⋮) button on expense cards */
+/* Three-dots button on expense cards */
 .dots-btn {
   transition: background 0.15s ease, transform 0.15s ease;
 }
 .dots-btn:hover {
-  background: #f1f5f9 !important;
+  background: var(--input-bg) !important;
 }
 .dots-btn:active {
   transform: scale(0.88) !important;
@@ -57,10 +56,10 @@
   text-align: left;
 }
 .expense-menu-item:hover {
-  background: #f8fafc;
+  background: var(--input-bg);
 }
 .expense-menu-item.danger:hover {
-  background: #fef2f2;
+  background: var(--danger-surface);
 }
 
 /* Inline delete confirmation popup */
@@ -71,4 +70,9 @@
 .confirm-popup {
   animation: popup-in 0.15s ease-out forwards;
   transform-origin: right center;
+}
+
+/* Smooth background transition on theme/mode change */
+body {
+  transition: background 0.25s ease;
 }

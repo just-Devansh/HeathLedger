@@ -1,7 +1,9 @@
 import { useMemo } from 'react'
+import { Wallet } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
+import { getIcon } from '../utils/icons'
 
-const TINTS = [
+const TINTS_LIGHT = [
   { bg: '#fef3c7', border: '#f59e0b' },
   { bg: '#dbeafe', border: '#3b82f6' },
   { bg: '#dcfce7', border: '#22c55e' },
@@ -10,6 +12,17 @@ const TINTS = [
   { bg: '#ffedd5', border: '#f97316' },
   { bg: '#f0fdf4', border: '#16a34a' },
   { bg: '#fdf4ff', border: '#d946ef' },
+]
+
+const TINTS_DARK = [
+  { bg: 'rgba(245,158,11,0.12)',  border: '#f59e0b' },
+  { bg: 'rgba(59,130,246,0.12)',  border: '#3b82f6' },
+  { bg: 'rgba(34,197,94,0.12)',   border: '#22c55e' },
+  { bg: 'rgba(236,72,153,0.12)',  border: '#ec4899' },
+  { bg: 'rgba(139,92,246,0.12)',  border: '#8b5cf6' },
+  { bg: 'rgba(249,115,22,0.12)',  border: '#f97316' },
+  { bg: 'rgba(22,163,74,0.12)',   border: '#16a34a' },
+  { bg: 'rgba(217,70,239,0.12)',  border: '#d946ef' },
 ]
 
 function currentMonthLabel() {
@@ -21,8 +34,9 @@ function formatAmount(n) {
 }
 
 export default function SummaryScreen({ expenses, categories }) {
-  const { theme } = useTheme()
-  const emojiMap = Object.fromEntries((categories ?? []).map(c => [c.name, c.emoji]))
+  const { theme, isDark } = useTheme()
+  const TINTS = isDark ? TINTS_DARK : TINTS_LIGHT
+  const iconMap = Object.fromEntries((categories ?? []).map(c => [c.name, c.icon]))
 
   const { total, breakdown } = useMemo(() => {
     const now = new Date()
@@ -56,7 +70,7 @@ export default function SummaryScreen({ expenses, categories }) {
       <header className="pt-8 pb-4">
         <p className="text-xs font-medium tracking-wide" style={{ color: theme.accent }}>HeathLedger</p>
         <h1 className="text-2xl font-bold tracking-tight mt-1" style={{ color: theme.heading }}>Firse Kharcha?</h1>
-        <p className="text-sm mt-0.5" style={{ color: '#64748b' }}>{currentMonthLabel()}</p>
+        <p className="text-sm mt-0.5" style={{ color: theme.textMuted }}>{currentMonthLabel()}</p>
       </header>
 
       <div
@@ -67,14 +81,14 @@ export default function SummaryScreen({ expenses, categories }) {
         }}
       >
         <p className="text-sm font-semibold mb-1 tracking-tight" style={{ color: theme.mutedText }}>
-          This month's damage 💸
+          This month's damage
         </p>
         <p className="text-4xl font-extrabold tracking-tight" style={{ color: '#ffffff' }}>
           ₹{formatAmount(total)}
         </p>
         {biggest ? (
           <p className="text-xs mt-2 font-medium" style={{ color: theme.mutedText }}>
-            Biggest damage: {biggest.name} ₹{formatAmount(biggest.amount)}
+            Biggest: {biggest.name} — ₹{formatAmount(biggest.amount)}
           </p>
         ) : (
           <p className="text-xs mt-2" style={{ color: theme.mutedText }}>
@@ -84,18 +98,27 @@ export default function SummaryScreen({ expenses, categories }) {
       </div>
 
       {breakdown.length === 0 ? (
-        <div className="text-center py-16" style={{ color: '#94a3b8' }}>
-          <p className="text-5xl mb-3">😇</p>
+        <div className="text-center py-16" style={{ color: theme.textFaint }}>
+          <div className="flex justify-center mb-3">
+            <div
+              className="w-16 h-16 rounded-full flex items-center justify-center"
+              style={{ background: theme.inputBg }}
+            >
+              <Wallet size={28} color={theme.textFaint} />
+            </div>
+          </div>
           <p className="text-sm">No damage yet.</p>
         </div>
       ) : (
         <>
           <p className="text-sm font-semibold mb-3 tracking-tight" style={{ color: theme.heading }}>
-            Where it all went 👇
+            Where it all went
           </p>
           <div className="flex flex-col gap-3">
             {breakdown.map(({ name, amount, percentage }, i) => {
               const tint = TINTS[i % TINTS.length]
+              const iconBg = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)'
+              const barBg = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.6)'
               return (
                 <div
                   key={name}
@@ -109,21 +132,21 @@ export default function SummaryScreen({ expenses, categories }) {
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <span
-                        className="text-lg w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0"
-                        style={{ background: 'rgba(255,255,255,0.7)' }}
+                        className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0"
+                        style={{ background: iconBg }}
                       >
-                        {emojiMap[name] ?? '📦'}
+                        {getIcon(iconMap[name] ?? 'box', { size: 18, color: tint.border })}
                       </span>
                       <div>
                         <p className="text-sm font-bold tracking-tight leading-tight" style={{ color: theme.heading }}>{name}</p>
-                        <p className="text-xs mt-0.5" style={{ color: '#94a3b8' }}>{percentage.toFixed(1)}%</p>
+                        <p className="text-xs mt-0.5" style={{ color: theme.textFaint }}>{percentage.toFixed(1)}%</p>
                       </div>
                     </div>
                     <p className="text-base font-bold tracking-tight" style={{ color: tint.border }}>
                       ₹{formatAmount(amount)}
                     </p>
                   </div>
-                  <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.6)' }}>
+                  <div className="h-1.5 rounded-full overflow-hidden" style={{ background: barBg }}>
                     <div
                       className="h-full rounded-full"
                       style={{

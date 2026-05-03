@@ -1,16 +1,73 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
+import { Pencil, Trash2, Check, X, Moon, Sun } from 'lucide-react'
 import { loadCategories, saveCategories } from '../utils/storage'
 import { useTheme } from '../context/ThemeContext'
 import { THEME_META } from '../utils/theme'
+import { CATEGORY_ICONS, ICON_OPTIONS, getIcon } from '../utils/icons'
+
+function formatIconLabel(name) {
+  return name.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
+
+function IconPicker({ selected, onSelect, theme }) {
+  const [tooltip, setTooltip] = useState(null)
+  const longPressTimer = useRef(null)
+
+  function handleTouchStart(name) {
+    longPressTimer.current = setTimeout(() => setTooltip(name), 400)
+  }
+
+  function handleTouchEnd() {
+    clearTimeout(longPressTimer.current)
+    setTimeout(() => setTooltip(null), 900)
+  }
+
+  return (
+    <div>
+      <div className="grid grid-cols-6 gap-1.5">
+        {ICON_OPTIONS.map(name => {
+          const isSelected = selected === name
+          const Icon = CATEGORY_ICONS[name]
+          return (
+            <button
+              key={name}
+              type="button"
+              onClick={() => onSelect(name)}
+              onMouseEnter={() => setTooltip(name)}
+              onMouseLeave={() => setTooltip(null)}
+              onTouchStart={() => handleTouchStart(name)}
+              onTouchEnd={handleTouchEnd}
+              className="w-9 h-9 flex items-center justify-center rounded-xl transition-colors active:scale-90"
+              style={{
+                background: isSelected ? theme.primary : theme.inputBg,
+                border: `2px solid ${isSelected ? theme.primary : 'transparent'}`,
+              }}
+              aria-label={formatIconLabel(name)}
+            >
+              <Icon size={16} color={isSelected ? '#ffffff' : theme.textMuted} />
+            </button>
+          )
+        })}
+      </div>
+      <div className="h-5 flex items-center justify-center mt-1">
+        {tooltip && (
+          <p className="text-xs font-medium" style={{ color: theme.primary }}>
+            {formatIconLabel(tooltip)}
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
 
 export default function CategoryManager({ onClose }) {
-  const { theme, themeName, setTheme } = useTheme()
+  const { theme, themeName, setTheme, isDark, toggleDark } = useTheme()
   const [categories, setCategories] = useState(() => loadCategories())
   const [newName, setNewName] = useState('')
-  const [newEmoji, setNewEmoji] = useState('')
+  const [newIcon, setNewIcon] = useState('box')
   const [editingIdx, setEditingIdx] = useState(null)
   const [editName, setEditName] = useState('')
-  const [editEmoji, setEditEmoji] = useState('')
+  const [editIcon, setEditIcon] = useState('box')
   const [confirmDeleteIdx, setConfirmDeleteIdx] = useState(null)
 
   function persist(cats) {
@@ -21,9 +78,9 @@ export default function CategoryManager({ onClose }) {
   function handleAdd() {
     const name = newName.trim()
     if (!name || categories.some(c => c.name === name)) return
-    persist([...categories, { name, emoji: newEmoji.trim() || '📦' }])
+    persist([...categories, { name, icon: newIcon }])
     setNewName('')
-    setNewEmoji('')
+    setNewIcon('box')
   }
 
   function handleDelete(idx) {
@@ -35,14 +92,14 @@ export default function CategoryManager({ onClose }) {
     setConfirmDeleteIdx(null)
     setEditingIdx(idx)
     setEditName(categories[idx].name)
-    setEditEmoji(categories[idx].emoji)
+    setEditIcon(categories[idx].icon ?? 'box')
   }
 
   function handleEditSave(idx) {
     const name = editName.trim()
     if (!name) { setEditingIdx(null); return }
     const updated = [...categories]
-    updated[idx] = { name, emoji: editEmoji.trim() || '📦' }
+    updated[idx] = { name, icon: editIcon }
     persist(updated)
     setEditingIdx(null)
   }
@@ -50,7 +107,6 @@ export default function CategoryManager({ onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col" style={{ background: theme.pageBg }}>
 
-      {/* Click-outside backdrop for confirmation popup */}
       {confirmDeleteIdx !== null && (
         <div
           className="fixed inset-0"
@@ -64,7 +120,7 @@ export default function CategoryManager({ onClose }) {
         {/* Header */}
         <div
           className="flex items-center justify-between px-6 pt-8 pb-4"
-          style={{ borderBottom: '1px solid #e2e8f0' }}
+          style={{ borderBottom: `1px solid ${theme.border}` }}
         >
           <div>
             <p className="text-xs font-medium tracking-wide" style={{ color: theme.accent }}>HeathLedger</p>
@@ -72,19 +128,51 @@ export default function CategoryManager({ onClose }) {
           </div>
           <button
             onClick={onClose}
-            className="btn-close w-9 h-9 flex items-center justify-center rounded-full text-xl leading-none"
-            style={{ border: '1px solid #e2e8f0' }}
+            className="btn-close w-9 h-9 flex items-center justify-center rounded-full"
+            style={{ border: `1px solid ${theme.border}`, color: theme.textMuted }}
             aria-label="Close"
           >
-            ×
+            <X size={18} />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto">
 
+          {/* Appearance */}
+          <div className="px-6 pt-5 pb-4" style={{ borderBottom: `1px solid ${theme.border}` }}>
+            <p className="text-xs uppercase tracking-wide font-medium mb-3" style={{ color: theme.textFaint }}>
+              Appearance
+            </p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {isDark
+                  ? <Moon size={18} color={theme.primary} />
+                  : <Sun size={18} color={theme.primary} />
+                }
+                <span className="text-sm font-medium" style={{ color: theme.text }}>Dark Mode</span>
+              </div>
+              <button
+                onClick={toggleDark}
+                className="relative w-12 h-6 rounded-full transition-colors active:scale-95"
+                style={{ background: isDark ? theme.primary : theme.border }}
+                aria-label="Toggle dark mode"
+              >
+                <span
+                  className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform"
+                  style={{
+                    left: '2px',
+                    transform: isDark ? 'translateX(24px)' : 'translateX(0)',
+                    transition: 'transform 0.2s cubic-bezier(0.4,0,0.2,1)',
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.25)',
+                  }}
+                />
+              </button>
+            </div>
+          </div>
+
           {/* Color theme picker */}
-          <div className="px-6 pt-5 pb-4" style={{ borderBottom: '1px solid #e2e8f0' }}>
-            <p className="text-xs uppercase tracking-wide font-medium mb-3" style={{ color: '#94a3b8' }}>
+          <div className="px-6 pt-5 pb-4" style={{ borderBottom: `1px solid ${theme.border}` }}>
+            <p className="text-xs uppercase tracking-wide font-medium mb-3" style={{ color: theme.textFaint }}>
               Color Theme
             </p>
             <div className="flex gap-4">
@@ -102,7 +190,7 @@ export default function CategoryManager({ onClose }) {
                       style={{
                         background: swatch,
                         boxShadow: isActive
-                          ? `0 0 0 3px #ffffff, 0 0 0 5px ${swatch}`
+                          ? `0 0 0 3px ${theme.cardBg}, 0 0 0 5px ${swatch}`
                           : '0 2px 6px rgba(0,0,0,0.15)',
                       }}
                     >
@@ -114,7 +202,7 @@ export default function CategoryManager({ onClose }) {
                     </span>
                     <span
                       className="text-xs font-medium"
-                      style={{ color: isActive ? theme.primary : '#94a3b8' }}
+                      style={{ color: isActive ? theme.primary : theme.textFaint }}
                     >
                       {label}
                     </span>
@@ -126,115 +214,110 @@ export default function CategoryManager({ onClose }) {
 
           {/* Categories list */}
           <div className="px-6 pt-4">
-            <p className="text-xs uppercase tracking-wide font-medium mb-3" style={{ color: '#94a3b8' }}>
+            <p className="text-xs uppercase tracking-wide font-medium mb-3" style={{ color: theme.textFaint }}>
               Categories
             </p>
           </div>
 
           <ul className="px-6 pb-4 flex flex-col gap-2">
             {categories.length === 0 && (
-              <p className="text-sm text-center py-8" style={{ color: '#94a3b8' }}>
+              <p className="text-sm text-center py-8" style={{ color: theme.textFaint }}>
                 No categories yet. Add one below.
               </p>
             )}
             {categories.map((cat, idx) => (
               <li
                 key={idx}
-                className="flex items-center gap-2 px-4 py-3 rounded-2xl"
+                className="flex flex-col px-4 py-3 rounded-2xl"
                 style={{
-                  background: '#ffffff',
-                  boxShadow: `0 2px 12px rgba(${theme.shadowRgb},0.10)`,
+                  background: theme.cardBg,
+                  boxShadow: `0 2px 12px rgba(${theme.shadowRgb},0.08)`,
                   position: 'relative',
                   zIndex: confirmDeleteIdx === idx ? 52 : 'auto',
                 }}
               >
                 {editingIdx === idx ? (
-                  <>
-                    <input
-                      type="text"
-                      placeholder="😀"
-                      value={editEmoji}
-                      onChange={e => setEditEmoji(e.target.value)}
-                      className="w-10 text-center text-lg outline-none rounded-lg bg-transparent"
-                      style={{ border: '1px solid #e2e8f0', padding: '2px' }}
-                    />
-                    <input
-                      type="text"
-                      className="flex-1 outline-none text-sm font-medium bg-transparent"
-                      style={{ color: '#0f172a' }}
-                      value={editName}
-                      onChange={e => setEditName(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') handleEditSave(idx)
-                        if (e.key === 'Escape') setEditingIdx(null)
-                      }}
-                      autoFocus
-                    />
-                    <button
-                      onClick={() => handleEditSave(idx)}
-                      className="text-xs font-semibold px-3 py-1.5 rounded-lg active:scale-95 transition-transform"
-                      style={{ background: theme.primary, color: '#ffffff' }}
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={() => setEditingIdx(null)}
-                      className="text-xs font-semibold px-3 py-1.5 rounded-lg active:scale-95 transition-transform"
-                      style={{ background: theme.surface, color: theme.accent }}
-                    >
-                      Cancel
-                    </button>
-                  </>
+                  <div className="flex flex-col gap-2">
+                    <IconPicker selected={editIcon} onSelect={setEditIcon} theme={theme} />
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="text"
+                        className="flex-1 outline-none text-sm font-medium bg-transparent"
+                        style={{ color: theme.text, borderBottom: `1px solid ${theme.border}`, padding: '4px 0' }}
+                        value={editName}
+                        onChange={e => setEditName(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') handleEditSave(idx)
+                          if (e.key === 'Escape') setEditingIdx(null)
+                        }}
+                        autoFocus
+                      />
+                      <button
+                        onClick={() => handleEditSave(idx)}
+                        className="text-xs font-semibold px-3 py-1.5 rounded-lg active:scale-95 transition-transform"
+                        style={{ background: theme.primary, color: '#ffffff' }}
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => setEditingIdx(null)}
+                        className="text-xs font-semibold px-3 py-1.5 rounded-lg active:scale-95 transition-transform"
+                        style={{ background: theme.inputBg, color: theme.textMuted }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
                 ) : (
-                  <>
+                  <div className="flex items-center gap-2">
                     <span
-                      className="w-9 h-9 flex items-center justify-center rounded-xl text-lg flex-shrink-0"
+                      className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0"
                       style={{ background: theme.surface }}
                     >
-                      {cat.emoji}
+                      {getIcon(cat.icon ?? 'box', { size: 18, color: theme.primary })}
                     </span>
-                    <span className="flex-1 text-sm font-medium" style={{ color: '#0f172a' }}>{cat.name}</span>
+                    <span className="flex-1 text-sm font-medium" style={{ color: theme.text }}>{cat.name}</span>
 
                     {confirmDeleteIdx === idx ? (
                       <div className="confirm-popup flex gap-2">
                         <button
                           onClick={() => handleDelete(idx)}
-                          className="action-btn w-9 h-9 flex items-center justify-center rounded-xl font-bold"
-                          style={{ background: '#22c55e', color: '#ffffff', fontSize: '18px' }}
+                          className="action-btn w-9 h-9 flex items-center justify-center rounded-xl"
+                          style={{ background: '#22c55e', color: '#ffffff' }}
                           aria-label="Confirm delete"
                         >
-                          ✓
+                          <Check size={18} />
                         </button>
                         <button
                           onClick={() => setConfirmDeleteIdx(null)}
-                          className="action-btn w-9 h-9 flex items-center justify-center rounded-xl font-bold"
-                          style={{ background: '#ef4444', color: '#ffffff', fontSize: '18px' }}
+                          className="action-btn w-9 h-9 flex items-center justify-center rounded-xl"
+                          style={{ background: '#ef4444', color: '#ffffff' }}
                           aria-label="Cancel delete"
                         >
-                          ✕
+                          <X size={18} />
                         </button>
                       </div>
                     ) : (
                       <>
                         <button
                           onClick={() => startEdit(idx)}
-                          className="action-btn w-9 h-9 flex items-center justify-center rounded-xl text-base"
+                          className="action-btn w-9 h-9 flex items-center justify-center rounded-xl"
                           style={{ background: theme.surface, color: theme.secondary }}
                           aria-label={`Edit ${cat.name}`}
                         >
-                          ✏️
+                          <Pencil size={16} />
                         </button>
                         <button
                           onClick={() => setConfirmDeleteIdx(idx)}
-                          className="action-btn w-9 h-9 flex items-center justify-center rounded-xl text-base"
-                          style={{ background: '#fef2f2', color: '#ef4444' }}
+                          className="action-btn w-9 h-9 flex items-center justify-center rounded-xl"
+                          style={{ background: theme.dangerSurface, color: '#ef4444' }}
                           aria-label={`Delete ${cat.name}`}
                         >
-                          🗑️
+                          <Trash2 size={16} />
                         </button>
                       </>
                     )}
-                  </>
+                  </div>
                 )}
               </li>
             ))}
@@ -244,17 +327,15 @@ export default function CategoryManager({ onClose }) {
         {/* Add new category */}
         <div
           className="px-6 py-4"
-          style={{ borderTop: '1px solid #e2e8f0', background: '#ffffff' }}
+          style={{ borderTop: `1px solid ${theme.border}`, background: theme.cardBg }}
         >
+          <p className="text-xs uppercase tracking-wide font-medium mb-2" style={{ color: theme.textFaint }}>
+            New Category
+          </p>
+          <div className="mb-2">
+            <IconPicker selected={newIcon} onSelect={setNewIcon} theme={theme} />
+          </div>
           <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="😀"
-              value={newEmoji}
-              onChange={e => setNewEmoji(e.target.value)}
-              className="w-14 text-center text-lg outline-none rounded-xl"
-              style={{ background: '#f1f5f9', border: '1px solid #e2e8f0' }}
-            />
             <input
               type="text"
               placeholder="Category name"
@@ -262,7 +343,7 @@ export default function CategoryManager({ onClose }) {
               onChange={e => setNewName(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleAdd() }}
               className="flex-1 px-4 py-3 rounded-xl text-sm outline-none"
-              style={{ background: '#f1f5f9', color: '#0f172a', border: '1px solid #e2e8f0' }}
+              style={{ background: theme.inputBg, color: theme.text, border: `1px solid ${theme.border}` }}
             />
             <button
               onClick={handleAdd}

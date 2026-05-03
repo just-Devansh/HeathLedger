@@ -1,13 +1,24 @@
 const KEY = 'heath_ledger_expenses'
 const CATEGORIES_KEY = 'categories'
+
+const EMOJI_TO_ICON = {
+  '🍔': 'utensils',
+  '🚗': 'car',
+  '🏠': 'home',
+  '🎉': 'users',
+  '🛍️': 'shopping-bag',
+  '✈️': 'plane',
+  '📦': 'box',
+}
+
 const DEFAULT_CATEGORIES = [
-  { name: 'Food', emoji: '🍔' },
-  { name: 'Transport', emoji: '🚗' },
-  { name: 'Rent/Fixed', emoji: '🏠' },
-  { name: 'Social/Going Out', emoji: '🎉' },
-  { name: 'Shopping', emoji: '🛍️' },
-  { name: 'Travel', emoji: '✈️' },
-  { name: 'Miscellaneous', emoji: '📦' },
+  { name: 'Food', icon: 'utensils' },
+  { name: 'Transport', icon: 'car' },
+  { name: 'Rent/Fixed', icon: 'home' },
+  { name: 'Social/Going Out', icon: 'users' },
+  { name: 'Shopping', icon: 'shopping-bag' },
+  { name: 'Travel', icon: 'plane' },
+  { name: 'Miscellaneous', icon: 'box' },
 ]
 
 export function loadExpenses() {
@@ -23,15 +34,16 @@ export function saveExpenses(expenses) {
   localStorage.setItem(KEY, JSON.stringify(expenses))
 }
 
-const DEFAULT_EMOJI_MAP = Object.fromEntries(DEFAULT_CATEGORIES.map(c => [c.name, c.emoji]))
-
 export function loadCategories() {
   try {
     const data = localStorage.getItem(CATEGORIES_KEY)
     if (data) {
       const parsed = JSON.parse(data)
-      // backward compat: old format was string[] — use default emoji if name matches, else 📦
-      return parsed.map(c => typeof c === 'string' ? { name: c, emoji: DEFAULT_EMOJI_MAP[c] ?? '📦' } : c)
+      return parsed.map(c => {
+        if (typeof c === 'string') return { name: c, icon: 'box' }
+        if (c.emoji && !c.icon) return { name: c.name, icon: EMOJI_TO_ICON[c.emoji] ?? 'box' }
+        return c
+      })
     }
   } catch {}
   return DEFAULT_CATEGORIES.map(c => ({ ...c }))

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { Settings, Moon, Sun } from 'lucide-react'
 import { loadExpenses, saveExpenses, loadCategories } from './utils/storage'
 import { useTheme } from './context/ThemeContext'
 import AddExpenseModal from './components/AddExpenseModal'
@@ -26,8 +27,8 @@ function currentMonth() {
   return new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
 }
 
-function ListIcon({ active, color }) {
-  const fill = active ? color : '#94a3b8'
+function ListIcon({ active, color, muted }) {
+  const fill = active ? color : muted
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
       <rect x="3" y="5" width="14" height="2" rx="1" fill={fill} />
@@ -37,18 +38,18 @@ function ListIcon({ active, color }) {
   )
 }
 
-function ChartIcon({ active, primary, secondary, gradEnd }) {
+function ChartIcon({ active, primary, secondary, gradEnd, muted }) {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <rect x="3"   y="12" width="3" height="5"  rx="1" fill={active ? primary   : '#94a3b8'} />
-      <rect x="8.5" y="8"  width="3" height="9"  rx="1" fill={active ? gradEnd   : '#cbd5e1'} />
-      <rect x="14"  y="4"  width="3" height="13" rx="1" fill={active ? secondary : '#b8c4d4'} />
+      <rect x="3"   y="12" width="3" height="5"  rx="1" fill={active ? primary   : muted} />
+      <rect x="8.5" y="8"  width="3" height="9"  rx="1" fill={active ? gradEnd   : muted} />
+      <rect x="14"  y="4"  width="3" height="13" rx="1" fill={active ? secondary : muted} />
     </svg>
   )
 }
 
 export default function App() {
-  const { theme } = useTheme()
+  const { theme, isDark, toggleDark } = useTheme()
   const [expenses, setExpenses] = useState(() => loadExpenses())
   const [categories, setCategories] = useState(() => loadCategories())
   const [showModal, setShowModal] = useState(false)
@@ -70,9 +71,7 @@ export default function App() {
       : [expense, ...expenses]
     setExpenses(updated)
     saveExpenses(updated)
-    const cat = categories.find(c => c.name === expense.category)
-    const emoji = cat?.emoji ?? '💸'
-    showToast(`${isUpdate ? 'Updated' : 'Added'} ₹${expense.amount} to ${expense.category} ${emoji}`)
+    showToast(`${isUpdate ? 'Updated' : 'Added'} ₹${expense.amount} to ${expense.category}`)
   }
 
   function handleDeleteExpense(id) {
@@ -106,22 +105,32 @@ export default function App() {
                 <h1 className="text-2xl font-bold mt-1" style={{ color: theme.heading }}>
                   Firse Kharcha?
                 </h1>
-                <p className="text-sm mt-0.5" style={{ color: '#64748b' }}>{currentMonth()}</p>
+                <p className="text-sm mt-0.5" style={{ color: theme.textMuted }}>{currentMonth()}</p>
               </div>
-              <button
-                onClick={() => setShowCategoryManager(true)}
-                className="btn-settings mt-1 w-9 h-9 flex items-center justify-center rounded-full text-lg"
-                style={{ background: theme.surface, border: `1px solid ${theme.border}`, color: theme.secondary }}
-                aria-label="Manage categories"
-              >
-                ⚙️
-              </button>
+              <div className="flex items-center gap-2 mt-1">
+                <button
+                  onClick={toggleDark}
+                  className="w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90"
+                  style={{ background: theme.surface, border: `1px solid ${theme.border}`, color: theme.textMuted }}
+                  aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                >
+                  {isDark ? <Sun size={16} /> : <Moon size={16} />}
+                </button>
+                <button
+                  onClick={() => setShowCategoryManager(true)}
+                  className="btn-settings w-9 h-9 flex items-center justify-center rounded-full"
+                  style={{ background: theme.surface, border: `1px solid ${theme.border}`, color: theme.secondary }}
+                  aria-label="Manage categories"
+                >
+                  <Settings size={18} />
+                </button>
+              </div>
             </div>
 
             <div
               className="relative flex mt-4 rounded-full overflow-hidden"
               style={{
-                background: 'rgba(255,255,255,0.6)',
+                background: theme.filterBg,
                 backdropFilter: 'blur(10px)',
                 WebkitBackdropFilter: 'blur(10px)',
                 border: `1px solid ${theme.border}`,
@@ -193,11 +202,11 @@ export default function App() {
           width: '90%',
           maxWidth: '420px',
           padding: '6px',
-          background: 'rgba(255,255,255,0.72)',
+          background: theme.glassBg,
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
           borderRadius: '999px',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.8)',
+          boxShadow: theme.glassShadow,
         }}
       >
         <button
@@ -209,11 +218,11 @@ export default function App() {
             background: activeTab === 'expenses'
               ? `linear-gradient(135deg, rgba(${theme.shadowRgb},0.32) 0%, rgba(${theme.shadowRgb},0.14) 100%)`
               : 'transparent',
-            color: activeTab === 'expenses' ? theme.primary : '#64748b',
+            color: activeTab === 'expenses' ? theme.primary : theme.textMuted,
             transition: 'all 0.2s ease',
           }}
         >
-          <ListIcon active={activeTab === 'expenses'} color={theme.primary} />
+          <ListIcon active={activeTab === 'expenses'} color={theme.primary} muted={theme.textFaint} />
           <span className="text-xs font-medium">Expenses</span>
         </button>
         <button
@@ -223,7 +232,7 @@ export default function App() {
             padding: '8px 0',
             borderRadius: '999px',
             background: activeTab === 'summary' ? `rgba(${theme.shadowRgb},0.12)` : 'transparent',
-            color: activeTab === 'summary' ? theme.primary : '#94a3b8',
+            color: activeTab === 'summary' ? theme.primary : theme.textFaint,
             transition: 'all 0.2s ease',
           }}
         >
@@ -232,6 +241,7 @@ export default function App() {
             primary={theme.primary}
             secondary={theme.secondary}
             gradEnd={theme.gradEnd}
+            muted={theme.textFaint}
           />
           <span className="text-xs font-medium">Summary</span>
         </button>

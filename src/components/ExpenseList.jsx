@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
+import { MoreVertical, Pencil, Trash2, Check, X } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
+import { getIcon } from '../utils/icons'
 
 function getDayLabel(isoDate) {
   const d = new Date(isoDate)
@@ -32,7 +34,7 @@ function groupByDate(expenses) {
 
 export default function ExpenseList({ expenses, categories, onEdit, onDelete }) {
   const { theme } = useTheme()
-  const emojiMap = Object.fromEntries((categories ?? []).map(c => [c.name, c.emoji]))
+  const iconMap = Object.fromEntries((categories ?? []).map(c => [c.name, c.icon]))
   const groups = useMemo(() => groupByDate(expenses), [expenses])
   const [openMenuId, setOpenMenuId] = useState(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
@@ -49,8 +51,15 @@ export default function ExpenseList({ expenses, categories, onEdit, onDelete }) 
 
   if (expenses.length === 0) {
     return (
-      <div className="text-center py-24" style={{ color: '#94a3b8' }}>
-        <p className="text-5xl mb-3">😇</p>
+      <div className="text-center py-24" style={{ color: theme.textFaint }}>
+        <div className="flex justify-center mb-3">
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center"
+            style={{ background: theme.inputBg }}
+          >
+            {getIcon('wallet', { size: 28, color: theme.textFaint })}
+          </div>
+        </div>
         <p className="text-sm">No damage yet. Tap + to add one.</p>
       </div>
     )
@@ -68,11 +77,11 @@ export default function ExpenseList({ expenses, categories, onEdit, onDelete }) 
       {groups.map((group, groupIdx) => (
         <div key={group.key}>
           {groupIdx > 0 && (
-            <div style={{ height: '1px', background: '#e2e8f0', margin: '12px 0' }} />
+            <div style={{ height: '1px', background: theme.border, margin: '12px 0' }} />
           )}
           <p
             className="text-xs font-medium"
-            style={{ color: '#64748b', margin: '16px 8px 8px' }}
+            style={{ color: theme.textMuted, margin: '16px 8px 8px' }}
           >
             {group.label}
           </p>
@@ -86,26 +95,26 @@ export default function ExpenseList({ expenses, categories, onEdit, onDelete }) 
                   key={exp.id}
                   className="flex items-center justify-between p-4 rounded-2xl"
                   style={{
-                    background: '#ffffff',
+                    background: theme.cardBg,
                     boxShadow: `0 2px 12px rgba(${theme.shadowRgb},0.10)`,
                     position: 'relative',
                     zIndex: isMenuOpen || isConfirming ? 11 : 'auto',
                   }}
                 >
-                  {/* Left: emoji + category name + note */}
+                  {/* Left: icon + category name + note */}
                   <div className="flex items-center gap-3 min-w-0">
                     <span
-                      className="text-xl w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0"
+                      className="w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0"
                       style={{ background: theme.surface }}
                     >
-                      {emojiMap[exp.category] ?? '📦'}
+                      {getIcon(iconMap[exp.category] ?? 'box', { size: 18, color: theme.primary })}
                     </span>
                     <div className="min-w-0">
                       <p className="font-semibold text-sm truncate" style={{ color: theme.heading }}>
                         {exp.category}
                       </p>
                       {exp.note && (
-                        <p className="text-xs mt-0.5 truncate" style={{ color: '#64748b' }}>{exp.note}</p>
+                        <p className="text-xs mt-0.5 truncate" style={{ color: theme.textMuted }}>{exp.note}</p>
                       )}
                     </div>
                   </div>
@@ -120,33 +129,33 @@ export default function ExpenseList({ expenses, categories, onEdit, onDelete }) 
                       <div className="confirm-popup flex gap-1.5">
                         <button
                           onClick={() => handleConfirmDelete(exp.id)}
-                          className="action-btn w-8 h-8 flex items-center justify-center rounded-xl font-bold"
-                          style={{ background: '#22c55e', color: '#ffffff', fontSize: '16px' }}
+                          className="action-btn w-8 h-8 flex items-center justify-center rounded-xl"
+                          style={{ background: '#22c55e', color: '#ffffff' }}
                           aria-label="Confirm delete"
                         >
-                          ✓
+                          <Check size={16} />
                         </button>
                         <button
                           onClick={() => setConfirmDeleteId(null)}
-                          className="action-btn w-8 h-8 flex items-center justify-center rounded-xl font-bold"
-                          style={{ background: '#ef4444', color: '#ffffff', fontSize: '16px' }}
+                          className="action-btn w-8 h-8 flex items-center justify-center rounded-xl"
+                          style={{ background: '#ef4444', color: '#ffffff' }}
                           aria-label="Cancel delete"
                         >
-                          ✕
+                          <X size={16} />
                         </button>
                       </div>
                     ) : (
                       <div style={{ position: 'relative' }}>
                         <button
                           onClick={() => setOpenMenuId(isMenuOpen ? null : exp.id)}
-                          className="dots-btn w-8 h-8 flex items-center justify-center rounded-xl text-lg leading-none"
+                          className="dots-btn w-8 h-8 flex items-center justify-center rounded-xl"
                           style={{
-                            color: '#94a3b8',
-                            background: isMenuOpen ? '#f1f5f9' : 'transparent',
+                            color: theme.textMuted,
+                            background: isMenuOpen ? theme.inputBg : 'transparent',
                           }}
                           aria-label="More options"
                         >
-                          ⋮
+                          <MoreVertical size={18} />
                         </button>
 
                         {isMenuOpen && (
@@ -154,8 +163,8 @@ export default function ExpenseList({ expenses, categories, onEdit, onDelete }) 
                             className="absolute right-0 rounded-2xl overflow-hidden"
                             style={{
                               top: 'calc(100% + 6px)',
-                              background: '#ffffff',
-                              boxShadow: '0 4px 24px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.05)',
+                              background: theme.cardBg,
+                              boxShadow: `0 4px 24px rgba(0,0,0,0.2), 0 0 0 1px ${theme.border}`,
                               zIndex: 20,
                               minWidth: '130px',
                             }}
@@ -163,17 +172,17 @@ export default function ExpenseList({ expenses, categories, onEdit, onDelete }) 
                             <button
                               onClick={() => { onEdit(exp); setOpenMenuId(null) }}
                               className="expense-menu-item w-full flex items-center gap-2.5 px-4 py-3 text-sm font-medium"
-                              style={{ color: '#0f172a' }}
+                              style={{ color: theme.text }}
                             >
-                              <span>✏️</span> Edit
+                              <Pencil size={15} /> Edit
                             </button>
-                            <div style={{ height: '1px', background: '#f1f5f9' }} />
+                            <div style={{ height: '1px', background: theme.border }} />
                             <button
                               onClick={() => { setConfirmDeleteId(exp.id); setOpenMenuId(null) }}
                               className="expense-menu-item danger w-full flex items-center gap-2.5 px-4 py-3 text-sm font-medium"
                               style={{ color: '#ef4444' }}
                             >
-                              <span>🗑️</span> Delete
+                              <Trash2 size={15} /> Delete
                             </button>
                           </div>
                         )}
