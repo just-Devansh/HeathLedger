@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import { Wallet } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Wallet, Download } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { getIcon } from '../utils/icons'
 
@@ -14,6 +14,17 @@ function formatAmount(n) {
 export default function SummaryScreen({ expenses, categories }) {
   const { theme, isDark } = useTheme()
   const iconMap = Object.fromEntries((categories ?? []).map(c => [c.name, c.icon]))
+  const [generating, setGenerating] = useState(false)
+
+  async function handleDownload() {
+    setGenerating(true)
+    try {
+      const { generateMonthlySummaryPDF } = await import('../utils/generatePDF')
+      await generateMonthlySummaryPDF({ expenses, accentHex: theme.primary })
+    } finally {
+      setGenerating(false)
+    }
+  }
 
   const { total, breakdown } = useMemo(() => {
     const now = new Date()
@@ -45,9 +56,42 @@ export default function SummaryScreen({ expenses, categories }) {
   return (
     <div className="max-w-[480px] mx-auto px-4 pb-[100px]">
       <header className="pt-8 pb-4">
-        <p className="text-xs font-medium tracking-wide" style={{ color: theme.accent }}>HeathLedger</p>
-        <h1 className="text-2xl font-bold tracking-tight mt-1" style={{ color: theme.heading }}>Firse Kharcha?</h1>
-        <p className="text-sm mt-0.5" style={{ color: theme.textMuted }}>{currentMonthLabel()}</p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-medium tracking-wide" style={{ color: theme.accent }}>HeathLedger</p>
+            <h1 className="text-2xl font-bold tracking-tight mt-1" style={{ color: theme.heading }}>Firse Kharcha?</h1>
+            <p className="text-sm mt-0.5" style={{ color: theme.textMuted }}>{currentMonthLabel()}</p>
+          </div>
+          <button
+            onClick={handleDownload}
+            disabled={generating}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-semibold flex-shrink-0 mt-1 active:scale-95 transition-transform"
+            style={{
+              background: generating
+                ? `linear-gradient(rgba(0,0,0,0.22), rgba(0,0,0,0.22)), ${theme.primary}`
+                : theme.primary,
+              color: '#ffffff',
+              cursor: generating ? 'wait' : 'pointer',
+              transition: 'background 0.2s ease, box-shadow 0.2s ease',
+              boxShadow: generating ? 'none' : `0 4px 14px rgba(${theme.shadowRgb},0.35)`,
+            }}
+            aria-label="Download PDF summary"
+          >
+            {generating ? (
+              <svg
+                className="icon-spin"
+                width="14" height="14" viewBox="0 0 14 14" fill="none"
+                aria-hidden="true"
+              >
+                <circle cx="7" cy="7" r="5" stroke="rgba(255,255,255,0.3)" strokeWidth="2" />
+                <path d="M7 2a5 5 0 0 1 5 5" stroke="white" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            ) : (
+              <Download size={14} strokeWidth={2.5} />
+            )}
+            <span>{generating ? 'Generating…' : 'PDF'}</span>
+          </button>
+        </div>
       </header>
 
       <div

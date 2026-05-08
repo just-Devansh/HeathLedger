@@ -142,3 +142,12 @@ body {
   font-family: 'Inter', system-ui, sans-serif;
   transition: background 0.25s ease;
 }
+
+/* PDF export button — spinner icon */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.icon-spin {
+  animation: spin 0.9s linear infinite;
+  transform-origin: center;
+}
