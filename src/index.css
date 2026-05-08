@@ -91,6 +91,27 @@
   animation: fadeUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
+/* Toast notification — slides up from nav area */
+@keyframes toastSlideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.toast-slide-up {
+  animation: toastSlideUp 0.22s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* Remove number input spinners — Chrome, Safari, Edge */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+/* Remove number input spinners — Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 /* Smooth background transition on theme/mode change */
 body {
   font-family: 'Inter', system-ui, sans-serif;

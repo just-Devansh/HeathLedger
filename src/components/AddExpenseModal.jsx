@@ -12,19 +12,34 @@ function todayString() {
   ].join('-')
 }
 
-export default function AddExpenseModal({ categories, onSave, onClose, editExpense }) {
+// Collapse "Zepto / Blinkit" and "Zepto/Blinkit" to the same key
+function normCat(name) {
+  return name.toLowerCase().replace(/\s*\/\s*/g, '/').trim()
+}
+
+// Find the actual stored category name that matches `name` after normalization.
+// Returns the stored name (with its original formatting) or falls back to `name`.
+function resolveCategory(name, categories) {
+  if (!name) return name
+  const key = normCat(name)
+  return categories.find(c => normCat(c.name) === key)?.name ?? name
+}
+
+export default function AddExpenseModal({ categories, onSave, onClose, editExpense, initialCategory, initialNote }) {
   const { theme } = useTheme()
   const isEditing = !!editExpense
 
   const [amount, setAmount] = useState(() =>
     isEditing ? String(editExpense.amount) : ''
   )
-  const [category, setCategory] = useState(() =>
-    isEditing
-      ? editExpense.category
-      : (localStorage.getItem('heath_ledger_last_category') || '')
-  )
-  const [note, setNote] = useState(() => isEditing ? editExpense.note : '')
+  const [category, setCategory] = useState(() => {
+    if (isEditing) return editExpense.category
+    // initialCategory != null covers both null and undefined (loose inequality)
+    // Quick actions pass a string; Custom passes ''; no prefill passes undefined → use localStorage
+    if (initialCategory != null) return resolveCategory(initialCategory, categories)
+    return resolveCategory(localStorage.getItem('heath_ledger_last_category') || '', categories)
+  })
+  const [note, setNote] = useState(() => isEditing ? editExpense.note : (initialNote || ''))
   const [date, setDate] = useState(() =>
     isEditing ? editExpense.date.split('T')[0] : todayString()
   )
@@ -33,7 +48,7 @@ export default function AddExpenseModal({ categories, onSave, onClose, editExpen
     const val = e.target.value
     setNote(val)
     const inferred = inferCategory(val)
-    if (inferred && !category) setCategory(inferred)
+    if (inferred && !category) setCategory(resolveCategory(inferred, categories))
   }
 
   function handleSubmit(e) {
@@ -52,7 +67,7 @@ export default function AddExpenseModal({ categories, onSave, onClose, editExpen
 
   return (
     <div
-      className="fixed inset-0 flex items-end z-50"
+      className="fixed inset-0 flex items-end z-[60]"
       style={{ background: theme.modalBg }}
       onClick={onClose}
     >

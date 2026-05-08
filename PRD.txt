@@ -201,3 +201,16 @@ but to make logging EVEN FASTER and STRUCTURED.
 Build the MVP with clean, readable code and minimal dependencies.
 Do not over-engineer.
 Focus on speed, clarity, and usability.
+
+
+Current Categories:
+1. Subscriptions
+2. Rent /⚡
+3. Food
+4. Social Animal
+5. Travel
+6. Commute
+7. Shopping
+8. Miscellaneous
+9. Zepto/Blinkit/Instamart
+10. Medical

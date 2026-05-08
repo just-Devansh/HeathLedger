@@ -6,6 +6,7 @@ import AddExpenseModal from './components/AddExpenseModal'
 import ExpenseList from './components/ExpenseList'
 import SummaryScreen from './components/SummaryScreen'
 import CategoryManager from './components/CategoryManager'
+import RadialMenu from './components/RadialMenu'
 
 const FILTERS = ['Today', 'Week', 'Month']
 
@@ -55,6 +56,8 @@ export default function App() {
   const [categories, setCategories] = useState(() => loadCategories())
   const [showModal, setShowModal] = useState(false)
   const [editExpense, setEditExpense] = useState(null)
+  const [prefillData, setPrefillData] = useState(null)
+  const [radialOpen, setRadialOpen] = useState(false)
   const [showCategoryManager, setShowCategoryManager] = useState(false)
   const [filter, setFilter] = useState('Today')
   const [activeTab, setActiveTab] = useState('expenses')
@@ -89,6 +92,19 @@ export default function App() {
   function closeModal() {
     setShowModal(false)
     setEditExpense(null)
+    setPrefillData(null)
+  }
+
+  function handleRadialAction(action) {
+    setRadialOpen(false)
+    setPrefillData({ category: action.category, note: action.note })
+    setShowModal(true)
+  }
+
+  function handleManualEntry() {
+    setRadialOpen(false)
+    setPrefillData({ category: '', note: '' })  // explicit empty — no localStorage fallback
+    setShowModal(true)
   }
 
   const filtered = useMemo(() => filterExpenses(expenses, filter), [expenses, filter])
@@ -208,7 +224,7 @@ export default function App() {
         }}
       >
         <button
-          onClick={() => setActiveTab('expenses')}
+          onClick={() => { setActiveTab('expenses'); setRadialOpen(false) }}
           className="flex flex-col items-center justify-center gap-0.5 active:scale-95"
           style={{
             padding: '8px 0',
@@ -225,27 +241,16 @@ export default function App() {
         </button>
 
         <div style={{ paddingInline: '8px', display: 'flex', justifyContent: 'center' }}>
-          <button
-            onClick={() => { setEditExpense(null); setShowModal(true) }}
-            className="flex items-center justify-center text-white active:scale-95 transition-transform"
-            style={{
-              width: 52,
-              height: 52,
-              borderRadius: '50%',
-              marginTop: '-32px',
-              fontSize: '28px',
-              lineHeight: 1,
-              background: `linear-gradient(135deg, ${theme.primary}, ${theme.gradEnd})`,
-              boxShadow: `0 4px 20px rgba(${theme.shadowRgb},0.5)`,
-            }}
-            aria-label="Add expense"
-          >
-            +
-          </button>
+          <RadialMenu
+            isOpen={radialOpen}
+            onToggle={() => setRadialOpen(o => !o)}
+            onActionSelect={handleRadialAction}
+            onManualEntry={handleManualEntry}
+          />
         </div>
 
         <button
-          onClick={() => setActiveTab('summary')}
+          onClick={() => { setActiveTab('summary'); setRadialOpen(false) }}
           className="flex flex-col items-center justify-center gap-0.5 active:scale-95"
           style={{
             padding: '8px 0',
@@ -267,9 +272,12 @@ export default function App() {
       </nav>
 
       {toast.visible && (
-        <div className="fixed top-4 left-0 right-0 flex justify-center z-50 pointer-events-none">
+        <div
+          className="fixed left-0 right-0 flex justify-center pointer-events-none"
+          style={{ bottom: 104, zIndex: 55 }}
+        >
           <div
-            className="px-5 py-2.5 rounded-full text-sm font-semibold text-white"
+            className="px-5 py-2.5 rounded-full text-sm font-semibold text-white toast-slide-up"
             style={{
               background: `linear-gradient(135deg, ${theme.primary}, ${theme.gradEnd})`,
               boxShadow: `0 4px 20px rgba(${theme.shadowRgb},0.45)`,
@@ -286,6 +294,8 @@ export default function App() {
           onSave={handleSave}
           onClose={closeModal}
           editExpense={editExpense}
+          initialCategory={!editExpense ? prefillData?.category : undefined}
+          initialNote={!editExpense ? prefillData?.note : undefined}
         />
       )}
 
