@@ -24,7 +24,8 @@ function filterExpenses(expenses, filter) {
 }
 
 function currentMonth() {
-  return new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
+  const d = new Date()
+  return `${d.toLocaleDateString('en-IN', { month: 'long' })} • ${d.getFullYear()}`
 }
 
 function ListIcon({ active, color, muted }) {
@@ -98,14 +99,29 @@ export default function App() {
 
       {activeTab === 'expenses' && (
         <div className="max-w-[480px] mx-auto px-4 pb-[100px]">
-          <header className="pt-8 pb-4">
+          <header className="header-animate pt-8 pb-4">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-medium tracking-wide" style={{ color: theme.accent }}>HeathLedger</p>
-                <h1 className="text-2xl font-bold mt-1" style={{ color: theme.heading }}>
-                  Firse Kharcha?
+                <p
+                  className="text-xs font-semibold uppercase"
+                  style={{ color: theme.accent, letterSpacing: '0.13em' }}
+                >
+                  Heath Ledger ✦
+                </p>
+                <h1
+                  className="font-display font-bold mt-2"
+                  style={{
+                    color: theme.heading,
+                    fontSize: '2.25rem',
+                    lineHeight: 1.1,
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  Kitna Kharcha?
                 </h1>
-                <p className="text-sm mt-0.5" style={{ color: theme.textMuted }}>{currentMonth()}</p>
+                <p className="text-sm font-medium mt-1" style={{ color: theme.textMuted }}>
+                  {currentMonth()}
+                </p>
               </div>
               <div className="flex items-center gap-2 mt-1">
                 <button
