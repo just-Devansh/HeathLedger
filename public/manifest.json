@@ -3,7 +3,7 @@
   "short_name": "Kharcha",
   "description": "Fast, minimal expense tracking for one",
   "start_url": "/",
-  "display": "browser",
+  "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#0c0a18",
   "theme_color": "#0c0a18",
