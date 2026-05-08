@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Settings } from 'lucide-react'
+import { Settings, Clock } from 'lucide-react'
 import { loadExpenses, saveExpenses, loadCategories } from './utils/storage'
 import { useTheme } from './context/ThemeContext'
 import AddExpenseModal from './components/AddExpenseModal'
@@ -7,6 +7,7 @@ import ExpenseList from './components/ExpenseList'
 import SummaryScreen from './components/SummaryScreen'
 import CategoryManager from './components/CategoryManager'
 import RadialMenu from './components/RadialMenu'
+import HistoryScreen from './components/HistoryScreen'
 
 const FILTERS = ['Today', 'Week', 'Month']
 
@@ -133,13 +134,21 @@ export default function App() {
                     letterSpacing: '-0.02em',
                   }}
                 >
-                  Kitna Kharcha?
+                  Phirse Kharcha?
                 </h1>
                 <p className="text-sm font-medium mt-1" style={{ color: theme.textMuted }}>
                   {currentMonth()}
                 </p>
               </div>
               <div className="flex items-center gap-2 mt-1">
+                <button
+                  onClick={() => { setActiveTab('history'); setRadialOpen(false) }}
+                  className="btn-settings w-9 h-9 flex items-center justify-center rounded-full"
+                  style={{ background: theme.surface, border: `1px solid ${theme.border}`, color: theme.secondary }}
+                  aria-label="View history"
+                >
+                  <Clock size={18} />
+                </button>
                 <button
                   onClick={() => setShowCategoryManager(true)}
                   className="btn-settings w-9 h-9 flex items-center justify-center rounded-full"
@@ -204,15 +213,25 @@ export default function App() {
         <SummaryScreen expenses={expenses} categories={categories} />
       )}
 
+      {activeTab === 'history' && (
+        <HistoryScreen
+          expenses={expenses}
+          categories={categories}
+          onClose={() => setActiveTab('expenses')}
+          onEdit={openEdit}
+          onDelete={handleDeleteExpense}
+        />
+      )}
+
       <nav
         className="fixed z-40"
         style={{
+          display: activeTab === 'history' ? 'none' : 'grid',
           bottom: '20px',
           left: '50%',
           transform: 'translateX(-50%)',
           width: '90%',
           maxWidth: '420px',
-          display: 'grid',
           gridTemplateColumns: '1fr auto 1fr',
           alignItems: 'center',
           padding: '6px',

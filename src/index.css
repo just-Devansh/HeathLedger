@@ -121,6 +121,22 @@ input[type=number] {
   appearance: textfield;
 }
 
+/* History screen — directional slide transitions */
+@keyframes historySlideRight {
+  from { opacity: 0; transform: translateX(32px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes historySlideLeft {
+  from { opacity: 0; transform: translateX(-32px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.history-slide-right {
+  animation: historySlideRight 0.22s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.history-slide-left {
+  animation: historySlideLeft 0.22s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
 /* Smooth background transition on theme/mode change */
 body {
   font-family: 'Inter', system-ui, sans-serif;

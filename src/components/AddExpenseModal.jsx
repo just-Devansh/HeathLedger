@@ -26,7 +26,7 @@ function resolveCategory(name, categories) {
 }
 
 export default function AddExpenseModal({ categories, onSave, onClose, editExpense, initialCategory, initialNote }) {
-  const { theme } = useTheme()
+  const { theme, isDark } = useTheme()
   const isEditing = !!editExpense
 
   const [amount, setAmount] = useState(() =>
@@ -147,7 +147,7 @@ export default function AddExpenseModal({ categories, onSave, onClose, editExpen
             value={date}
             onChange={e => setDate(e.target.value)}
             className="border-b outline-none py-2 text-base bg-transparent"
-            style={{ borderColor: theme.border, color: theme.text }}
+            style={{ borderColor: theme.border, color: theme.text, colorScheme: isDark ? 'dark' : 'light' }}
           />
 
           <button
