@@ -55,16 +55,24 @@ export default function ExpenseList({ expenses, categories, onEdit, onDelete }) 
 
   if (expenses.length === 0) {
     return (
-      <div className="text-center py-24" style={{ color: theme.textFaint }}>
-        <div className="flex justify-center mb-3">
-          <div
-            className="w-16 h-16 rounded-full flex items-center justify-center"
-            style={{ background: theme.inputBg }}
-          >
-            {getIcon('wallet', { size: 28, color: theme.textFaint })}
-          </div>
-        </div>
-        <p className="text-sm">No damage yet. Tap + to add one.</p>
+      <div className="fixed inset-0 flex flex-col items-center justify-center pointer-events-none empty-state-in">
+        <p
+          className="font-devanagari font-black"
+          style={{
+            color: theme.textFaint,
+            fontSize: '4rem',
+            lineHeight: 1,
+            letterSpacing: '0.01em',
+          }}
+        >
+          शून्य
+        </p>
+        <p
+          className="mt-3 text-xs tracking-[0.22em] uppercase"
+          style={{ color: theme.textFaint, opacity: 0.45 }}
+        >
+          zero
+        </p>
       </div>
     )
   }
