@@ -4,6 +4,7 @@ import { loadCategories, saveCategories } from '../utils/storage'
 import { useTheme } from '../context/ThemeContext'
 import { THEME_META } from '../utils/theme'
 import { CATEGORY_ICONS, ICON_OPTIONS, getIcon } from '../utils/icons'
+import BackupSection from './BackupSection'
 
 function formatIconLabel(name) {
   return name.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
@@ -84,7 +85,7 @@ function InlineIconPicker({ selected, onSelect, theme }) {
   )
 }
 
-export default function CategoryManager({ onClose }) {
+export default function CategoryManager({ onClose, onRestoreComplete }) {
   const { theme, themeName, setTheme, isDark, toggleDark } = useTheme()
   const [categories, setCategories] = useState(() => loadCategories())
   const [newName, setNewName] = useState('')
@@ -243,7 +244,7 @@ export default function CategoryManager({ onClose }) {
             </p>
           </div>
 
-          <ul className="px-6 pb-4 flex flex-col gap-2">
+          <ul className="px-6 pb-2 flex flex-col gap-2">
             {categories.length === 0 && (
               <p className="text-sm text-center py-8" style={{ color: theme.textFaint }}>
                 No categories yet. Add one below.
@@ -344,6 +345,8 @@ export default function CategoryManager({ onClose }) {
               </li>
             ))}
           </ul>
+
+          <BackupSection onRestoreComplete={onRestoreComplete} />
         </div>
 
         {/* Add new category */}

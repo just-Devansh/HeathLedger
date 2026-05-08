@@ -61,3 +61,37 @@ export function loadCategories() {
 export function saveCategories(categories) {
   localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories))
 }
+
+const BACKUP_THEME_KEY = 'heath_ledger_theme'
+const BACKUP_DARK_KEY = 'heath_ledger_dark'
+
+export function exportBackup() {
+  const backup = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    appName: 'HeathLedger',
+    expenses: loadExpenses(),
+    categories: loadCategories(),
+    settings: {
+      theme: localStorage.getItem(BACKUP_THEME_KEY) ?? 'blue',
+      darkMode: localStorage.getItem(BACKUP_DARK_KEY),
+    },
+  }
+  return JSON.stringify(backup, null, 2)
+}
+
+export function validateBackup(data) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('invalid')
+  if (typeof data.version !== 'number') throw new Error('invalid')
+  if (data.version > 1) throw new Error('version')
+  if (!Array.isArray(data.expenses)) throw new Error('invalid')
+  if (!Array.isArray(data.categories)) throw new Error('invalid')
+}
+
+export function applyBackup(data) {
+  saveExpenses(data.expenses)
+  saveCategories(data.categories)
+  const { theme, darkMode } = data.settings ?? {}
+  if (theme) localStorage.setItem(BACKUP_THEME_KEY, theme)
+  if (darkMode !== null && darkMode !== undefined) localStorage.setItem(BACKUP_DARK_KEY, String(darkMode))
+}

@@ -31,8 +31,13 @@ export function ThemeProvider({ children }) {
     setIsDarkState(next)
   }
 
+  function setDark(val) {
+    saveDarkMode(val)
+    setIsDarkState(val)
+  }
+
   return (
-    <ThemeContext.Provider value={{ theme, themeName, setTheme, isDark, toggleDark }}>
+    <ThemeContext.Provider value={{ theme, themeName, setTheme, isDark, toggleDark, setDark }}>
       {children}
     </ThemeContext.Provider>
   )

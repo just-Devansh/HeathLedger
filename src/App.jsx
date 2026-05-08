@@ -52,7 +52,7 @@ function ChartIcon({ active, primary, secondary, gradEnd, muted }) {
 }
 
 export default function App() {
-  const { theme } = useTheme()
+  const { theme, setTheme, setDark } = useTheme()
   const [expenses, setExpenses] = useState(() => loadExpenses())
   const [categories, setCategories] = useState(() => loadCategories())
   const [showModal, setShowModal] = useState(false)
@@ -319,7 +319,17 @@ export default function App() {
       )}
 
       {showCategoryManager && (
-        <CategoryManager onClose={() => { setCategories(loadCategories()); setShowCategoryManager(false) }} />
+        <CategoryManager
+          onClose={() => { setCategories(loadCategories()); setShowCategoryManager(false) }}
+          onRestoreComplete={(data) => {
+            setExpenses(data.expenses)
+            setCategories(data.categories)
+            if (data.settings?.theme) setTheme(data.settings.theme)
+            if (data.settings?.darkMode != null) setDark(data.settings.darkMode === 'true')
+            setShowCategoryManager(false)
+            showToast('Backup restored.')
+          }}
+        />
       )}
     </div>
   )
