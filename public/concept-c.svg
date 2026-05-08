@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <filter id="neon" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="9" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Deep navy-black -->
+  <rect width="512" height="512" rx="96" fill="#0d0b1f"/>
+
+  <!--
+    THE WILD CARD — Concept C
+    The ♦ diamond playing card suit.
+    The Joker is literally the wild card — no suit, no rules.
+    Clean outlined diamond with neon purple glow.
+    Zero DC imagery. Pure geometry. Pure subtext.
+  -->
+  <path d="M256,136 L374,256 L256,376 L138,256 Z"
+        fill="none" stroke="#c060ff" stroke-width="48" stroke-linejoin="round"
+        filter="url(#neon)"/>
+</svg>

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Near-pure black -->
+  <rect width="512" height="512" rx="80" fill="#080808"/>
+
+  <!--
+    THE GRIN — Concept B
+    Nothing but the smile. No letter, no symbol.
+    A wide sweeping arc, slightly asymmetric:
+    left side sits higher than right (Glasgow smile scar quality).
+    Toxic lime green. The purest Joker reference with zero literal imagery.
+  -->
+  <path d="M88,244 Q256,402 424,230"
+        fill="none" stroke="#29ff74" stroke-width="62" stroke-linecap="round"
+        filter="url(#glow)"/>
+</svg>

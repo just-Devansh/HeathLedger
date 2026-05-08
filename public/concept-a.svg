@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <!-- Double-pass blur: neon tube glow effect -->
+    <!-- Double-pass blur for true neon tube glow -->
     <filter id="neon" x="-25%" y="-25%" width="150%" height="150%">
       <feGaussianBlur stdDeviation="8" result="b"/>
       <feMerge>
@@ -11,18 +11,23 @@
     </filter>
   </defs>
 
-  <!-- Deep purple-black: cinematic, subterranean -->
+  <!-- Deep purple-black: subterranean, cinematic -->
   <rect width="512" height="512" rx="96" fill="#0c0a18"/>
 
   <!--
-    THE SMIRK — Heath Ledger icon
-    Geometric H (for Heath). Crossbar is a wide downward-curving arc.
-    Clean letterform at a glance. A grin on second look.
-    The Joker's permanent smile, hidden in plain sight.
+    THE SMIRK — Concept A
+    A geometric H where the crossbar is a wide downward-curving arc.
+    At a glance: clean sans-serif H.
+    On second look: it's grinning.
+    Joker's permanent smile hidden in a letterform.
+    Electric violet + double neon glow.
   -->
   <g filter="url(#neon)" stroke="#c060ff" stroke-linecap="round" fill="none" stroke-width="50">
+    <!-- Left pillar -->
     <line x1="151" y1="106" x2="151" y2="406"/>
+    <!-- Right pillar -->
     <line x1="361" y1="106" x2="361" y2="406"/>
+    <!-- The grin: crossbar curves DOWN at midpoint (corners sit higher = wide smile) -->
     <path d="M151,252 Q256,318 361,252"/>
   </g>
 </svg>
