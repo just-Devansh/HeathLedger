@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Deep dark background with subtle blue tint, rounded corners -->
+  <rect width="512" height="512" rx="96" fill="#111118"/>
+  <!-- ₹ symbol: geometric path, bold indigo-violet strokes -->
+  <g stroke="#7c6aff" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke-width="52">
+    <!-- Vertical stem -->
+    <line x1="157" y1="106" x2="157" y2="406"/>
+    <!-- Top horizontal bar -->
+    <line x1="157" y1="106" x2="360" y2="106"/>
+    <!-- Middle horizontal bar -->
+    <line x1="157" y1="218" x2="334" y2="218"/>
+    <!-- Bowl arc: top-bar right end curves down to mid-bar right end -->
+    <path d="M360,106 Q395,162 334,218"/>
+    <!-- Diagonal: mid-bar junction to lower-right -->
+    <line x1="334" y1="218" x2="370" y2="406"/>
+  </g>
+</svg>
