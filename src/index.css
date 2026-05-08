@@ -72,6 +72,16 @@
   transform-origin: right center;
 }
 
+/* Floating icon picker panel — fade + scale in */
+@keyframes iconPickerIn {
+  from { opacity: 0; transform: scale(0.92) translateY(4px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+.icon-picker-panel {
+  animation: iconPickerIn 0.15s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  transform-origin: bottom left;
+}
+
 /* Smooth background transition on theme/mode change */
 body {
   transition: background 0.25s ease;

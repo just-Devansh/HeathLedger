@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Pencil, Trash2, Check, X, Moon, Sun } from 'lucide-react'
 import { loadCategories, saveCategories } from '../utils/storage'
 import { useTheme } from '../context/ThemeContext'
@@ -9,53 +9,77 @@ function formatIconLabel(name) {
   return name.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 }
 
-function IconPicker({ selected, onSelect, theme }) {
-  const [tooltip, setTooltip] = useState(null)
-  const longPressTimer = useRef(null)
+function InlineIconPicker({ selected, onSelect, theme }) {
+  const [open, setOpen] = useState(false)
+  const containerRef = useRef(null)
 
-  function handleTouchStart(name) {
-    longPressTimer.current = setTimeout(() => setTooltip(name), 400)
-  }
+  useEffect(() => {
+    if (!open) return
+    function handleOutside(e) {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutside)
+    document.addEventListener('touchstart', handleOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleOutside)
+      document.removeEventListener('touchstart', handleOutside)
+    }
+  }, [open])
 
-  function handleTouchEnd() {
-    clearTimeout(longPressTimer.current)
-    setTimeout(() => setTooltip(null), 900)
-  }
+  const SelectedIcon = CATEGORY_ICONS[selected] ?? CATEGORY_ICONS.box
 
   return (
-    <div>
-      <div className="grid grid-cols-6 gap-1.5">
-        {ICON_OPTIONS.map(name => {
-          const isSelected = selected === name
-          const Icon = CATEGORY_ICONS[name]
-          return (
-            <button
-              key={name}
-              type="button"
-              onClick={() => onSelect(name)}
-              onMouseEnter={() => setTooltip(name)}
-              onMouseLeave={() => setTooltip(null)}
-              onTouchStart={() => handleTouchStart(name)}
-              onTouchEnd={handleTouchEnd}
-              className="w-9 h-9 flex items-center justify-center rounded-xl transition-colors active:scale-90"
-              style={{
-                background: isSelected ? theme.primary : theme.inputBg,
-                border: `2px solid ${isSelected ? theme.primary : 'transparent'}`,
-              }}
-              aria-label={formatIconLabel(name)}
-            >
-              <Icon size={16} color={isSelected ? '#ffffff' : theme.textMuted} />
-            </button>
-          )
-        })}
-      </div>
-      <div className="h-5 flex items-center justify-center mt-1">
-        {tooltip && (
-          <p className="text-xs font-medium" style={{ color: theme.primary }}>
-            {formatIconLabel(tooltip)}
-          </p>
-        )}
-      </div>
+    <div ref={containerRef} className="relative flex-shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className="w-10 h-10 flex items-center justify-center rounded-xl transition-all active:scale-90"
+        style={{
+          background: open ? theme.primary : theme.surface,
+          border: `1.5px solid ${open ? theme.primary : theme.border}`,
+        }}
+        aria-label="Choose icon"
+      >
+        <SelectedIcon size={18} color={open ? '#ffffff' : theme.primary} />
+      </button>
+
+      {open && (
+        <div
+          className="icon-picker-panel absolute left-0 z-50 rounded-2xl"
+          style={{
+            bottom: 'calc(100% + 8px)',
+            padding: '16px',
+            width: 'fit-content',
+            background: theme.cardBg,
+            border: `1px solid ${theme.border}`,
+            boxShadow: `0 8px 32px rgba(${theme.shadowRgb},0.2), 0 2px 8px rgba(${theme.shadowRgb},0.1)`,
+          }}
+        >
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 36px)', gap: '12px' }}>
+            {ICON_OPTIONS.map(name => {
+              const isSelected = selected === name
+              const Icon = CATEGORY_ICONS[name]
+              return (
+                <button
+                  key={name}
+                  type="button"
+                  onClick={() => { onSelect(name); setOpen(false) }}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl transition-colors active:scale-90"
+                  style={{
+                    background: isSelected ? theme.primary : theme.inputBg,
+                    border: `2px solid ${isSelected ? theme.primary : 'transparent'}`,
+                  }}
+                  aria-label={formatIconLabel(name)}
+                >
+                  <Icon size={16} color={isSelected ? '#ffffff' : theme.textMuted} />
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -237,36 +261,34 @@ export default function CategoryManager({ onClose }) {
                 }}
               >
                 {editingIdx === idx ? (
-                  <div className="flex flex-col gap-2">
-                    <IconPicker selected={editIcon} onSelect={setEditIcon} theme={theme} />
-                    <div className="flex gap-2 items-center">
-                      <input
-                        type="text"
-                        className="flex-1 outline-none text-sm font-medium bg-transparent"
-                        style={{ color: theme.text, borderBottom: `1px solid ${theme.border}`, padding: '4px 0' }}
-                        value={editName}
-                        onChange={e => setEditName(e.target.value)}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') handleEditSave(idx)
-                          if (e.key === 'Escape') setEditingIdx(null)
-                        }}
-                        autoFocus
-                      />
-                      <button
-                        onClick={() => handleEditSave(idx)}
-                        className="text-xs font-semibold px-3 py-1.5 rounded-lg active:scale-95 transition-transform"
-                        style={{ background: theme.primary, color: '#ffffff' }}
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={() => setEditingIdx(null)}
-                        className="text-xs font-semibold px-3 py-1.5 rounded-lg active:scale-95 transition-transform"
-                        style={{ background: theme.inputBg, color: theme.textMuted }}
-                      >
-                        Cancel
-                      </button>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <InlineIconPicker selected={editIcon} onSelect={setEditIcon} theme={theme} />
+                    <input
+                      type="text"
+                      className="flex-1 outline-none text-sm font-medium bg-transparent"
+                      style={{ color: theme.text, borderBottom: `1px solid ${theme.border}`, padding: '4px 0' }}
+                      value={editName}
+                      onChange={e => setEditName(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') handleEditSave(idx)
+                        if (e.key === 'Escape') setEditingIdx(null)
+                      }}
+                      autoFocus
+                    />
+                    <button
+                      onClick={() => handleEditSave(idx)}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-lg active:scale-95 transition-transform flex-shrink-0"
+                      style={{ background: theme.primary, color: '#ffffff' }}
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setEditingIdx(null)}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-lg active:scale-95 transition-transform flex-shrink-0"
+                      style={{ background: theme.inputBg, color: theme.textMuted }}
+                    >
+                      Cancel
+                    </button>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
@@ -332,10 +354,8 @@ export default function CategoryManager({ onClose }) {
           <p className="text-xs uppercase tracking-wide font-medium mb-2" style={{ color: theme.textFaint }}>
             New Category
           </p>
-          <div className="mb-2">
-            <IconPicker selected={newIcon} onSelect={setNewIcon} theme={theme} />
-          </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            <InlineIconPicker selected={newIcon} onSelect={setNewIcon} theme={theme} />
             <input
               type="text"
               placeholder="Category name"
@@ -348,7 +368,7 @@ export default function CategoryManager({ onClose }) {
             <button
               onClick={handleAdd}
               disabled={!newName.trim()}
-              className="px-5 py-3 rounded-xl text-sm font-semibold text-white disabled:opacity-30 active:scale-95 transition-transform"
+              className="px-5 py-3 rounded-xl text-sm font-semibold text-white disabled:opacity-30 active:scale-95 transition-transform flex-shrink-0"
               style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})` }}
             >
               Add

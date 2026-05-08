@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Settings, Moon, Sun } from 'lucide-react'
+import { Settings } from 'lucide-react'
 import { loadExpenses, saveExpenses, loadCategories } from './utils/storage'
 import { useTheme } from './context/ThemeContext'
 import AddExpenseModal from './components/AddExpenseModal'
@@ -49,7 +49,7 @@ function ChartIcon({ active, primary, secondary, gradEnd, muted }) {
 }
 
 export default function App() {
-  const { theme, isDark, toggleDark } = useTheme()
+  const { theme } = useTheme()
   const [expenses, setExpenses] = useState(() => loadExpenses())
   const [categories, setCategories] = useState(() => loadCategories())
   const [showModal, setShowModal] = useState(false)
@@ -108,14 +108,6 @@ export default function App() {
                 <p className="text-sm mt-0.5" style={{ color: theme.textMuted }}>{currentMonth()}</p>
               </div>
               <div className="flex items-center gap-2 mt-1">
-                <button
-                  onClick={toggleDark}
-                  className="w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90"
-                  style={{ background: theme.surface, border: `1px solid ${theme.border}`, color: theme.textMuted }}
-                  aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-                >
-                  {isDark ? <Sun size={16} /> : <Moon size={16} />}
-                </button>
                 <button
                   onClick={() => setShowCategoryManager(true)}
                   className="btn-settings w-9 h-9 flex items-center justify-center rounded-full"
@@ -180,27 +172,17 @@ export default function App() {
         <SummaryScreen expenses={expenses} categories={categories} />
       )}
 
-      <button
-        onClick={() => { setEditExpense(null); setShowModal(true) }}
-        className="fixed right-6 w-14 h-14 rounded-full flex items-center justify-center text-white text-3xl active:scale-95 transition-transform"
-        style={{
-          bottom: '96px',
-          background: `linear-gradient(135deg, ${theme.primary}, ${theme.gradEnd})`,
-          boxShadow: `0 4px 20px rgba(${theme.shadowRgb},0.5)`,
-        }}
-        aria-label="Add expense"
-      >
-        +
-      </button>
-
       <nav
-        className="fixed z-40 flex"
+        className="fixed z-40"
         style={{
           bottom: '20px',
           left: '50%',
           transform: 'translateX(-50%)',
           width: '90%',
           maxWidth: '420px',
+          display: 'grid',
+          gridTemplateColumns: '1fr auto 1fr',
+          alignItems: 'center',
           padding: '6px',
           background: theme.glassBg,
           backdropFilter: 'blur(12px)',
@@ -211,7 +193,7 @@ export default function App() {
       >
         <button
           onClick={() => setActiveTab('expenses')}
-          className="flex-1 flex flex-col items-center justify-center gap-0.5 active:scale-95"
+          className="flex flex-col items-center justify-center gap-0.5 active:scale-95"
           style={{
             padding: '8px 0',
             borderRadius: '999px',
@@ -225,9 +207,30 @@ export default function App() {
           <ListIcon active={activeTab === 'expenses'} color={theme.primary} muted={theme.textFaint} />
           <span className="text-xs font-medium">Expenses</span>
         </button>
+
+        <div style={{ paddingInline: '8px', display: 'flex', justifyContent: 'center' }}>
+          <button
+            onClick={() => { setEditExpense(null); setShowModal(true) }}
+            className="flex items-center justify-center text-white active:scale-95 transition-transform"
+            style={{
+              width: 52,
+              height: 52,
+              borderRadius: '50%',
+              marginTop: '-32px',
+              fontSize: '28px',
+              lineHeight: 1,
+              background: `linear-gradient(135deg, ${theme.primary}, ${theme.gradEnd})`,
+              boxShadow: `0 4px 20px rgba(${theme.shadowRgb},0.5)`,
+            }}
+            aria-label="Add expense"
+          >
+            +
+          </button>
+        </div>
+
         <button
           onClick={() => setActiveTab('summary')}
-          className="flex-1 flex flex-col items-center justify-center gap-0.5 active:scale-95"
+          className="flex flex-col items-center justify-center gap-0.5 active:scale-95"
           style={{
             padding: '8px 0',
             borderRadius: '999px',

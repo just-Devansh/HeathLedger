@@ -16,6 +16,10 @@ function getDayLabel(isoDate) {
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
 }
 
+function formatAmount(n) {
+  return n.toLocaleString('en-IN')
+}
+
 function groupByDate(expenses) {
   const groups = []
   let lastKey = null
@@ -122,7 +126,7 @@ export default function ExpenseList({ expenses, categories, onEdit, onDelete }) 
                   {/* Right: amount + three-dots or confirmation */}
                   <div className="flex items-center gap-2 flex-shrink-0 ml-3">
                     <p className="text-base font-bold" style={{ color: theme.primary }}>
-                      ₹{exp.amount}
+                      ₹{formatAmount(exp.amount)}
                     </p>
 
                     {isConfirming ? (
