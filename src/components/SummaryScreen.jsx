@@ -137,31 +137,42 @@ export default function SummaryScreen({ expenses, categories }) {
           </p>
           <div className="flex flex-col gap-3">
             {breakdown.map(({ name, amount, percentage }) => {
-              const barBg = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'
+              const barBg = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'
               return (
                 <div
                   key={name}
                   className="p-4 rounded-2xl"
                   style={{
                     background: theme.cardBg,
-                    borderLeft: `3px solid ${theme.primary}`,
-                    boxShadow: `0 2px 12px rgba(${theme.shadowRgb},0.07)`,
+                    border: `1px solid rgba(${theme.shadowRgb}, 0.18)`,
+                    boxShadow: `0 2px 14px rgba(${theme.shadowRgb}, 0.09)`,
                   }}
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
+                  {/* Left side allows shrinking; right side (amount) never shrinks */}
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
                       <span
                         className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0"
                         style={{ background: theme.surface }}
                       >
                         {getIcon(iconMap[name] ?? 'box', { size: 18, color: theme.primary })}
                       </span>
-                      <div>
-                        <p className="text-sm font-bold tracking-tight leading-tight" style={{ color: theme.heading }}>{name}</p>
-                        <p className="text-xs mt-0.5" style={{ color: theme.textFaint }}>{percentage.toFixed(1)}%</p>
+                      <div className="min-w-0">
+                        <p
+                          className="text-sm font-bold tracking-tight leading-tight truncate"
+                          style={{ color: theme.heading }}
+                        >
+                          {name}
+                        </p>
+                        <p className="text-xs mt-0.5" style={{ color: theme.textFaint }}>
+                          {percentage.toFixed(1)}%
+                        </p>
                       </div>
                     </div>
-                    <p className="text-base font-bold tracking-tight" style={{ color: theme.primary }}>
+                    <p
+                      className="text-base font-bold tracking-tight flex-shrink-0"
+                      style={{ color: theme.primary }}
+                    >
                       ₹{formatAmount(amount)}
                     </p>
                   </div>
@@ -170,7 +181,7 @@ export default function SummaryScreen({ expenses, categories }) {
                       className="h-full rounded-full"
                       style={{
                         width: `${percentage}%`,
-                        background: theme.primary,
+                        background: `linear-gradient(90deg, ${theme.primary}, ${theme.gradEnd})`,
                         transition: 'width 0.5s ease',
                       }}
                     />

@@ -22,7 +22,7 @@ export default function BackupSection({ onRestoreComplete }) {
       const today = new Date().toISOString().split('T')[0]
       const a = document.createElement('a')
       a.href = url
-      a.download = `firse-kharcha-backup-${today}.json`
+      a.download = `heath-ledger-backup-${today}.json`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)

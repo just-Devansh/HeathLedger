@@ -176,7 +176,7 @@ function buildTemplate({ breakdown, total, monthExpenses, accentHex, now }) {
       <!-- Footer -->
       <div style="height:1px; background:#e2e8f0; margin-bottom:24px;"></div>
       <p style="font-size:12px; color:#cbd5e1; margin:0;">
-        Generated on ${genDate} · Firse Kharcha?
+        Generated on ${genDate} · Heath Ledger
       </p>
     </div>
   `
@@ -241,7 +241,7 @@ export async function generateMonthlySummaryPDF({ expenses, accentHex }) {
     })
 
     pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
-    pdf.save(`firse-kharcha-${monthSlug(now)}.pdf`)
+    pdf.save(`heath-ledger-${monthSlug(now)}.pdf`)
   } finally {
     document.body.removeChild(container)
   }
