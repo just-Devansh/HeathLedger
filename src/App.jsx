@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { Settings, Clock } from 'lucide-react'
 import { loadExpenses, saveExpenses, loadCategories } from './utils/storage'
 import { useTheme } from './context/ThemeContext'
@@ -64,6 +64,72 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('expenses')
   const [toast, setToast] = useState({ visible: false, message: '' })
 
+  // ── Browser history / back-button management ────────────────────────────────
+  // overlayDepth tracks how many history entries we've pushed so we can call
+  // history.back() from X-buttons to keep the browser stack in sync.
+  const overlayDepth = useRef(0)
+  // Set to true by X-button close helpers before calling history.back() so the
+  // popstate handler knows the close was already handled and skips re-closing.
+  const isManualBack = useRef(false)
+  // Mirror of current React state used inside the popstate handler to avoid
+  // stale-closure reads (effects re-register the handler on every state change).
+  const stateRef = useRef({})
+  // When HistoryScreen is active it registers its own back handler here so the
+  // centralized popstate below can delegate to it.
+  const historyScreenBackRef = useRef(null)
+
+  // Keep stateRef current so the popstate handler always reads fresh state.
+  useEffect(() => {
+    stateRef.current = { showModal, editExpense, radialOpen, showCategoryManager, activeTab }
+  }, [showModal, editExpense, radialOpen, showCategoryManager, activeTab])
+
+  // Centralized popstate handler — fires when Android/browser back is pressed.
+  useEffect(() => {
+    function handlePopState() {
+      // If an X-button called syncHistoryBack() it already closed the overlay
+      // and set isManualBack. Skip so we don't double-close.
+      if (isManualBack.current) {
+        isManualBack.current = false
+        return
+      }
+      const s = stateRef.current
+      // Priority: modal > settings > history tab (delegated) > other tabs.
+      if (s.showModal || s.editExpense) {
+        setShowModal(false)
+        setEditExpense(null)
+        setPrefillData(null)
+      } else if (s.showCategoryManager) {
+        setCategories(loadCategories())
+        setShowCategoryManager(false)
+      } else if (s.activeTab === 'history' && historyScreenBackRef.current) {
+        // HistoryScreen handles its internal levels; calls onClose when done.
+        historyScreenBackRef.current()
+      } else if (s.activeTab !== 'expenses') {
+        setActiveTab('expenses')
+      }
+      // else: nothing open — browser navigates back naturally.
+      if (overlayDepth.current > 0) overlayDepth.current--
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, []) // stable — reads all state via refs
+
+  function pushOverlay() {
+    overlayDepth.current++
+    history.pushState({ heathLedger: true, depth: overlayDepth.current }, '')
+  }
+
+  // Called by X-buttons: close is already handled by React state above; this
+  // just consumes the pushed history entry so the browser stack stays in sync.
+  function syncHistoryBack() {
+    if (overlayDepth.current > 0) {
+      overlayDepth.current--
+      isManualBack.current = true
+      history.back()
+    }
+  }
+
   function showToast(message) {
     setToast({ visible: true, message })
     setTimeout(() => setToast({ visible: false, message: '' }), 2500)
@@ -88,24 +154,28 @@ export default function App() {
 
   function openEdit(expense) {
     setEditExpense(expense)
+    pushOverlay()
   }
 
   function closeModal() {
     setShowModal(false)
     setEditExpense(null)
     setPrefillData(null)
+    syncHistoryBack()
   }
 
   function handleRadialAction(action) {
     setRadialOpen(false)
     setPrefillData({ category: action.category, note: action.note })
     setShowModal(true)
+    pushOverlay()
   }
 
   function handleManualEntry() {
     setRadialOpen(false)
     setPrefillData({ category: '', note: '' })  // explicit empty — no localStorage fallback
     setShowModal(true)
+    pushOverlay()
   }
 
   const filtered = useMemo(() => filterExpenses(expenses, filter), [expenses, filter])
@@ -142,7 +212,7 @@ export default function App() {
               </div>
               <div className="flex items-center gap-2 mt-1">
                 <button
-                  onClick={() => { setActiveTab('history'); setRadialOpen(false) }}
+                  onClick={() => { setActiveTab('history'); setRadialOpen(false); pushOverlay() }}
                   className="btn-settings w-9 h-9 flex items-center justify-center rounded-full"
                   style={{ background: theme.surface, border: `1px solid ${theme.border}`, color: theme.secondary }}
                   aria-label="View history"
@@ -150,7 +220,7 @@ export default function App() {
                   <Clock size={18} />
                 </button>
                 <button
-                  onClick={() => setShowCategoryManager(true)}
+                  onClick={() => { setShowCategoryManager(true); pushOverlay() }}
                   className="btn-settings w-9 h-9 flex items-center justify-center rounded-full"
                   style={{ background: theme.surface, border: `1px solid ${theme.border}`, color: theme.secondary }}
                   aria-label="Manage categories"
@@ -218,8 +288,10 @@ export default function App() {
           expenses={expenses}
           categories={categories}
           onClose={() => setActiveTab('expenses')}
+          onClosedByUI={() => { setActiveTab('expenses'); syncHistoryBack() }}
           onEdit={openEdit}
           onDelete={handleDeleteExpense}
+          onRegisterBackHandler={fn => { historyScreenBackRef.current = fn }}
         />
       )}
 
@@ -269,7 +341,7 @@ export default function App() {
         </div>
 
         <button
-          onClick={() => { setActiveTab('summary'); setRadialOpen(false) }}
+          onClick={() => { setActiveTab('summary'); setRadialOpen(false); pushOverlay() }}
           className="flex flex-col items-center justify-center gap-0.5 active:scale-95"
           style={{
             padding: '8px 0',
@@ -320,7 +392,7 @@ export default function App() {
 
       {showCategoryManager && (
         <CategoryManager
-          onClose={() => { setCategories(loadCategories()); setShowCategoryManager(false) }}
+          onClose={() => { setCategories(loadCategories()); setShowCategoryManager(false); syncHistoryBack() }}
           onRestoreComplete={(data) => {
             setExpenses(data.expenses)
             setCategories(data.categories)

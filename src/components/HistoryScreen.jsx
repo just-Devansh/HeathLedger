@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { ArrowLeft, ChevronRight, X } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import ExpenseList from './ExpenseList'
@@ -32,12 +32,55 @@ function EmptyState({ label }) {
   )
 }
 
-export default function HistoryScreen({ expenses, categories, onClose, onEdit, onDelete }) {
+export default function HistoryScreen({ expenses, categories, onClose, onClosedByUI, onEdit, onDelete, onRegisterBackHandler }) {
   const { theme } = useTheme()
   const [view, setView] = useState('years')
   const [selectedYear, setSelectedYear] = useState(null)
   const [selectedMonth, setSelectedMonth] = useState(null)
   const [slideDir, setSlideDir] = useState('forward')
+
+  // Tracks how many history entries this component pushed (for internal nav).
+  const histDepth = useRef(0)
+  // isUIBack prevents the popstate handler from double-firing when the UI
+  // back button calls history.back() to sync the browser stack.
+  const isUIBack = useRef(false)
+  // Keep view and onClose accessible in the popstate handler without stale closures.
+  const viewRef = useRef('years')
+  const onCloseRef = useRef(onClose)
+  useEffect(() => { viewRef.current = view }, [view])
+  useEffect(() => { onCloseRef.current = onClose }, [onClose])
+
+  // Register our back handler with App.jsx so the centralized popstate
+  // delegates to us while the history tab is active.
+  // Reads all state via refs to avoid stale closures (handler is set once).
+  useEffect(() => {
+    if (!onRegisterBackHandler) return
+    onRegisterBackHandler(() => {
+      // When the UI back button calls history.back() it sets isUIBack=true so
+      // we skip here — the internal state was already updated by goBack().
+      if (isUIBack.current) {
+        isUIBack.current = false
+        return
+      }
+      const v = viewRef.current
+      if (v !== 'years') {
+        setSlideDir('back')
+        if (v === 'expenses') {
+          setView('months')
+          setSelectedMonth(null)
+        } else {
+          setView('years')
+          setSelectedYear(null)
+        }
+        if (histDepth.current > 0) histDepth.current--
+        return
+      }
+      // At the top level — close history tab.
+      onCloseRef.current()
+    })
+    return () => onRegisterBackHandler(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onRegisterBackHandler])
 
   const yearGroups = useMemo(() => {
     const map = {}
@@ -81,12 +124,16 @@ export default function HistoryScreen({ expenses, categories, onClose, onEdit, o
     setSlideDir('forward')
     setSelectedYear(year)
     setView('months')
+    histDepth.current++
+    history.pushState({ heathLedger: 'historyView', depth: histDepth.current }, '')
   }
 
   function goToMonth(month) {
     setSlideDir('forward')
     setSelectedMonth(month)
     setView('expenses')
+    histDepth.current++
+    history.pushState({ heathLedger: 'historyView', depth: histDepth.current }, '')
   }
 
   function goBack() {
@@ -97,6 +144,12 @@ export default function HistoryScreen({ expenses, categories, onClose, onEdit, o
     } else {
       setView('years')
       setSelectedYear(null)
+    }
+    // Sync browser stack when the UI back button triggers this (not hardware back).
+    if (histDepth.current > 0) {
+      histDepth.current--
+      isUIBack.current = true
+      history.back()
     }
   }
 
@@ -136,7 +189,7 @@ export default function HistoryScreen({ expenses, categories, onClose, onEdit, o
                 </p>
               </div>
               <button
-                onClick={onClose}
+                onClick={onClosedByUI ?? onClose}
                 className="btn-settings w-9 h-9 flex items-center justify-center rounded-full mt-1"
                 style={{
                   background: theme.surface,

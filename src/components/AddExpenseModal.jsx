@@ -71,19 +71,21 @@ export default function AddExpenseModal({ categories, onSave, onClose, editExpen
       style={{ background: theme.modalBg }}
       onClick={onClose}
     >
+      {/* max-height uses dvh so it shrinks correctly when the mobile keyboard opens */}
       <div
-        className="w-full rounded-t-2xl p-6 max-w-[480px] mx-auto"
-        style={{ background: theme.cardBg }}
+        className="w-full rounded-t-2xl max-w-[480px] mx-auto flex flex-col"
+        style={{ background: theme.cardBg, maxHeight: 'min(92dvh, 92vh)' }}
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-5">
+        {/* Header is flex-shrink-0 so it always stays visible above the scrollable form */}
+        <div className="flex-shrink-0 flex items-center justify-between px-6 pt-6 pb-3">
           <h2 className="text-lg font-semibold" style={{ color: theme.text }}>
             {isEditing ? 'Edit Expense' : 'Add Expense'}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full text-xl leading-none"
+            className="w-11 h-11 flex items-center justify-center rounded-full text-xl leading-none active:scale-90 transition-transform"
             style={{ background: theme.inputBg, color: theme.textMuted }}
             aria-label="Close"
           >
@@ -91,74 +93,77 @@ export default function AddExpenseModal({ categories, onSave, onClose, editExpen
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          <div className="flex items-center gap-1 py-2">
-            <span className="text-4xl font-bold" style={{ color: theme.gradEnd }}>₹</span>
-            <input
-              type="number"
-              inputMode="decimal"
-              placeholder="0"
-              value={amount}
-              onChange={e => setAmount(e.target.value)}
-              className="text-4xl font-bold outline-none w-full bg-transparent"
-              style={{ color: theme.text }}
-              autoFocus
-              required
-              min="0"
-              step="any"
-            />
-          </div>
-
-          <div>
-            <p className="text-xs uppercase tracking-wide mb-2" style={{ color: theme.textFaint }}>
-              Category
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {categories.map(cat => (
-                <button
-                  key={cat.name}
-                  type="button"
-                  onClick={() => setCategory(cat.name)}
-                  className="px-3 py-2 rounded-full text-sm font-medium border transition-colors active:scale-95 flex items-center gap-1.5"
-                  style={
-                    category === cat.name
-                      ? { background: theme.primary, color: '#ffffff', borderColor: theme.primary }
-                      : { background: theme.surface, color: theme.primary, borderColor: theme.border }
-                  }
-                >
-                  {getIcon(cat.icon, { size: 14, color: category === cat.name ? '#ffffff' : theme.primary })}
-                  {cat.name}
-                </button>
-              ))}
+        {/* Scrollable content so form never clips the close button off-screen */}
+        <div className="flex-1 overflow-y-auto px-6 pb-8">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            <div className="flex items-center gap-1 py-2">
+              <span className="text-4xl font-bold" style={{ color: theme.gradEnd }}>₹</span>
+              <input
+                type="number"
+                inputMode="decimal"
+                placeholder="0"
+                value={amount}
+                onChange={e => setAmount(e.target.value)}
+                className="text-4xl font-bold outline-none w-full bg-transparent"
+                style={{ color: theme.text }}
+                autoFocus
+                required
+                min="0"
+                step="any"
+              />
             </div>
-          </div>
 
-          <input
-            type="text"
-            placeholder="Note (optional)"
-            value={note}
-            onChange={handleNoteChange}
-            className="border-b outline-none py-2 text-base bg-transparent"
-            style={{ borderColor: theme.border, color: theme.text }}
-          />
+            <div>
+              <p className="text-xs uppercase tracking-wide mb-2" style={{ color: theme.textFaint }}>
+                Category
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {categories.map(cat => (
+                  <button
+                    key={cat.name}
+                    type="button"
+                    onClick={() => setCategory(cat.name)}
+                    className="px-3 py-2 rounded-full text-sm font-medium border transition-colors active:scale-95 flex items-center gap-1.5"
+                    style={
+                      category === cat.name
+                        ? { background: theme.primary, color: '#ffffff', borderColor: theme.primary }
+                        : { background: theme.surface, color: theme.primary, borderColor: theme.border }
+                    }
+                  >
+                    {getIcon(cat.icon, { size: 14, color: category === cat.name ? '#ffffff' : theme.primary })}
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-          <input
-            type="date"
-            value={date}
-            onChange={e => setDate(e.target.value)}
-            className="border-b outline-none py-2 text-base bg-transparent"
-            style={{ borderColor: theme.border, color: theme.text, colorScheme: isDark ? 'dark' : 'light' }}
-          />
+            <input
+              type="text"
+              placeholder="Note (optional)"
+              value={note}
+              onChange={handleNoteChange}
+              className="border-b outline-none py-2 text-base bg-transparent"
+              style={{ borderColor: theme.border, color: theme.text }}
+            />
 
-          <button
-            type="submit"
-            disabled={!amount || !category}
-            className="py-4 rounded-xl text-base font-semibold text-white disabled:opacity-30 active:scale-95 transition-transform"
-            style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})` }}
-          >
-            {isEditing ? 'Update Expense' : 'Save Expense'}
-          </button>
-        </form>
+            <input
+              type="date"
+              value={date}
+              onChange={e => setDate(e.target.value)}
+              className="border-b outline-none py-2 text-base bg-transparent"
+              style={{ borderColor: theme.border, color: theme.text, colorScheme: isDark ? 'dark' : 'light' }}
+            />
+
+            <button
+              type="submit"
+              disabled={!amount || !category}
+              className="py-4 rounded-xl text-base font-semibold text-white disabled:opacity-30 active:scale-95 transition-transform"
+              style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})` }}
+            >
+              {isEditing ? 'Update Expense' : 'Save Expense'}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   )
