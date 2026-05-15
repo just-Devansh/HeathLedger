@@ -78,6 +78,14 @@ export default function App() {
   // centralized popstate below can delegate to it.
   const historyScreenBackRef = useRef(null)
 
+  // Swipe navigation (expenses tab)
+  const expensesContainerRef = useRef(null) // non-passive touchmove target
+  const swipeTrackRef        = useRef(null) // DOM-manipulated during gesture
+  const pillRef              = useRef(null) // filter pill — DOM-manipulated during gesture
+  const touchStartRef        = useRef(null) // { x, y } of current touch
+  const isHorizontalRef      = useRef(null) // null=undecided, true=horizontal, false=vertical
+  const filterIndexRef       = useRef(0)    // mirror of filterIndex state for gesture handlers
+
   // Keep stateRef current so the popstate handler always reads fresh state.
   useEffect(() => {
     stateRef.current = { showModal, editExpense, radialOpen, showCategoryManager, activeTab }
@@ -114,6 +122,60 @@ export default function App() {
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
   }, []) // stable — reads all state via refs
+
+  // Keep filterIndexRef in sync so gesture closures never read stale state.
+  useEffect(() => {
+    filterIndexRef.current = FILTERS.indexOf(filter)
+  }, [filter])
+
+  // Non-passive touchmove so we can call e.preventDefault() during horizontal swipes.
+  // React adds passive listeners by default, so we must use addEventListener directly.
+  useEffect(() => {
+    if (activeTab !== 'expenses') return
+    const el = expensesContainerRef.current
+    if (!el) return
+
+    function onTouchMove(e) {
+      if (!touchStartRef.current) return
+      const dx = e.touches[0].clientX - touchStartRef.current.x
+      const dy = e.touches[0].clientY - touchStartRef.current.y
+
+      // Direction lock: decide after 8px of movement.
+      if (isHorizontalRef.current === null) {
+        if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+          isHorizontalRef.current = Math.abs(dx) > Math.abs(dy)
+        }
+      }
+      if (!isHorizontalRef.current) return
+
+      e.preventDefault() // block vertical scroll while swiping horizontally
+
+      const idx = filterIndexRef.current
+      // Rubber-band resistance at the edges.
+      const atStart = idx === 0 && dx > 0
+      const atEnd   = idx === FILTERS.length - 1 && dx < 0
+      const clampedDx = (atStart || atEnd) ? dx * 0.18 : dx
+
+      // Track: each page is 1/3 of the 300%-wide container.
+      const PAGE   = 100 / 3
+      const offset = -(idx * PAGE) + (clampedDx / window.innerWidth) * PAGE
+      if (swipeTrackRef.current) {
+        swipeTrackRef.current.style.transition = 'none'
+        swipeTrackRef.current.style.transform  = `translateX(${offset}%)`
+      }
+
+      // Pill: translateX in multiples of its own width (100% = 1 tab step).
+      if (pillRef.current) {
+        const progress = -(clampedDx / window.innerWidth)
+        const liveIdx  = Math.max(0, Math.min(FILTERS.length - 1, idx + progress))
+        pillRef.current.style.transition = 'none'
+        pillRef.current.style.transform  = `translateX(${liveIdx * 100}%)`
+      }
+    }
+
+    el.addEventListener('touchmove', onTouchMove, { passive: false })
+    return () => el.removeEventListener('touchmove', onTouchMove)
+  }, [activeTab])
 
   function pushOverlay() {
     overlayDepth.current++
@@ -178,104 +240,197 @@ export default function App() {
     pushOverlay()
   }
 
-  const filtered = useMemo(() => filterExpenses(expenses, filter), [expenses, filter])
-  const filterIndex = FILTERS.indexOf(filter)
+  function handleTouchStart(e) {
+    touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+    isHorizontalRef.current = null
+  }
+
+  function handleTouchEnd(e) {
+    if (!touchStartRef.current || !isHorizontalRef.current) {
+      touchStartRef.current = null
+      isHorizontalRef.current = null
+      return
+    }
+    const dx        = e.changedTouches[0].clientX - touchStartRef.current.x
+    const W         = window.innerWidth
+    const threshold = Math.min(50, W * 0.25)
+    const idx       = filterIndexRef.current
+    let newIdx      = idx
+    if (dx < -threshold && idx < FILTERS.length - 1) newIdx = idx + 1
+    else if (dx > threshold && idx > 0)               newIdx = idx - 1
+
+    const PAGE = 100 / 3
+    const ease = 'transform 0.32s cubic-bezier(0.4, 0, 0.2, 1)'
+    if (swipeTrackRef.current) {
+      swipeTrackRef.current.style.transition = ease
+      swipeTrackRef.current.style.transform  = `translateX(${-newIdx * PAGE}%)`
+    }
+    if (pillRef.current) {
+      pillRef.current.style.transition = ease
+      pillRef.current.style.transform  = `translateX(${newIdx * 100}%)`
+    }
+    if (newIdx !== idx) setFilter(FILTERS[newIdx])
+
+    touchStartRef.current = null
+    isHorizontalRef.current = null
+  }
+
+  function handleTouchCancel() {
+    // Finger lifted abnormally (e.g. incoming call) — snap back to current tab.
+    if (touchStartRef.current && isHorizontalRef.current) {
+      const idx  = filterIndexRef.current
+      const PAGE = 100 / 3
+      const ease = 'transform 0.32s cubic-bezier(0.4, 0, 0.2, 1)'
+      if (swipeTrackRef.current) {
+        swipeTrackRef.current.style.transition = ease
+        swipeTrackRef.current.style.transform  = `translateX(${-idx * PAGE}%)`
+      }
+      if (pillRef.current) {
+        pillRef.current.style.transition = ease
+        pillRef.current.style.transform  = `translateX(${idx * 100}%)`
+      }
+    }
+    touchStartRef.current = null
+    isHorizontalRef.current = null
+  }
+
+  // All three tab lists computed simultaneously so pages are always mounted
+  // (preserves each tab's scroll position during swipes).
+  const todayExpenses = useMemo(() => filterExpenses(expenses, 'Today'), [expenses])
+  const weekExpenses  = useMemo(() => filterExpenses(expenses, 'Week'),  [expenses])
+  const monthExpenses = useMemo(() => filterExpenses(expenses, 'Month'), [expenses])
+  const filterIndex   = FILTERS.indexOf(filter)
 
   return (
     <div className="min-h-screen" style={{ background: theme.pageBg }}>
 
       {activeTab === 'expenses' && (
-        <div className="max-w-[480px] mx-auto px-4 pb-[100px]">
-          <header className="header-animate pt-8 pb-4">
-            <div className="flex items-start justify-between">
-              <div>
-                <p
-                  className="text-xs font-semibold uppercase"
-                  style={{ color: theme.accent, letterSpacing: '0.13em' }}
-                >
-                  Heath Ledger ✦
-                </p>
-                <h1
-                  className="font-display font-bold mt-2"
-                  style={{
-                    color: theme.heading,
-                    fontSize: '2.25rem',
-                    lineHeight: 1.1,
-                    letterSpacing: '-0.02em',
-                  }}
-                >
-                  Phirse Kharcha?
-                </h1>
-                <p className="text-sm font-medium mt-1" style={{ color: theme.textMuted }}>
-                  {currentMonth()}
-                </p>
+        <div
+          ref={expensesContainerRef}
+          style={{ height: '100dvh', display: 'flex', flexDirection: 'column' }}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchCancel}
+        >
+          {/* Fixed header — sits above the swipeable content area */}
+          <div className="flex-shrink-0" style={{ maxWidth: '480px', margin: '0 auto', width: '100%', padding: '0 1rem' }}>
+            <header className="header-animate pt-8 pb-4">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p
+                    className="text-xs font-semibold uppercase"
+                    style={{ color: theme.accent, letterSpacing: '0.13em' }}
+                  >
+                    Heath Ledger ✦
+                  </p>
+                  <h1
+                    className="font-display font-bold mt-2"
+                    style={{
+                      color: theme.heading,
+                      fontSize: '2.25rem',
+                      lineHeight: 1.1,
+                      letterSpacing: '-0.02em',
+                    }}
+                  >
+                    Phirse Kharcha?
+                  </h1>
+                  <p className="text-sm font-medium mt-1" style={{ color: theme.textMuted }}>
+                    {currentMonth()}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <button
+                    onClick={() => { setActiveTab('history'); setRadialOpen(false); pushOverlay() }}
+                    className="btn-settings w-9 h-9 flex items-center justify-center rounded-full"
+                    style={{ background: theme.surface, border: `1px solid ${theme.border}`, color: theme.secondary }}
+                    aria-label="View history"
+                  >
+                    <Clock size={18} />
+                  </button>
+                  <button
+                    onClick={() => { setShowCategoryManager(true); pushOverlay() }}
+                    className="btn-settings w-9 h-9 flex items-center justify-center rounded-full"
+                    style={{ background: theme.surface, border: `1px solid ${theme.border}`, color: theme.secondary }}
+                    aria-label="Manage categories"
+                  >
+                    <Settings size={18} />
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-2 mt-1">
-                <button
-                  onClick={() => { setActiveTab('history'); setRadialOpen(false); pushOverlay() }}
-                  className="btn-settings w-9 h-9 flex items-center justify-center rounded-full"
-                  style={{ background: theme.surface, border: `1px solid ${theme.border}`, color: theme.secondary }}
-                  aria-label="View history"
-                >
-                  <Clock size={18} />
-                </button>
-                <button
-                  onClick={() => { setShowCategoryManager(true); pushOverlay() }}
-                  className="btn-settings w-9 h-9 flex items-center justify-center rounded-full"
-                  style={{ background: theme.surface, border: `1px solid ${theme.border}`, color: theme.secondary }}
-                  aria-label="Manage categories"
-                >
-                  <Settings size={18} />
-                </button>
-              </div>
-            </div>
 
+              <div
+                className="relative flex mt-4 rounded-full overflow-hidden"
+                style={{
+                  background: theme.filterBg,
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  border: `1px solid ${theme.border}`,
+                }}
+              >
+                {/* Pill: ref lets gesture handler move it without re-renders */}
+                <div
+                  ref={pillRef}
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    width: `${100 / FILTERS.length}%`,
+                    background: theme.primary,
+                    borderRadius: '999px',
+                    transition: 'transform 0.32s cubic-bezier(0.4,0,0.2,1)',
+                    transform: `translateX(${filterIndex * 100}%)`,
+                  }}
+                />
+                {FILTERS.map(f => (
+                  <button
+                    key={f}
+                    onClick={() => setFilter(f)}
+                    className="relative z-10 text-sm font-medium"
+                    style={{
+                      flex: 1,
+                      padding: '7px 16px',
+                      color: filter === f ? '#ffffff' : theme.accent,
+                      transition: 'color 0.2s ease',
+                      minWidth: '72px',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+            </header>
+          </div>
+
+          {/* Swipeable content — clips the 300%-wide track */}
+          <div style={{ flex: 1, overflow: 'hidden' }}>
             <div
-              className="relative flex mt-4 rounded-full overflow-hidden"
+              ref={swipeTrackRef}
               style={{
-                background: theme.filterBg,
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)',
-                border: `1px solid ${theme.border}`,
+                display: 'flex',
+                width: '300%',
+                height: '100%',
+                transform: `translateX(${-filterIndex * (100 / 3)}%)`,
+                transition: 'transform 0.32s cubic-bezier(0.4, 0, 0.2, 1)',
+                willChange: 'transform',
               }}
             >
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  width: `${100 / FILTERS.length}%`,
-                  background: theme.primary,
-                  borderRadius: '999px',
-                  transition: 'transform 0.3s cubic-bezier(0.4,0,0.2,1)',
-                  transform: `translateX(${filterIndex * 100}%)`,
-                }}
-              />
-              {FILTERS.map(f => (
-                <button
-                  key={f}
-                  onClick={() => setFilter(f)}
-                  className="relative z-10 text-sm font-medium"
-                  style={{
-                    flex: 1,
-                    padding: '7px 16px',
-                    color: filter === f ? '#ffffff' : theme.accent,
-                    transition: 'color 0.2s ease',
-                    minWidth: '72px',
-                    textAlign: 'center',
-                  }}
+              {[todayExpenses, weekExpenses, monthExpenses].map((exps, i) => (
+                <div
+                  key={i}
+                  style={{ width: '33.333%', flexShrink: 0, height: '100%', overflowY: 'auto' }}
                 >
-                  {f}
-                </button>
+                  <div className="max-w-[480px] mx-auto px-4 pb-[100px]">
+                    <ExpenseList
+                      expenses={exps}
+                      categories={categories}
+                      onEdit={openEdit}
+                      onDelete={handleDeleteExpense}
+                    />
+                  </div>
+                </div>
               ))}
             </div>
-          </header>
-
-          <ExpenseList
-            expenses={filtered}
-            categories={categories}
-            onEdit={openEdit}
-            onDelete={handleDeleteExpense}
-          />
+          </div>
         </div>
       )}
 

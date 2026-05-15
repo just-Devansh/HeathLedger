@@ -56,7 +56,7 @@ export default function ExpenseList({ expenses, categories, onEdit, onDelete }) 
 
   if (expenses.length === 0) {
     return (
-      <div className="fixed inset-0 flex flex-col items-center justify-center pointer-events-none empty-state-in">
+      <div className="flex flex-col items-center justify-center py-32 empty-state-in" style={{ pointerEvents: 'none' }}>
         <p
           className="font-devanagari font-black"
           style={{
