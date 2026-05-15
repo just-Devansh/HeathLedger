@@ -21,9 +21,10 @@ function formatAmount(n) {
 }
 
 function groupByDate(expenses) {
+  const sorted = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date))
   const groups = []
   let lastKey = null
-  for (const exp of expenses) {
+  for (const exp of sorted) {
     const d = new Date(exp.date)
     const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
     if (key !== lastKey) {
