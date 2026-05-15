@@ -128,54 +128,40 @@ export default function App() {
     filterIndexRef.current = FILTERS.indexOf(filter)
   }, [filter])
 
-  // Non-passive touchmove so we can call e.preventDefault() during horizontal swipes.
-  // React adds passive listeners by default, so we must use addEventListener directly.
-  useEffect(() => {
-    if (activeTab !== 'expenses') return
-    const el = expensesContainerRef.current
-    if (!el) return
+  // touch-action: pan-y on the container tells the browser to handle vertical
+  // scrolling natively without fighting our horizontal swipe — no addEventListener
+  // override or e.preventDefault() needed, so this can be a plain React handler.
+  function handleTouchMove(e) {
+    if (!touchStartRef.current) return
+    const dx = e.touches[0].clientX - touchStartRef.current.x
+    const dy = e.touches[0].clientY - touchStartRef.current.y
 
-    function onTouchMove(e) {
-      if (!touchStartRef.current) return
-      const dx = e.touches[0].clientX - touchStartRef.current.x
-      const dy = e.touches[0].clientY - touchStartRef.current.y
-
-      // Direction lock: decide after 8px of movement.
-      if (isHorizontalRef.current === null) {
-        if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
-          isHorizontalRef.current = Math.abs(dx) > Math.abs(dy)
-        }
-      }
-      if (!isHorizontalRef.current) return
-
-      e.preventDefault() // block vertical scroll while swiping horizontally
-
-      const idx = filterIndexRef.current
-      // Rubber-band resistance at the edges.
-      const atStart = idx === 0 && dx > 0
-      const atEnd   = idx === FILTERS.length - 1 && dx < 0
-      const clampedDx = (atStart || atEnd) ? dx * 0.18 : dx
-
-      // Track: each page is 1/3 of the 300%-wide container.
-      const PAGE   = 100 / 3
-      const offset = -(idx * PAGE) + (clampedDx / window.innerWidth) * PAGE
-      if (swipeTrackRef.current) {
-        swipeTrackRef.current.style.transition = 'none'
-        swipeTrackRef.current.style.transform  = `translateX(${offset}%)`
-      }
-
-      // Pill: translateX in multiples of its own width (100% = 1 tab step).
-      if (pillRef.current) {
-        const progress = -(clampedDx / window.innerWidth)
-        const liveIdx  = Math.max(0, Math.min(FILTERS.length - 1, idx + progress))
-        pillRef.current.style.transition = 'none'
-        pillRef.current.style.transform  = `translateX(${liveIdx * 100}%)`
+    // Direction lock: commit after 8px of movement.
+    if (isHorizontalRef.current === null) {
+      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+        isHorizontalRef.current = Math.abs(dx) > Math.abs(dy)
       }
     }
+    if (!isHorizontalRef.current) return
 
-    el.addEventListener('touchmove', onTouchMove, { passive: false })
-    return () => el.removeEventListener('touchmove', onTouchMove)
-  }, [activeTab])
+    const idx = filterIndexRef.current
+    const W   = window.innerWidth
+    const atStart  = idx === 0 && dx > 0
+    const atEnd    = idx === FILTERS.length - 1 && dx < 0
+    const clampedDx = (atStart || atEnd) ? dx * 0.18 : dx
+
+    // px units so React's re-render (same value) never restarts the transition.
+    if (swipeTrackRef.current) {
+      swipeTrackRef.current.style.transition = 'none'
+      swipeTrackRef.current.style.transform  = `translateX(${-idx * W + clampedDx}px)`
+    }
+    if (pillRef.current) {
+      const progress = -(clampedDx / W)
+      const liveIdx  = Math.max(0, Math.min(FILTERS.length - 1, idx + progress))
+      pillRef.current.style.transition = 'none'
+      pillRef.current.style.transform  = `translateX(${liveIdx * 100}%)`
+    }
+  }
 
   function pushOverlay() {
     overlayDepth.current++
@@ -259,11 +245,10 @@ export default function App() {
     if (dx < -threshold && idx < FILTERS.length - 1) newIdx = idx + 1
     else if (dx > threshold && idx > 0)               newIdx = idx - 1
 
-    const PAGE = 100 / 3
     const ease = 'transform 0.32s cubic-bezier(0.4, 0, 0.2, 1)'
     if (swipeTrackRef.current) {
       swipeTrackRef.current.style.transition = ease
-      swipeTrackRef.current.style.transform  = `translateX(${-newIdx * PAGE}%)`
+      swipeTrackRef.current.style.transform  = `translateX(${-newIdx * W}px)`
     }
     if (pillRef.current) {
       pillRef.current.style.transition = ease
@@ -279,11 +264,10 @@ export default function App() {
     // Finger lifted abnormally (e.g. incoming call) — snap back to current tab.
     if (touchStartRef.current && isHorizontalRef.current) {
       const idx  = filterIndexRef.current
-      const PAGE = 100 / 3
       const ease = 'transform 0.32s cubic-bezier(0.4, 0, 0.2, 1)'
       if (swipeTrackRef.current) {
         swipeTrackRef.current.style.transition = ease
-        swipeTrackRef.current.style.transform  = `translateX(${-idx * PAGE}%)`
+        swipeTrackRef.current.style.transform  = `translateX(${-idx * window.innerWidth}px)`
       }
       if (pillRef.current) {
         pillRef.current.style.transition = ease
@@ -307,8 +291,9 @@ export default function App() {
       {activeTab === 'expenses' && (
         <div
           ref={expensesContainerRef}
-          style={{ height: '100dvh', display: 'flex', flexDirection: 'column' }}
+          style={{ height: '100dvh', display: 'flex', flexDirection: 'column', touchAction: 'pan-y' }}
           onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
           onTouchCancel={handleTouchCancel}
         >
@@ -409,7 +394,7 @@ export default function App() {
                 display: 'flex',
                 width: '300%',
                 height: '100%',
-                transform: `translateX(${-filterIndex * (100 / 3)}%)`,
+                transform: `translateX(${-filterIndex * window.innerWidth}px)`,
                 transition: 'transform 0.32s cubic-bezier(0.4, 0, 0.2, 1)',
                 willChange: 'transform',
               }}
