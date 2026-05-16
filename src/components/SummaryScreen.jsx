@@ -22,7 +22,7 @@ export default function SummaryScreen({ expenses, categories }) {
     setGenerating(true)
     try {
       const { generateMonthlySummaryPDF } = await import('../utils/generatePDF')
-      await generateMonthlySummaryPDF({ expenses, accentHex: theme.primary })
+      await generateMonthlySummaryPDF({ expenses, theme })
     } finally {
       setGenerating(false)
     }
