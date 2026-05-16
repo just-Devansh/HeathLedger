@@ -34,9 +34,12 @@
           ? darkRaw === 'true'
           : window.matchMedia('(prefers-color-scheme: dark)').matches
         var bgs = {
-          'blue-light': '#f1f5ff', 'blue-dark': '#0d0d1f',
-          'green-light': '#f0fdf4', 'green-dark': '#071a0d',
-          'black-light': '#f8fafc', 'black-dark': '#09090b',
+          'blue-light':   '#f1f5ff', 'blue-dark':   '#0d0d1f',
+          'green-light':  '#f0fdf4', 'green-dark':  '#071a0d',
+          'black-light':  '#f8fafc', 'black-dark':  '#09090b',
+          'red-light':    '#fff1f2', 'red-dark':    '#120308',
+          'pink-light':   '#fdf2f8', 'pink-dark':   '#120309',
+          'orange-light': '#fff7ed', 'orange-dark': '#120800',
         }
         document.body.style.background = bgs[theme + '-' + (isDark ? 'dark' : 'light')] || '#f1f5ff'
       })()
