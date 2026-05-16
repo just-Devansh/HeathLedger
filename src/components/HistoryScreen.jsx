@@ -174,12 +174,13 @@ export default function HistoryScreen({ expenses, categories, onClose, onClosedB
                   Heath Ledger ✦
                 </p>
                 <h1
-                  className="font-display font-bold mt-2"
+                  className="font-display mt-2"
                   style={{
                     color: theme.heading,
-                    fontSize: '2.25rem',
-                    lineHeight: 1.1,
-                    letterSpacing: '-0.02em',
+                    fontSize: '2.35rem',
+                    fontWeight: 800,
+                    lineHeight: 1.0,
+                    letterSpacing: '-0.035em',
                   }}
                 >
                   History
@@ -223,12 +224,13 @@ export default function HistoryScreen({ expenses, categories, onClose, onClosedB
                   {view === 'months' ? 'History' : selectedYear}
                 </p>
                 <h1
-                  className="font-display font-bold"
+                  className="font-display"
                   style={{
                     color: theme.heading,
-                    fontSize: '1.75rem',
-                    lineHeight: 1.1,
-                    letterSpacing: '-0.02em',
+                    fontSize: '1.85rem',
+                    fontWeight: 800,
+                    lineHeight: 1.0,
+                    letterSpacing: '-0.03em',
                   }}
                 >
                   {view === 'months' ? selectedYear : MONTHS[selectedMonth]}
@@ -263,14 +265,14 @@ export default function HistoryScreen({ expenses, categories, onClose, onClosedB
                       <div className="flex items-center justify-between">
                         <div>
                           <p
-                            className="font-display font-extrabold tracking-tight"
-                            style={{ color: theme.heading, fontSize: '2.25rem', lineHeight: 1 }}
+                            className="font-numeric"
+                            style={{ color: theme.heading, fontSize: '2.4rem', fontWeight: 700, lineHeight: 1 }}
                           >
                             {year}
                           </p>
                           <p
-                            className="text-sm font-medium mt-2"
-                            style={{ color: theme.textMuted }}
+                            className="font-numeric text-sm mt-2"
+                            style={{ color: theme.textMuted, fontSize: '0.875rem', fontWeight: 500 }}
                           >
                             ₹{formatAmount(total)} spent
                           </p>

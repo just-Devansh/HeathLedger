@@ -146,8 +146,20 @@ input[type=number] {
 
 /* Smooth background transition on theme/mode change */
 body {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-weight: 450;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   transition: background 0.25s ease;
+}
+
+/* Currency / numeric emphasis — Space Grotesk with tabular figures */
+.font-numeric {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+  letter-spacing: -0.02em;
 }
 
 /* PDF export button — spinner icon */

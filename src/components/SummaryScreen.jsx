@@ -58,9 +58,9 @@ export default function SummaryScreen({ expenses, categories }) {
       <header className="pt-8 pb-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-medium tracking-wide" style={{ color: theme.accent }}>HeathLedger</p>
-            <h1 className="text-2xl font-bold tracking-tight mt-1" style={{ color: theme.heading }}>Firse Kharcha?</h1>
-            <p className="text-sm mt-0.5" style={{ color: theme.textMuted }}>{currentMonthLabel()}</p>
+            <p className="text-xs font-semibold uppercase" style={{ color: theme.accent, letterSpacing: '0.13em' }}>HeathLedger</p>
+            <h1 className="font-display mt-1" style={{ color: theme.heading, fontSize: '1.85rem', fontWeight: 800, lineHeight: 1.05, letterSpacing: '-0.03em' }}>Firse Kharcha?</h1>
+            <p className="text-sm font-medium mt-0.5" style={{ color: theme.textMuted }}>{currentMonthLabel()}</p>
           </div>
           <button
             onClick={handleDownload}
@@ -101,18 +101,18 @@ export default function SummaryScreen({ expenses, categories }) {
           boxShadow: theme.heroShadow,
         }}
       >
-        <p className="text-sm font-semibold mb-1 tracking-tight" style={{ color: theme.mutedText }}>
+        <p className="text-xs font-semibold uppercase mb-2" style={{ color: theme.mutedText, letterSpacing: '0.12em' }}>
           This month's damage
         </p>
-        <p className="text-4xl font-extrabold tracking-tight" style={{ color: '#ffffff' }}>
+        <p className="font-numeric" style={{ color: '#ffffff', fontSize: '2.75rem', fontWeight: 700, lineHeight: 1 }}>
           ₹{formatAmount(total)}
         </p>
         {biggest ? (
-          <p className="text-xs mt-2 font-medium" style={{ color: theme.mutedText }}>
+          <p className="text-xs mt-2.5 font-medium" style={{ color: theme.mutedText, letterSpacing: '0.01em' }}>
             Biggest: {biggest.name} — ₹{formatAmount(biggest.amount)}
           </p>
         ) : (
-          <p className="text-xs mt-2" style={{ color: theme.mutedText }}>
+          <p className="text-xs mt-2.5" style={{ color: theme.mutedText }}>
             {breakdown.length} {breakdown.length === 1 ? 'category' : 'categories'}
           </p>
         )}
