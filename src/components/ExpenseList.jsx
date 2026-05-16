@@ -41,6 +41,7 @@ export default function ExpenseList({ expenses, categories, onEdit, onDelete }) 
   const { theme } = useTheme()
   const iconMap = Object.fromEntries((categories ?? []).map(c => [c.name, c.icon]))
   const groups = useMemo(() => groupByDate(expenses), [expenses])
+  const tabTotal = useMemo(() => expenses.reduce((sum, e) => sum + e.amount, 0), [expenses])
   const [openMenuId, setOpenMenuId] = useState(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
 
@@ -92,12 +93,29 @@ export default function ExpenseList({ expenses, categories, onEdit, onDelete }) 
           {groupIdx > 0 && (
             <div style={{ height: '1px', background: theme.border, margin: '12px 0' }} />
           )}
-          <p
-            className="text-xs font-medium"
-            style={{ color: theme.textMuted, margin: '16px 8px 8px' }}
+          <div
+            className="flex items-center justify-between"
+            style={{ margin: '16px 8px 8px' }}
           >
-            {group.label}
-          </p>
+            <p className="text-xs font-medium" style={{ color: theme.textMuted }}>
+              {group.label}
+            </p>
+            {groupIdx === 0 && (
+              <p
+                className="text-[15px] font-bold tabular-nums"
+                style={{
+                  color: theme.gradEnd,
+                  letterSpacing: '-0.02em',
+                  border: `1.5px solid ${theme.gradEnd}`,
+                  borderRadius: '10px',
+                  padding: '2px 10px',
+                  marginRight: '-8px',
+                }}
+              >
+                ₹{formatAmount(tabTotal)}
+              </p>
+            )}
+          </div>
 
           <div className="flex flex-col gap-3">
             {group.items.map(exp => {
