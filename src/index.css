@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Unified radius scale ─────────────────────────────────────────────────── */
+:root {
+  --r-element:  12px; /* icon badges, action buttons, small controls        */
+  --r-card:     16px; /* cards, panels, modals — primary design language     */
+  --r-shell:    20px; /* outermost floating containers (nav bar)             */
+}
+
 /* Settings gear button */
 .btn-settings {
   transition: all 0.2s ease;

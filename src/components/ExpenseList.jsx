@@ -107,7 +107,7 @@ export default function ExpenseList({ expenses, categories, onEdit, onDelete }) 
                   color: theme.gradEnd,
                   letterSpacing: '-0.02em',
                   border: `1.5px solid ${theme.gradEnd}`,
-                  borderRadius: '10px',
+                  borderRadius: 'var(--r-element)',
                   padding: '2px 10px',
                   marginRight: '-8px',
                 }}
