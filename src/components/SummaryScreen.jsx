@@ -5,7 +5,8 @@ import { getIcon } from '../utils/icons'
 import PageHeader from './PageHeader'
 
 function currentMonthLabel() {
-  return new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
+  const d = new Date()
+  return `${d.toLocaleDateString('en-IN', { month: 'long' })} • ${d.getFullYear()}`
 }
 
 function formatAmount(n) {
@@ -59,7 +60,7 @@ export default function SummaryScreen({ expenses, categories }) {
       <PageHeader
         animate
         label="Heath Ledger ✦"
-        title="Firse Kharcha?"
+        title="Phirse Kharcha?"
         subtitle={currentMonthLabel()}
         right={
           <button
