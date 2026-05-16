@@ -150,7 +150,7 @@ export default function SummaryScreen({ expenses, categories }) {
                   }}
                 >
                   {/* Left side allows shrinking; right side (amount) never shrinks */}
-                  <div className="flex items-center justify-between gap-3 mb-3">
+                  <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <span
                         className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0"
@@ -171,7 +171,7 @@ export default function SummaryScreen({ expenses, categories }) {
                       </div>
                     </div>
                     <p
-                      className="text-base font-bold tracking-tight flex-shrink-0"
+                      className="text-base font-bold leading-tight tracking-tight flex-shrink-0"
                       style={{ color: theme.primary }}
                     >
                       ₹{formatAmount(amount)}
