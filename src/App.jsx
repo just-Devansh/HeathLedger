@@ -344,12 +344,13 @@ export default function App() {
               </div>
 
               <div
-                className="relative flex mt-4 rounded-full overflow-hidden"
+                className="relative flex mt-4 overflow-hidden"
                 style={{
                   background: theme.filterBg,
                   backdropFilter: 'blur(10px)',
                   WebkitBackdropFilter: 'blur(10px)',
                   border: `1px solid ${theme.border}`,
+                  borderRadius: 'var(--r-card)',
                 }}
               >
                 {/* Pill: ref lets gesture handler move it without re-renders */}
@@ -360,7 +361,7 @@ export default function App() {
                     inset: 0,
                     width: `${100 / FILTERS.length}%`,
                     background: theme.primary,
-                    borderRadius: '999px',
+                    borderRadius: 'var(--r-element)',
                     transition: 'transform 0.32s cubic-bezier(0.4,0,0.2,1)',
                     transform: `translateX(${filterIndex * 100}%)`,
                   }}
@@ -450,7 +451,7 @@ export default function App() {
           background: theme.glassBg,
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
-          borderRadius: '999px',
+          borderRadius: 'var(--r-shell)',
           boxShadow: theme.glassShadow,
         }}
       >
@@ -459,7 +460,7 @@ export default function App() {
           className="flex flex-col items-center justify-center gap-0.5 active:scale-95"
           style={{
             padding: '8px 0',
-            borderRadius: '999px',
+            borderRadius: 'var(--r-card)',
             background: activeTab === 'expenses'
               ? `linear-gradient(135deg, rgba(${theme.shadowRgb},0.32) 0%, rgba(${theme.shadowRgb},0.14) 100%)`
               : 'transparent',
@@ -485,7 +486,7 @@ export default function App() {
           className="flex flex-col items-center justify-center gap-0.5 active:scale-95"
           style={{
             padding: '8px 0',
-            borderRadius: '999px',
+            borderRadius: 'var(--r-card)',
             background: activeTab === 'summary' ? `rgba(${theme.shadowRgb},0.12)` : 'transparent',
             color: activeTab === 'summary' ? theme.primary : theme.textFaint,
             transition: 'all 0.2s ease',
