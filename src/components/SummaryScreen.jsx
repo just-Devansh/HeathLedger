@@ -98,7 +98,7 @@ export default function SummaryScreen({ expenses, categories }) {
         className="rounded-2xl p-6 mb-5 text-center"
         style={{
           background: theme.gradientBg,
-          boxShadow: `0 8px 32px rgba(${theme.shadowRgb},0.45), 0 0 0 1px rgba(${theme.shadowRgb},0.08)`,
+          boxShadow: theme.heroShadow,
         }}
       >
         <p className="text-sm font-semibold mb-1 tracking-tight" style={{ color: theme.mutedText }}>

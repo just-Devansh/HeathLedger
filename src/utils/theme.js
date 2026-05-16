@@ -42,6 +42,7 @@ const ACCENT_VARIANTS = {
       mutedText: '#c4b5fd',
       heading: '#1e1b4b',
       shadowRgb: '79,70,229',
+      heroShadow: '0 8px 32px rgba(79,70,229,0.35), 0 0 0 1px rgba(79,70,229,0.14)',
     },
     dark: {
       pageBg: '#050505',
@@ -54,6 +55,7 @@ const ACCENT_VARIANTS = {
       mutedText: '#c4b5fd',
       heading: '#e0e7ff',
       shadowRgb: '99,102,241',
+      heroShadow: '0 8px 32px rgba(99,102,241,0.5), 0 0 0 1px rgba(99,102,241,0.18)',
     },
   },
   green: {
@@ -68,6 +70,7 @@ const ACCENT_VARIANTS = {
       mutedText: '#bbf7d0',
       heading: '#14532d',
       shadowRgb: '22,163,74',
+      heroShadow: '0 8px 32px rgba(22,163,74,0.3), 0 0 0 1px rgba(22,163,74,0.14)',
     },
     dark: {
       pageBg: '#050505',
@@ -80,6 +83,7 @@ const ACCENT_VARIANTS = {
       mutedText: '#bbf7d0',
       heading: '#dcfce7',
       shadowRgb: '34,197,94',
+      heroShadow: '0 8px 32px rgba(34,197,94,0.4), 0 0 0 1px rgba(34,197,94,0.16)',
     },
   },
   black: {
@@ -94,6 +98,7 @@ const ACCENT_VARIANTS = {
       mutedText: '#94a3b8',
       heading: '#0f172a',
       shadowRgb: '15,23,42',
+      heroShadow: '0 8px 32px rgba(15,23,42,0.28), 0 0 0 1px rgba(15,23,42,0.12)',
     },
     dark: {
       pageBg: '#050505',
@@ -102,10 +107,11 @@ const ACCENT_VARIANTS = {
       accent: '#cbd5e1',
       secondary: '#64748b',
       gradEnd: '#e2e8f0',
-      gradientBg: 'linear-gradient(135deg, #64748b, #94a3b8, #cbd5e1)',
-      mutedText: '#94a3b8',
+      gradientBg: 'linear-gradient(135deg, #111111, #1a1a1a, #212121)',
+      mutedText: 'rgba(255,255,255,0.55)',
       heading: '#f1f5f9',
       shadowRgb: '148,163,184',
+      heroShadow: '0 8px 32px rgba(0,0,0,0.75), inset 0 1px 0 rgba(255,255,255,0.06)',
     },
   },
 }
