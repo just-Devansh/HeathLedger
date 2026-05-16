@@ -8,6 +8,7 @@ import SummaryScreen from './components/SummaryScreen'
 import CategoryManager from './components/CategoryManager'
 import RadialMenu from './components/RadialMenu'
 import HistoryScreen from './components/HistoryScreen'
+import PageHeader from './components/PageHeader'
 
 const FILTERS = ['Today', 'Week', 'Month']
 
@@ -299,31 +300,12 @@ export default function App() {
         >
           {/* Fixed header — sits above the swipeable content area */}
           <div className="flex-shrink-0" style={{ maxWidth: '480px', margin: '0 auto', width: '100%', padding: '0 1rem' }}>
-            <header className="header-animate pt-8 pb-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p
-                    className="text-xs font-semibold uppercase"
-                    style={{ color: theme.accent, letterSpacing: '0.13em' }}
-                  >
-                    Heath Ledger ✦
-                  </p>
-                  <h1
-                    className="font-display mt-2"
-                    style={{
-                      color: theme.heading,
-                      fontSize: '2.35rem',
-                      fontWeight: 800,
-                      lineHeight: 1.0,
-                      letterSpacing: '-0.035em',
-                    }}
-                  >
-                    Phirse Kharcha?
-                  </h1>
-                  <p className="text-sm font-medium mt-1" style={{ color: theme.textMuted }}>
-                    {currentMonth()}
-                  </p>
-                </div>
+            <PageHeader
+              animate
+              label="Heath Ledger ✦"
+              title="Phirse Kharcha?"
+              subtitle={currentMonth()}
+              right={
                 <div className="flex items-center gap-2 mt-1">
                   <button
                     onClick={() => { setActiveTab('history'); setRadialOpen(false); pushOverlay() }}
@@ -342,8 +324,8 @@ export default function App() {
                     <Settings size={18} />
                   </button>
                 </div>
-              </div>
-
+              }
+            >
               <div
                 className="relative flex mt-4 overflow-hidden"
                 style={{
@@ -385,7 +367,7 @@ export default function App() {
                   </button>
                 ))}
               </div>
-            </header>
+            </PageHeader>
           </div>
 
           {/* Swipeable content — clips the 300%-wide track */}

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Wallet, Download } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { getIcon } from '../utils/icons'
+import PageHeader from './PageHeader'
 
 function currentMonthLabel() {
   return new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
@@ -55,13 +56,12 @@ export default function SummaryScreen({ expenses, categories }) {
 
   return (
     <div className="max-w-[480px] mx-auto px-4 pb-[100px]">
-      <header className="pt-8 pb-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold uppercase" style={{ color: theme.accent, letterSpacing: '0.13em' }}>HeathLedger</p>
-            <h1 className="font-display mt-1" style={{ color: theme.heading, fontSize: '1.85rem', fontWeight: 800, lineHeight: 1.05, letterSpacing: '-0.03em' }}>Firse Kharcha?</h1>
-            <p className="text-sm font-medium mt-0.5" style={{ color: theme.textMuted }}>{currentMonthLabel()}</p>
-          </div>
+      <PageHeader
+        animate
+        label="Heath Ledger ✦"
+        title="Firse Kharcha?"
+        subtitle={currentMonthLabel()}
+        right={
           <button
             onClick={handleDownload}
             disabled={generating}
@@ -91,8 +91,8 @@ export default function SummaryScreen({ expenses, categories }) {
             )}
             <span>{generating ? 'Generating…' : 'PDF'}</span>
           </button>
-        </div>
-      </header>
+        }
+      />
 
       <div
         className="rounded-2xl p-6 mb-5 text-center"
