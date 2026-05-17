@@ -5,6 +5,7 @@ import { useTheme } from '../context/ThemeContext'
 import { THEME_META } from '../utils/theme'
 import { CATEGORY_ICONS, ICON_OPTIONS, getIcon } from '../utils/icons'
 import BackupSection from './BackupSection'
+import RecurringManager from './RecurringManager'
 
 function formatIconLabel(name) {
   return name.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
@@ -85,7 +86,7 @@ function InlineIconPicker({ selected, onSelect, theme }) {
   )
 }
 
-export default function CategoryManager({ onClose, onRestoreComplete }) {
+export default function CategoryManager({ onClose, onRestoreComplete, recurringRules, onRecurringRulesChange }) {
   const { theme, themeName, setTheme, isDark, toggleDark } = useTheme()
   const [categories, setCategories] = useState(() => loadCategories())
   const [newName, setNewName] = useState('')
@@ -348,6 +349,12 @@ export default function CategoryManager({ onClose, onRestoreComplete }) {
               </li>
             ))}
           </ul>
+
+          <RecurringManager
+            rules={recurringRules ?? []}
+            categories={categories}
+            onChange={onRecurringRulesChange}
+          />
 
           <BackupSection onRestoreComplete={onRestoreComplete} />
         </div>

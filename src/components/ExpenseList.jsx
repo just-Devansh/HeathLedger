@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { MoreVertical, Pencil, Trash2, Check, X } from 'lucide-react'
+import { MoreVertical, Pencil, Trash2, Check, X, Repeat } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { getIcon } from '../utils/icons'
 import { dayMonthLabel } from '../utils/dateFormat'
@@ -142,9 +142,14 @@ export default function ExpenseList({ expenses, categories, onEdit, onDelete }) 
                       {getIcon(idToCategory[exp.categoryId]?.icon ?? 'box', { size: 18, color: theme.primary })}
                     </span>
                     <div className="min-w-0">
-                      <p className="font-semibold text-sm truncate" style={{ color: theme.heading }}>
-                        {idToCategory[exp.categoryId]?.name ?? exp.category ?? 'Unknown'}
-                      </p>
+                      <div className="flex items-center gap-1">
+                        <p className="font-semibold text-sm truncate" style={{ color: theme.heading }}>
+                          {idToCategory[exp.categoryId]?.name ?? exp.category ?? 'Unknown'}
+                        </p>
+                        {exp.recurringRuleId && (
+                          <Repeat size={11} style={{ color: theme.textFaint, flexShrink: 0, opacity: 0.7 }} />
+                        )}
+                      </div>
                       {exp.note && (
                         <p className="text-xs mt-0.5 truncate" style={{ color: theme.textMuted }}>{exp.note}</p>
                       )}

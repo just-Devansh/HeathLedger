@@ -1,5 +1,6 @@
 const KEY = 'heath_ledger_expenses'
 const CATEGORIES_KEY = 'categories'
+const RECURRING_KEY = 'heath_ledger_recurring'
 
 const EMOJI_TO_ICON = {
   '🍔': 'utensils',
@@ -70,6 +71,19 @@ export function saveCategories(categories) {
   localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories))
 }
 
+export function loadRecurringRules() {
+  try {
+    const data = localStorage.getItem(RECURRING_KEY)
+    return data ? JSON.parse(data) : []
+  } catch {
+    return []
+  }
+}
+
+export function saveRecurringRules(rules) {
+  localStorage.setItem(RECURRING_KEY, JSON.stringify(rules))
+}
+
 // Converts expenses that reference categories by name string to reference by categoryId.
 // Safe to call multiple times — skips expenses that already have a categoryId.
 export function migrateExpensesToCategoryIds(expenses, categories) {
@@ -88,11 +102,12 @@ const BACKUP_DARK_KEY = 'heath_ledger_dark'
 
 export function exportBackup() {
   const backup = {
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
     appName: 'HeathLedger',
     expenses: loadExpenses(),
     categories: loadCategories(),
+    recurringRules: loadRecurringRules(),
     settings: {
       theme: localStorage.getItem(BACKUP_THEME_KEY) ?? 'blue',
       darkMode: localStorage.getItem(BACKUP_DARK_KEY),
@@ -112,6 +127,7 @@ export function validateBackup(data) {
 export function applyBackup(data) {
   saveExpenses(data.expenses)
   saveCategories(data.categories)
+  if (Array.isArray(data.recurringRules)) saveRecurringRules(data.recurringRules)
   const { theme, darkMode } = data.settings ?? {}
   if (theme) localStorage.setItem(BACKUP_THEME_KEY, theme)
   if (darkMode !== null && darkMode !== undefined) localStorage.setItem(BACKUP_DARK_KEY, String(darkMode))

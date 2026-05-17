@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { Settings, Clock } from 'lucide-react'
-import { loadExpenses, saveExpenses, loadCategories, saveCategories, migrateExpensesToCategoryIds } from './utils/storage'
+import { loadExpenses, saveExpenses, loadCategories, saveCategories, migrateExpensesToCategoryIds, loadRecurringRules, saveRecurringRules } from './utils/storage'
+import { syncRecurringExpenses } from './utils/recurringExpenses'
 import { useTheme } from './context/ThemeContext'
 import AddExpenseModal from './components/AddExpenseModal'
 import ExpenseList from './components/ExpenseList'
@@ -56,6 +57,7 @@ export default function App() {
   const { theme, setTheme, setDark } = useTheme()
   const [expenses, setExpenses] = useState(() => loadExpenses())
   const [categories, setCategories] = useState(() => loadCategories())
+  const [recurringRules, setRecurringRules] = useState(() => loadRecurringRules())
 
   // One-time migration: assign categoryId to expenses that only have a category string.
   useEffect(() => {
@@ -64,6 +66,20 @@ export default function App() {
     if (changed) {
       saveExpenses(migrated)
       setExpenses(migrated)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // On every app open: backfill any missing recurring expense entries.
+  // Reads directly from localStorage to avoid stale-closure issues with initial state.
+  useEffect(() => {
+    const rules = loadRecurringRules()
+    if (!rules.length) return
+    const current = loadExpenses()
+    const generated = syncRecurringExpenses(rules, current)
+    if (generated.length > 0) {
+      const merged = [...generated, ...current]
+      saveExpenses(merged)
+      setExpenses(merged)
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const [showModal, setShowModal] = useState(false)
@@ -187,6 +203,23 @@ export default function App() {
       isManualBack.current = true
       history.back()
     }
+  }
+
+  function applyGeneratedExpenses(generated) {
+    if (generated.length === 0) return
+    setExpenses(prev => {
+      const merged = [...generated, ...prev]
+      saveExpenses(merged)
+      return merged
+    })
+  }
+
+  function handleRecurringRulesChange(newRules) {
+    setRecurringRules(newRules)
+    saveRecurringRules(newRules)
+    // Sync immediately so new/re-enabled rules generate entries right away.
+    // `expenses` is fresh from the current render.
+    applyGeneratedExpenses(syncRecurringExpenses(newRules, expenses))
   }
 
   function showToast(message) {
@@ -527,6 +560,8 @@ export default function App() {
 
       {showCategoryManager && (
         <CategoryManager
+          recurringRules={recurringRules}
+          onRecurringRulesChange={handleRecurringRulesChange}
           onClose={() => { setCategories(loadCategories()); setShowCategoryManager(false); syncHistoryBack() }}
           onRestoreComplete={(data) => {
             // Ensure restored categories have stable IDs, then migrate expenses.
@@ -534,10 +569,16 @@ export default function App() {
               c.id ? c : { id: crypto.randomUUID(), ...c }
             )
             const { expenses: migratedExpenses } = migrateExpensesToCategoryIds(data.expenses, catsWithIds)
+            const restoredRules = Array.isArray(data.recurringRules) ? data.recurringRules : []
+            // Generate any recurring entries the backup may have been missing.
+            const generated = syncRecurringExpenses(restoredRules, migratedExpenses)
+            const finalExpenses = generated.length ? [...generated, ...migratedExpenses] : migratedExpenses
             saveCategories(catsWithIds)
-            saveExpenses(migratedExpenses)
-            setExpenses(migratedExpenses)
+            saveExpenses(finalExpenses)
+            saveRecurringRules(restoredRules)
+            setExpenses(finalExpenses)
             setCategories(catsWithIds)
+            setRecurringRules(restoredRules)
             if (data.settings?.theme) setTheme(data.settings.theme)
             if (data.settings?.darkMode != null) setDark(data.settings.darkMode === 'true')
             setShowCategoryManager(false)
