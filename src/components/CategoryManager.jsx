@@ -317,7 +317,7 @@ export default function CategoryManager({ onClose, onRestoreComplete }) {
                         <button
                           onClick={() => setConfirmDeleteIdx(null)}
                           className="action-btn w-9 h-9 flex items-center justify-center rounded-xl"
-                          style={{ background: '#ef4444', color: '#ffffff' }}
+                          style={{ background: theme.inputBg, color: theme.textMuted }}
                           aria-label="Cancel delete"
                         >
                           <X size={18} />
