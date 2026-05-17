@@ -5,18 +5,9 @@ function fmt(n) {
   return '₹' + Math.round(n).toLocaleString('en-IN')
 }
 
-// Measures the rendered pixel width of a string at given font settings.
-// Used to compute a safe padding-right for the category name column.
-function measureText(str, fontPx, weight, family) {
-  try {
-    const c = document.createElement('canvas')
-    const ctx = c.getContext('2d')
-    ctx.font = `${weight} ${fontPx}px ${family}`
-    return ctx.measureText(str).width
-  } catch (_) {
-    return fontPx * str.length * 0.6
-  }
-}
+// Fixed column width (px) reserved for the amount on the right of each card.
+// Handles amounts up to ₹9,99,999 at the font sizes used below.
+const AMOUNT_COL = 90
 
 function buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, now }) {
   const accent     = theme.primary
@@ -38,12 +29,8 @@ function buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, n
   const avgPerEntry = monthExpenses.length > 0 ? fmt(total / monthExpenses.length) : '—'
   const genDate = fullDateLabel(now)
 
-  // Pre-measure the widest amount string so we know how much right-padding the name needs
-  const widestAmount = breakdown.reduce((max, { amount }) => {
-    const w = measureText(fmt(amount), 15, '700', 'Space Grotesk, system-ui')
-    return w > max ? w : max
-  }, 60)
-  const amountColWidth = Math.ceil(widestAmount) + 16  // 16px breathing room
+  // Switch to 2-column grid when there are many categories
+  const twoCol = breakdown.length > 5
 
   const statChips = [
     { value: monthExpenses.length, label: 'Entries' },
@@ -86,81 +73,97 @@ function buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, n
   `).join('')
 
   /*
-   * Category row layout:
-   * - Outer card is position:relative
-   * - Amount is position:absolute right:18px top:18px — never overflows the card
-   * - Name + percentage occupy the left, with padding-right equal to amountColWidth + card-right-padding
-   * - No flexbox, no display:table — plain block + absolute, most reliable in html2canvas
+   * Category card:
+   *   - Amount is position:absolute at right edge — never overflows the card
+   *   - Name column has padding-right equal to AMOUNT_COL + card-right-pad so they never touch
+   *   - overflow:hidden is on a wrapper div, NOT on the text <p>, so html2canvas never clips glyphs
+   *   - All text has explicit line-height + padding-bottom to prevent bottom-pixel clipping
    */
-  const categoryRows = breakdown.map(({ name, amount, percentage }) => `
-    <div style="
-      position: relative;
-      padding: 18px ${amountColWidth + 26}px 20px 18px;
-      background: ${cardBg};
-      border-radius: 14px;
-      border: 1px solid ${border};
-      margin-bottom: 10px;
-      box-sizing: border-box;
-    ">
-      <!-- Amount: absolutely pinned to right, never overflows -->
+  function categoryCard({ name, amount, percentage }, compact) {
+    const hPad  = compact ? 12 : 18   // horizontal card padding
+    const vPadT = compact ? 14 : 18   // vertical top padding
+    const vPadB = compact ? 16 : 20   // vertical bottom padding
+    const namePx = compact ? 13 : 14  // category name font size
+    const amtPx  = compact ? 13 : 15  // amount font size
+    const pctPx  = compact ? 9  : 10  // percentage font size
+
+    return `
       <div style="
-        position: absolute;
-        right: 18px;
-        top: 50%;
-        margin-top: -22px;
-        width: ${amountColWidth}px;
-        text-align: right;
+        ${compact ? 'width: calc(50% - 5px);' : ''}
+        position: relative;
+        padding: ${vPadT}px ${AMOUNT_COL + hPad + 4}px ${vPadB}px ${hPad}px;
+        background: ${cardBg};
+        border-radius: 14px;
+        border: 1px solid ${border};
+        box-sizing: border-box;
+        margin-bottom: ${compact ? 8 : 10}px;
       ">
-        <span style="
-          font-family: ${sg};
-          font-size: 15px;
-          font-weight: 700;
-          line-height: 1.6;
-          color: ${accent};
-          letter-spacing: -0.01em;
-          display: block;
-          padding-bottom: 4px;
-          white-space: nowrap;
-        ">${fmt(amount)}</span>
-      </div>
-
-      <!-- Name -->
-      <div style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin-bottom: 4px;">
-        <span style="
-          font-family: ${pjs};
-          font-size: 14px;
-          font-weight: 700;
-          line-height: 1.6;
-          color: ${text};
-          letter-spacing: -0.01em;
-          padding-bottom: 4px;
-          display: inline-block;
-        ">${name}</span>
-      </div>
-
-      <!-- Percentage -->
-      <p style="
-        font-family: ${pjs};
-        font-size: 10px;
-        font-weight: 500;
-        line-height: 1.6;
-        color: ${muted};
-        margin: 0 0 12px;
-        padding-bottom: 4px;
-        display: block;
-      ">${percentage.toFixed(1)}%</p>
-
-      <!-- Progress bar -->
-      <div style="height: 3px; background: ${barBg}; border-radius: 999px; overflow: hidden;">
+        <!-- Amount pinned to right — absolutely positioned, never overflows -->
         <div style="
-          height: 100%;
-          width: ${Math.max(percentage, 2)}%;
-          background: linear-gradient(90deg, ${accent}, ${gradEnd});
-          border-radius: 999px;
-        "></div>
+          position: absolute;
+          right: ${hPad}px;
+          top: 50%;
+          margin-top: -20px;
+          width: ${AMOUNT_COL}px;
+          text-align: right;
+        ">
+          <span style="
+            font-family: ${sg};
+            font-size: ${amtPx}px;
+            font-weight: 700;
+            line-height: 1.6;
+            color: ${accent};
+            letter-spacing: -0.01em;
+            display: block;
+            padding-bottom: 4px;
+            white-space: nowrap;
+          ">${fmt(amount)}</span>
+        </div>
+
+        <!-- Name: overflow wrapper keeps truncation off the <span> so glyphs aren't clipped -->
+        <div style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin-bottom: 4px;">
+          <span style="
+            font-family: ${pjs};
+            font-size: ${namePx}px;
+            font-weight: 700;
+            line-height: 1.6;
+            color: ${text};
+            letter-spacing: -0.01em;
+            padding-bottom: 4px;
+            display: inline-block;
+          ">${name}</span>
+        </div>
+
+        <!-- Percentage -->
+        <p style="
+          font-family: ${pjs};
+          font-size: ${pctPx}px;
+          font-weight: 500;
+          line-height: 1.6;
+          color: ${muted};
+          margin: 0 0 ${compact ? 10 : 12}px;
+          padding-bottom: 4px;
+          display: block;
+        ">${percentage.toFixed(1)}%</p>
+
+        <!-- Progress bar -->
+        <div style="height: 3px; background: ${barBg}; border-radius: 999px; overflow: hidden;">
+          <div style="
+            height: 100%;
+            width: ${Math.max(percentage, 2)}%;
+            background: linear-gradient(90deg, ${accent}, ${gradEnd});
+            border-radius: 999px;
+          "></div>
+        </div>
       </div>
-    </div>
-  `).join('')
+    `
+  }
+
+  const categoryRows = twoCol
+    ? `<div style="display: flex; flex-wrap: wrap; gap: 10px;">
+        ${breakdown.map(item => categoryCard(item, true)).join('')}
+       </div>`
+    : breakdown.map(item => categoryCard(item, false)).join('')
 
   return `
     <div style="
@@ -296,7 +299,6 @@ function buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, n
           letter-spacing: 0.12em;
           text-transform: uppercase;
           opacity: 0.7;
-          display: block;
         ">Heath Ledger</p>
         <p style="
           font-family: ${pjs};
@@ -307,7 +309,6 @@ function buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, n
           margin: 0;
           padding-bottom: 4px;
           letter-spacing: 0.02em;
-          display: block;
         ">Generated on ${genDate}</p>
       </div>
 
@@ -355,11 +356,11 @@ export async function generateMonthlyImage({ expenses, categories, theme, isDark
   try {
     const el = container.firstElementChild
 
-    // Let the off-screen layout fully settle before measuring
+    // Let the off-screen layout fully settle before measuring height
     await new Promise(r => setTimeout(r, 80))
 
     const canvas = await html2canvas(el, {
-      scale: 2,
+      scale: 3,              // 1620px output → sharp when zoomed
       useCORS: true,
       allowTaint: true,
       backgroundColor: bgColor,
