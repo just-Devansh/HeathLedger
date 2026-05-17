@@ -263,11 +263,11 @@ export default function CategoryManager({ onClose, onRestoreComplete }) {
                 }}
               >
                 {editingIdx === idx ? (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
                     <InlineIconPicker selected={editIcon} onSelect={setEditIcon} theme={theme} />
                     <input
                       type="text"
-                      className="flex-1 outline-none text-sm font-medium bg-transparent"
+                      className="flex-1 outline-none text-sm font-medium bg-transparent min-w-0"
                       style={{ color: theme.text, borderBottom: `1px solid ${theme.border}`, padding: '4px 0' }}
                       value={editName}
                       onChange={e => setEditName(e.target.value)}
@@ -279,17 +279,19 @@ export default function CategoryManager({ onClose, onRestoreComplete }) {
                     />
                     <button
                       onClick={() => handleEditSave(idx)}
-                      className="text-xs font-semibold px-3 py-1.5 rounded-lg active:scale-95 transition-transform flex-shrink-0"
-                      style={{ background: theme.primary, color: '#ffffff' }}
+                      className="action-btn w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 active:scale-95 transition-transform"
+                      style={{ background: '#22c55e', color: '#ffffff' }}
+                      aria-label="Save"
                     >
-                      Save
+                      <Check size={18} />
                     </button>
                     <button
                       onClick={() => setEditingIdx(null)}
-                      className="text-xs font-semibold px-3 py-1.5 rounded-lg active:scale-95 transition-transform flex-shrink-0"
+                      className="action-btn w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 active:scale-95 transition-transform"
                       style={{ background: theme.inputBg, color: theme.textMuted }}
+                      aria-label="Cancel"
                     >
-                      Cancel
+                      <X size={18} />
                     </button>
                   </div>
                 ) : (
