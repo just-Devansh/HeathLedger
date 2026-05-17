@@ -139,61 +139,63 @@ export default function SummaryScreen({ expenses, categories }) {
           <p className="text-sm font-semibold mb-3 tracking-tight" style={{ color: theme.heading }}>
             Where it all went
           </p>
-          <div className="flex flex-col gap-3">
-            {breakdown.map(({ name, icon, amount, percentage }) => {
-              const barBg = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'
-              return (
-                <div
-                  key={name}
-                  className="p-4 rounded-2xl"
-                  style={{
-                    background: theme.cardBg,
-                    border: `1px solid rgba(${theme.shadowRgb}, 0.18)`,
-                    boxShadow: `0 2px 14px rgba(${theme.shadowRgb}, 0.09)`,
-                  }}
-                >
-                  {/* Left side allows shrinking; right side (amount) never shrinks */}
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <span
-                        className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0"
-                        style={{ background: theme.surface }}
-                      >
-                        {getIcon(icon, { size: 18, color: theme.primary })}
-                      </span>
-                      <div className="min-w-0">
-                        <p
-                          className="text-sm font-bold tracking-tight leading-tight truncate"
-                          style={{ color: theme.heading }}
+          {(() => {
+            const twoCol = breakdown.length > 5
+            const barBg = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'
+            return (
+              <div className={twoCol ? 'grid grid-cols-2 gap-2.5' : 'flex flex-col gap-3'}>
+                {breakdown.map(({ name, icon, amount, percentage }) => (
+                  <div
+                    key={name}
+                    className={twoCol ? 'p-3 rounded-2xl' : 'p-4 rounded-2xl'}
+                    style={{
+                      background: theme.cardBg,
+                      border: `1px solid rgba(${theme.shadowRgb}, 0.18)`,
+                      boxShadow: `0 2px 14px rgba(${theme.shadowRgb}, 0.09)`,
+                    }}
+                  >
+                    <div className={`flex items-start justify-between mb-2.5 ${twoCol ? 'gap-1.5' : 'gap-3'}`}>
+                      <div className={`flex items-center min-w-0 ${twoCol ? 'gap-2' : 'gap-2.5'}`}>
+                        <span
+                          className={`flex items-center justify-center rounded-xl flex-shrink-0 ${twoCol ? 'w-8 h-8' : 'w-9 h-9'}`}
+                          style={{ background: theme.surface }}
                         >
-                          {name}
-                        </p>
-                        <p className="text-xs mt-0.5" style={{ color: theme.textFaint }}>
-                          {percentage.toFixed(1)}%
-                        </p>
+                          {getIcon(icon, { size: twoCol ? 15 : 18, color: theme.primary })}
+                        </span>
+                        <div className="min-w-0">
+                          <p
+                            className={`font-bold tracking-tight leading-tight truncate ${twoCol ? 'text-xs' : 'text-sm'}`}
+                            style={{ color: theme.heading }}
+                          >
+                            {name}
+                          </p>
+                          <p className="text-xs mt-0.5" style={{ color: theme.textFaint }}>
+                            {percentage.toFixed(1)}%
+                          </p>
+                        </div>
                       </div>
+                      <p
+                        className={`font-bold leading-tight tracking-tight flex-shrink-0 ${twoCol ? 'text-sm' : 'text-base'}`}
+                        style={{ color: theme.primary }}
+                      >
+                        ₹{formatAmount(amount)}
+                      </p>
                     </div>
-                    <p
-                      className="text-base font-bold leading-tight tracking-tight flex-shrink-0"
-                      style={{ color: theme.primary }}
-                    >
-                      ₹{formatAmount(amount)}
-                    </p>
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: barBg }}>
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${percentage}%`,
+                          background: `linear-gradient(90deg, ${theme.primary}, ${theme.gradEnd})`,
+                          transition: 'width 0.5s ease',
+                        }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-1.5 rounded-full overflow-hidden" style={{ background: barBg }}>
-                    <div
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${percentage}%`,
-                        background: `linear-gradient(90deg, ${theme.primary}, ${theme.gradEnd})`,
-                        transition: 'width 0.5s ease',
-                      }}
-                    />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+                ))}
+              </div>
+            )
+          })()}
         </>
       )}
     </div>
