@@ -238,10 +238,10 @@ function buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, n
           font-family: ${sg};
           font-size: 54px;
           font-weight: 700;
-          line-height: 1.15;
+          line-height: 1;
           color: #ffffff;
           margin: 0;
-          padding-bottom: 4px;
+          padding-bottom: 6px;
           letter-spacing: -0.025em;
           display: block;
         ">${fmt(total)}</p>
@@ -350,8 +350,8 @@ export async function generateMonthlyImage({ expenses, categories, theme, isDark
   document.body.appendChild(container)
 
   const bgColor = isDark ? '#0a0a0a' : theme.pageBg
-  const month = now.toLocaleDateString('en-CA').slice(0, 7)
-  const filename = `heath-ledger-${month}.png`
+  const monthName = now.toLocaleDateString('en-US', { month: 'long' })
+  const filename = `${monthName}-${now.getFullYear()}-Report-Heath-Ledger.png`
 
   try {
     const el = container.firstElementChild

@@ -149,8 +149,17 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
           style={{ borderBottom: `1px solid ${theme.border}` }}
         >
           <div>
-            <p className="text-xs font-medium tracking-wide" style={{ color: theme.accent }}>HeathLedger</p>
-            <h2 className="text-2xl font-bold mt-1" style={{ color: theme.heading }}>Settings</h2>
+            <p className="text-xs font-semibold uppercase" style={{ color: theme.accent, letterSpacing: '0.13em' }}>Heath Ledger ✦</p>
+            <h2
+              className="font-display mt-2"
+              style={{
+                color: theme.heading,
+                fontSize: '2.35rem',
+                fontWeight: 800,
+                lineHeight: 1.0,
+                letterSpacing: '-0.035em',
+              }}
+            >Settings</h2>
           </div>
           <button
             onClick={onClose}
