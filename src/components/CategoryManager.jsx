@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Pencil, Trash2, Check, X, Moon, Sun, Plus, MoreVertical } from 'lucide-react'
+import { Pencil, Trash2, Check, X, Moon, Sun, Plus, MoreVertical, ChevronDown, ChevronUp } from 'lucide-react'
 import { loadCategories, saveCategories } from '../utils/storage'
 import { useTheme } from '../context/ThemeContext'
 import { THEME_META } from '../utils/theme'
@@ -96,6 +96,11 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
   const [confirmDeleteIdx, setConfirmDeleteIdx] = useState(null)
   const [openMenuIdx, setOpenMenuIdx] = useState(null)
   const [addingCategory, setAddingCategory] = useState(false)
+  const [showAllCategories, setShowAllCategories] = useState(false)
+
+  const CATEGORY_PREVIEW = 3
+  const visibleCategories = showAllCategories ? categories : categories.slice(0, CATEGORY_PREVIEW)
+  const hiddenCount = categories.length - CATEGORY_PREVIEW
 
   function persist(cats) {
     setCategories(cats)
@@ -261,7 +266,7 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
                 No categories yet. Tap Add to create one.
               </p>
             )}
-            {categories.map((cat, idx) => (
+            {visibleCategories.map((cat, idx) => (
               <li
                 key={idx}
                 className="flex flex-col px-4 py-3 rounded-2xl"
@@ -381,6 +386,29 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
               </li>
             ))}
           </ul>
+
+          {categories.length > CATEGORY_PREVIEW && (
+            <button
+              onClick={() => setShowAllCategories(v => {
+                if (v) { setEditingIdx(null); setConfirmDeleteIdx(null); setOpenMenuIdx(null) }
+                return !v
+              })}
+              className="w-full flex items-center justify-center gap-1.5 py-2 mb-1 active:opacity-60 transition-opacity"
+              style={{ color: theme.textFaint }}
+            >
+              {showAllCategories ? (
+                <>
+                  <ChevronUp size={13} />
+                  <span className="text-xs font-medium">Show less</span>
+                </>
+              ) : (
+                <>
+                  <ChevronDown size={13} />
+                  <span className="text-xs font-medium">See all {categories.length} categories</span>
+                </>
+              )}
+            </button>
+          )}
 
           <RecurringManager
             rules={recurringRules ?? []}
