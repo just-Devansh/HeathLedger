@@ -143,28 +143,31 @@ export default function SummaryScreen({ expenses, categories }) {
             const twoCol = breakdown.length > 5
             const barBg = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'
             return (
-              <div className={twoCol ? 'grid grid-cols-2 gap-2.5' : 'flex flex-col gap-3'}>
+              <div className={twoCol
+                ? 'flex flex-col gap-3 md:grid md:grid-cols-2 md:gap-2.5'
+                : 'flex flex-col gap-3'
+              }>
                 {breakdown.map(({ name, icon, amount, percentage }) => (
                   <div
                     key={name}
-                    className={twoCol ? 'p-3 rounded-2xl' : 'p-4 rounded-2xl'}
+                    className={twoCol ? 'p-4 rounded-2xl md:p-3' : 'p-4 rounded-2xl'}
                     style={{
                       background: theme.cardBg,
                       border: `1px solid rgba(${theme.shadowRgb}, 0.18)`,
                       boxShadow: `0 2px 14px rgba(${theme.shadowRgb}, 0.09)`,
                     }}
                   >
-                    <div className={`flex items-start justify-between mb-2.5 ${twoCol ? 'gap-1.5' : 'gap-3'}`}>
-                      <div className={`flex items-center min-w-0 ${twoCol ? 'gap-2' : 'gap-2.5'}`}>
+                    <div className={`flex items-start justify-between mb-2.5 ${twoCol ? 'gap-3 md:gap-1.5' : 'gap-3'}`}>
+                      <div className={`flex items-center min-w-0 ${twoCol ? 'gap-2.5 md:gap-2' : 'gap-2.5'}`}>
                         <span
-                          className={`flex items-center justify-center rounded-xl flex-shrink-0 ${twoCol ? 'w-8 h-8' : 'w-9 h-9'}`}
+                          className={`flex items-center justify-center rounded-xl flex-shrink-0 ${twoCol ? 'w-9 h-9 md:w-8 md:h-8' : 'w-9 h-9'}`}
                           style={{ background: theme.surface }}
                         >
                           {getIcon(icon, { size: twoCol ? 15 : 18, color: theme.primary })}
                         </span>
                         <div className="min-w-0">
                           <p
-                            className={`font-bold tracking-tight leading-tight truncate ${twoCol ? 'text-xs' : 'text-sm'}`}
+                            className={`font-bold tracking-tight leading-tight truncate ${twoCol ? 'text-sm md:text-xs' : 'text-sm'}`}
                             style={{ color: theme.heading }}
                           >
                             {name}
@@ -175,7 +178,7 @@ export default function SummaryScreen({ expenses, categories }) {
                         </div>
                       </div>
                       <p
-                        className={`font-bold leading-tight tracking-tight flex-shrink-0 ${twoCol ? 'text-sm' : 'text-base'}`}
+                        className={`font-bold leading-tight tracking-tight flex-shrink-0 ${twoCol ? 'text-base md:text-sm' : 'text-base'}`}
                         style={{ color: theme.primary }}
                       >
                         ₹{formatAmount(amount)}
