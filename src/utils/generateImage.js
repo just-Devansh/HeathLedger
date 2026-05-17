@@ -42,7 +42,8 @@ function buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, n
   const maxDayEntry = Object.values(byDay).sort((a, b) => b.total - a.total)[0]
   const maxDayLabel = maxDayEntry ? dayMonthLabel(maxDayEntry.date).toUpperCase() : '—'
   const maxDayAmt   = maxDayEntry ? fmt(maxDayEntry.total) : '—'
-  const avgExpense  = monthExpenses.length > 0 ? fmt(total / monthExpenses.length) : '—'
+  const daysElapsed = now.getDate()
+  const avgExpense  = daysElapsed > 0 ? fmt(total / daysElapsed) : '—'
 
   function statChip({ topLabel, value, sub }) {
     return `
@@ -95,7 +96,7 @@ function buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, n
 
   const statChips = [
     statChip({ topLabel: 'Most Expensive Day', value: maxDayLabel, sub: maxDayAmt }),
-    statChip({ topLabel: 'Avg Expense',        value: avgExpense,  sub: null    }),
+    statChip({ topLabel: 'Avg Daily Spend',     value: avgExpense,  sub: null    }),
   ].join('')
 
   /*
