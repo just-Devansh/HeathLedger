@@ -218,7 +218,7 @@ function buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, n
       <div style="
         background: ${gradientBg};
         border-radius: 20px;
-        padding: 38px 32px 40px;
+        padding: 24px 32px 26px;
         margin-bottom: 16px;
         text-align: center;
       ">
@@ -228,9 +228,9 @@ function buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, n
           font-weight: 700;
           line-height: 1.6;
           letter-spacing: 0.14em;
-          color: rgba(255,255,255,0.55);
+          color: rgba(255,255,255,0.80);
           text-transform: uppercase;
-          margin: 0 0 16px;
+          margin: 0 0 8px;
           padding-bottom: 4px;
           display: block;
         ">This month's damage</p>
@@ -251,8 +251,8 @@ function buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, n
             font-size: 11px;
             font-weight: 500;
             line-height: 1.6;
-            color: rgba(255,255,255,0.55);
-            margin: 14px 0 0;
+            color: rgba(255,255,255,0.80);
+            margin: 10px 0 0;
             padding-bottom: 4px;
             letter-spacing: 0.01em;
             display: block;
