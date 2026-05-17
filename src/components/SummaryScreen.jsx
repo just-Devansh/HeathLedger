@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Wallet, Download } from 'lucide-react'
+import { Wallet, ImageDown } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { getIcon } from '../utils/icons'
 import PageHeader from './PageHeader'
@@ -16,8 +16,8 @@ export default function SummaryScreen({ expenses, categories }) {
   async function handleDownload() {
     setGenerating(true)
     try {
-      const { generateMonthlySummaryPDF } = await import('../utils/generatePDF')
-      await generateMonthlySummaryPDF({ expenses, categories, theme })
+      const { generateMonthlyImage } = await import('../utils/generateImage')
+      await generateMonthlyImage({ expenses, categories, theme, isDark })
     } finally {
       setGenerating(false)
     }
@@ -79,7 +79,7 @@ export default function SummaryScreen({ expenses, categories }) {
               transition: 'background 0.2s ease, box-shadow 0.2s ease',
               boxShadow: generating ? 'none' : `0 4px 14px rgba(${theme.shadowRgb},0.35)`,
             }}
-            aria-label="Download PDF summary"
+            aria-label="Download image summary"
           >
             {generating ? (
               <svg
@@ -91,9 +91,9 @@ export default function SummaryScreen({ expenses, categories }) {
                 <path d="M7 2a5 5 0 0 1 5 5" stroke="white" strokeWidth="2" strokeLinecap="round" />
               </svg>
             ) : (
-              <Download size={14} strokeWidth={2.5} />
+              <ImageDown size={14} strokeWidth={2.5} />
             )}
-            <span>{generating ? 'Generating…' : 'PDF'}</span>
+            <span>{generating ? 'Generating…' : 'Image'}</span>
           </button>
         }
       />
