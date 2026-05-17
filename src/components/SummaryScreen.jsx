@@ -68,8 +68,9 @@ export default function SummaryScreen({ expenses, categories }) {
           <button
             onClick={handleDownload}
             disabled={generating}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-semibold flex-shrink-0 mt-1 active:scale-95 transition-transform"
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold flex-shrink-0 mt-1 active:scale-95 transition-transform"
             style={{
+              borderRadius: 'var(--r-element)',
               background: generating
                 ? `linear-gradient(rgba(0,0,0,0.22), rgba(0,0,0,0.22)), ${theme.primary}`
                 : theme.primary,

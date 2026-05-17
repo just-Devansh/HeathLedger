@@ -192,7 +192,7 @@ const ACCENT_VARIANTS = {
       secondary: '#870d0d',
       gradEnd: '#d42828',
       gradientBg: 'linear-gradient(135deg, #5a0000, #8b0000, #b31616)',
-      mutedText: 'rgba(220,80,80,0.6)',
+      mutedText: 'rgba(255,210,210,0.82)',
       heading: '#fce8e8',
       shadowRgb: '179,22,22',
       heroShadow: '0 8px 32px rgba(179,22,22,0.65), 0 0 0 1px rgba(179,22,22,0.24)',
