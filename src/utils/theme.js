@@ -170,6 +170,34 @@ const ACCENT_VARIANTS = {
       heroShadow: '0 8px 32px rgba(236,72,153,0.48), 0 0 0 1px rgba(236,72,153,0.18)',
     },
   },
+  blood: {
+    light: {
+      pageBg: '#fff0f0',
+      surface: '#fde0e0',
+      primary: '#8b0000',
+      accent: '#a01212',
+      secondary: '#6b0000',
+      gradEnd: '#b30000',
+      gradientBg: 'linear-gradient(135deg, #6b0000, #8b0000, #b30000)',
+      mutedText: '#f5a0a0',
+      heading: '#3b0000',
+      shadowRgb: '139,0,0',
+      heroShadow: '0 8px 32px rgba(139,0,0,0.38), 0 0 0 1px rgba(139,0,0,0.16)',
+    },
+    dark: {
+      pageBg: '#060000',
+      surface: '#1a0505',
+      primary: '#b31616',
+      accent: '#cc1a1a',
+      secondary: '#870d0d',
+      gradEnd: '#d42828',
+      gradientBg: 'linear-gradient(135deg, #5a0000, #8b0000, #b31616)',
+      mutedText: 'rgba(220,80,80,0.6)',
+      heading: '#fce8e8',
+      shadowRgb: '179,22,22',
+      heroShadow: '0 8px 32px rgba(179,22,22,0.65), 0 0 0 1px rgba(179,22,22,0.24)',
+    },
+  },
   orange: {
     light: {
       pageBg: '#fff7ed',
@@ -213,6 +241,7 @@ export const THEME_META = [
   { id: 'green',  label: 'Green',  swatch: '#16a34a' },
   { id: 'black',  label: 'Black',  swatch: '#0f172a' },
   { id: 'red',    label: 'Red',    swatch: '#e11d48' },
+  { id: 'blood',  label: 'Blood',  swatch: '#8b0000' },
   { id: 'pink',   label: 'Pink',   swatch: '#db2777' },
   { id: 'orange', label: 'Orange', swatch: '#ea580c' },
 ]

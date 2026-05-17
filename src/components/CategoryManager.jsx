@@ -201,7 +201,7 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
             <p className="text-xs uppercase tracking-wide font-medium mb-3" style={{ color: theme.textFaint }}>
               Color Theme
             </p>
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-4">
               {THEME_META.map(({ id, label, swatch }) => {
                 const isActive = themeName === id
                 return (
