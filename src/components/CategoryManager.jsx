@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Pencil, Trash2, Check, X, Moon, Sun, Plus } from 'lucide-react'
+import { Pencil, Trash2, Check, X, Moon, Sun, Plus, MoreVertical } from 'lucide-react'
 import { loadCategories, saveCategories } from '../utils/storage'
 import { useTheme } from '../context/ThemeContext'
 import { THEME_META } from '../utils/theme'
@@ -94,6 +94,7 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
   const [editName, setEditName] = useState('')
   const [editIcon, setEditIcon] = useState('box')
   const [confirmDeleteIdx, setConfirmDeleteIdx] = useState(null)
+  const [openMenuIdx, setOpenMenuIdx] = useState(null)
   const [addingCategory, setAddingCategory] = useState(false)
 
   function persist(cats) {
@@ -108,6 +109,7 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
 
   function startEdit(idx) {
     setConfirmDeleteIdx(null)
+    setOpenMenuIdx(null)
     setEditingIdx(idx)
     setEditName(categories[idx].name)
     setEditIcon(categories[idx].icon ?? 'box')
@@ -126,11 +128,11 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
   return (
     <div className="fixed inset-0 z-50 flex flex-col" style={{ background: theme.pageBg }}>
 
-      {confirmDeleteIdx !== null && (
+      {(confirmDeleteIdx !== null || openMenuIdx !== null) && (
         <div
           className="fixed inset-0"
           style={{ zIndex: 51 }}
-          onClick={() => setConfirmDeleteIdx(null)}
+          onClick={() => { setConfirmDeleteIdx(null); setOpenMenuIdx(null) }}
         />
       )}
 
@@ -267,7 +269,7 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
                   background: theme.cardBg,
                   boxShadow: `0 2px 12px rgba(${theme.shadowRgb},0.08)`,
                   position: 'relative',
-                  zIndex: confirmDeleteIdx === idx ? 52 : 'auto',
+                  zIndex: confirmDeleteIdx === idx || openMenuIdx === idx ? 52 : 'auto',
                 }}
               >
                 {editingIdx === idx ? (
@@ -313,43 +315,66 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
                     <span className="flex-1 text-sm font-medium" style={{ color: theme.text }}>{cat.name}</span>
 
                     {confirmDeleteIdx === idx ? (
-                      <div className="confirm-popup flex gap-2">
+                      <div className="confirm-popup flex gap-1.5 flex-shrink-0">
                         <button
                           onClick={() => handleDelete(idx)}
-                          className="action-btn w-9 h-9 flex items-center justify-center rounded-xl"
+                          className="action-btn w-8 h-8 flex items-center justify-center rounded-xl"
                           style={{ background: '#22c55e', color: '#ffffff' }}
                           aria-label="Confirm delete"
                         >
-                          <Check size={18} />
+                          <Check size={16} />
                         </button>
                         <button
                           onClick={() => setConfirmDeleteIdx(null)}
-                          className="action-btn w-9 h-9 flex items-center justify-center rounded-xl"
+                          className="action-btn w-8 h-8 flex items-center justify-center rounded-xl"
                           style={{ background: theme.inputBg, color: theme.textMuted }}
                           aria-label="Cancel delete"
                         >
-                          <X size={18} />
+                          <X size={16} />
                         </button>
                       </div>
                     ) : (
-                      <>
+                      <div style={{ position: 'relative' }} className="flex-shrink-0">
                         <button
-                          onClick={() => startEdit(idx)}
-                          className="action-btn w-9 h-9 flex items-center justify-center rounded-xl"
-                          style={{ background: theme.surface, color: theme.secondary }}
-                          aria-label={`Edit ${cat.name}`}
+                          onClick={() => setOpenMenuIdx(openMenuIdx === idx ? null : idx)}
+                          className="action-btn w-8 h-8 flex items-center justify-center rounded-xl"
+                          style={{
+                            color: theme.textMuted,
+                            background: openMenuIdx === idx ? theme.inputBg : 'transparent',
+                          }}
+                          aria-label={`Options for ${cat.name}`}
                         >
-                          <Pencil size={16} />
+                          <MoreVertical size={17} />
                         </button>
-                        <button
-                          onClick={() => setConfirmDeleteIdx(idx)}
-                          className="action-btn w-9 h-9 flex items-center justify-center rounded-xl"
-                          style={{ background: theme.dangerSurface, color: '#ef4444' }}
-                          aria-label={`Delete ${cat.name}`}
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </>
+                        {openMenuIdx === idx && (
+                          <div
+                            className="absolute right-0 rounded-2xl overflow-hidden"
+                            style={{
+                              top: 'calc(100% + 6px)',
+                              background: theme.cardBg,
+                              boxShadow: `0 4px 24px rgba(0,0,0,0.18), 0 0 0 1px ${theme.border}`,
+                              zIndex: 20,
+                              minWidth: '130px',
+                            }}
+                          >
+                            <button
+                              onClick={() => startEdit(idx)}
+                              className="expense-menu-item w-full flex items-center gap-2.5 px-4 py-3 text-sm font-medium"
+                              style={{ color: theme.text }}
+                            >
+                              <Pencil size={14} /> Edit
+                            </button>
+                            <div style={{ height: '1px', background: theme.border }} />
+                            <button
+                              onClick={() => { setConfirmDeleteIdx(idx); setOpenMenuIdx(null) }}
+                              className="expense-menu-item danger w-full flex items-center gap-2.5 px-4 py-3 text-sm font-medium"
+                              style={{ color: '#ef4444' }}
+                            >
+                              <Trash2 size={14} /> Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 )}

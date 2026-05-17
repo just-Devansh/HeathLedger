@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { Plus, Pencil, Trash2, Check, X, Repeat } from 'lucide-react'
+import { Plus, Pencil, Trash2, Check, X, Repeat, MoreVertical } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { getIcon } from '../utils/icons'
 import { recurrenceLabel } from '../utils/recurringExpenses'
 import AddRecurringModal from './AddRecurringModal'
 
-function RuleCard({ rule, categories, onToggle, onEdit, onDelete, confirmDeleting, onConfirmDelete, onCancelDelete }) {
+function RuleCard({ rule, categories, onToggle, onEdit, onDelete, confirmDeleting, onConfirmDelete, onCancelDelete, menuOpen, onMenuToggle }) {
   const { theme } = useTheme()
   const cat = categories.find(c => c.id === rule.categoryId)
 
@@ -17,6 +17,7 @@ function RuleCard({ rule, categories, onToggle, onEdit, onDelete, confirmDeletin
         boxShadow: `0 2px 12px rgba(${theme.shadowRgb},0.08)`,
         opacity: rule.active ? 1 : 0.55,
         position: 'relative',
+        zIndex: confirmDeleting || menuOpen ? 52 : 'auto',
         transition: 'opacity 0.2s ease',
       }}
     >
@@ -40,27 +41,27 @@ function RuleCard({ rule, categories, onToggle, onEdit, onDelete, confirmDeletin
 
       {/* Actions */}
       {confirmDeleting ? (
-        <div className="confirm-popup flex gap-2 flex-shrink-0">
+        <div className="confirm-popup flex gap-1.5 flex-shrink-0">
           <button
             onClick={onConfirmDelete}
-            className="action-btn w-9 h-9 flex items-center justify-center rounded-xl"
+            className="action-btn w-8 h-8 flex items-center justify-center rounded-xl"
             style={{ background: '#22c55e', color: '#ffffff' }}
             aria-label="Confirm delete"
           >
-            <Check size={18} />
+            <Check size={16} />
           </button>
           <button
             onClick={onCancelDelete}
-            className="action-btn w-9 h-9 flex items-center justify-center rounded-xl"
+            className="action-btn w-8 h-8 flex items-center justify-center rounded-xl"
             style={{ background: theme.inputBg, color: theme.textMuted }}
             aria-label="Cancel delete"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
       ) : (
-        <div className="flex items-center gap-1.5 flex-shrink-0">
-          {/* Enable / disable toggle */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Enable / disable toggle — always visible */}
           <button
             onClick={onToggle}
             className="relative rounded-full transition-colors active:scale-95 flex-shrink-0"
@@ -81,23 +82,48 @@ function RuleCard({ rule, categories, onToggle, onEdit, onDelete, confirmDeletin
             />
           </button>
 
-          <button
-            onClick={onEdit}
-            className="action-btn w-9 h-9 flex items-center justify-center rounded-xl"
-            style={{ background: theme.surface, color: theme.secondary }}
-            aria-label={`Edit ${rule.note || 'rule'}`}
-          >
-            <Pencil size={16} />
-          </button>
-
-          <button
-            onClick={onDelete}
-            className="action-btn w-9 h-9 flex items-center justify-center rounded-xl"
-            style={{ background: theme.dangerSurface, color: '#ef4444' }}
-            aria-label={`Delete ${rule.note || 'rule'}`}
-          >
-            <Trash2 size={16} />
-          </button>
+          {/* 3-dot overflow menu */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={onMenuToggle}
+              className="action-btn w-8 h-8 flex items-center justify-center rounded-xl"
+              style={{
+                color: theme.textMuted,
+                background: menuOpen ? theme.inputBg : 'transparent',
+              }}
+              aria-label={`Options for ${rule.note || 'rule'}`}
+            >
+              <MoreVertical size={17} />
+            </button>
+            {menuOpen && (
+              <div
+                className="absolute right-0 rounded-2xl overflow-hidden"
+                style={{
+                  top: 'calc(100% + 6px)',
+                  background: theme.cardBg,
+                  boxShadow: `0 4px 24px rgba(0,0,0,0.18), 0 0 0 1px ${theme.border}`,
+                  zIndex: 20,
+                  minWidth: '130px',
+                }}
+              >
+                <button
+                  onClick={onEdit}
+                  className="expense-menu-item w-full flex items-center gap-2.5 px-4 py-3 text-sm font-medium"
+                  style={{ color: theme.text }}
+                >
+                  <Pencil size={14} /> Edit
+                </button>
+                <div style={{ height: '1px', background: theme.border }} />
+                <button
+                  onClick={onDelete}
+                  className="expense-menu-item danger w-full flex items-center gap-2.5 px-4 py-3 text-sm font-medium"
+                  style={{ color: '#ef4444' }}
+                >
+                  <Trash2 size={14} /> Delete
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </li>
@@ -109,6 +135,7 @@ export default function RecurringManager({ rules, categories, onChange }) {
   const [editingRule, setEditingRule] = useState(null)
   const [addingNew, setAddingNew]     = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const [openMenuId, setOpenMenuId] = useState(null)
 
   function handleSave(ruleData) {
     if (editingRule) {
@@ -142,12 +169,12 @@ export default function RecurringManager({ rules, categories, onChange }) {
 
   return (
     <>
-      {/* Backdrop to close delete confirmation */}
-      {confirmDeleteId !== null && (
+      {/* Backdrop to close menus / delete confirmation */}
+      {(confirmDeleteId !== null || openMenuId !== null) && (
         <div
           className="fixed inset-0"
           style={{ zIndex: 51 }}
-          onClick={() => setConfirmDeleteId(null)}
+          onClick={() => { setConfirmDeleteId(null); setOpenMenuId(null) }}
         />
       )}
 
@@ -198,11 +225,13 @@ export default function RecurringManager({ rules, categories, onChange }) {
               rule={rule}
               categories={categories}
               onToggle={() => handleToggle(rule.id)}
-              onEdit={() => { setConfirmDeleteId(null); setEditingRule(rule) }}
-              onDelete={() => setConfirmDeleteId(rule.id)}
+              onEdit={() => { setConfirmDeleteId(null); setOpenMenuId(null); setEditingRule(rule) }}
+              onDelete={() => { setConfirmDeleteId(rule.id); setOpenMenuId(null) }}
               confirmDeleting={confirmDeleteId === rule.id}
               onConfirmDelete={() => handleDelete(rule.id)}
               onCancelDelete={() => setConfirmDeleteId(null)}
+              menuOpen={openMenuId === rule.id}
+              onMenuToggle={() => setOpenMenuId(openMenuId === rule.id ? null : rule.id)}
             />
           ))
         )}
