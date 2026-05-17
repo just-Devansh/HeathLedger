@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
-import { Pencil, Trash2, Check, X, Moon, Sun } from 'lucide-react'
+import { Pencil, Trash2, Check, X, Moon, Sun, Plus } from 'lucide-react'
 import { loadCategories, saveCategories } from '../utils/storage'
 import { useTheme } from '../context/ThemeContext'
 import { THEME_META } from '../utils/theme'
 import { CATEGORY_ICONS, ICON_OPTIONS, getIcon } from '../utils/icons'
 import BackupSection from './BackupSection'
 import RecurringManager from './RecurringManager'
+import AddCategoryModal from './AddCategoryModal'
 
 function formatIconLabel(name) {
   return name.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
@@ -89,24 +90,15 @@ function InlineIconPicker({ selected, onSelect, theme }) {
 export default function CategoryManager({ onClose, onRestoreComplete, recurringRules, onRecurringRulesChange }) {
   const { theme, themeName, setTheme, isDark, toggleDark } = useTheme()
   const [categories, setCategories] = useState(() => loadCategories())
-  const [newName, setNewName] = useState('')
-  const [newIcon, setNewIcon] = useState('box')
   const [editingIdx, setEditingIdx] = useState(null)
   const [editName, setEditName] = useState('')
   const [editIcon, setEditIcon] = useState('box')
   const [confirmDeleteIdx, setConfirmDeleteIdx] = useState(null)
+  const [addingCategory, setAddingCategory] = useState(false)
 
   function persist(cats) {
     setCategories(cats)
     saveCategories(cats)
-  }
-
-  function handleAdd() {
-    const name = newName.trim()
-    if (!name || categories.some(c => c.name === name)) return
-    persist([...categories, { id: crypto.randomUUID(), name, icon: newIcon }])
-    setNewName('')
-    setNewIcon('box')
   }
 
   function handleDelete(idx) {
@@ -240,16 +232,31 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
           </div>
 
           {/* Categories list */}
-          <div className="px-6 pt-4">
-            <p className="text-xs uppercase tracking-wide font-medium mb-3" style={{ color: theme.textFaint }}>
-              Categories
-            </p>
+          <div className="px-6 pt-5 pb-3" style={{ borderTop: `1px solid ${theme.border}` }}>
+            <div className="flex items-center justify-between">
+              <p className="text-xs uppercase tracking-wide font-medium" style={{ color: theme.textFaint }}>
+                Categories
+              </p>
+              <button
+                onClick={() => setAddingCategory(true)}
+                className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold active:scale-95 transition-transform"
+                style={{
+                  borderRadius: 'var(--r-element)',
+                  background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
+                  color: '#ffffff',
+                }}
+                aria-label="Add category"
+              >
+                <Plus size={13} />
+                Add
+              </button>
+            </div>
           </div>
 
           <ul className="px-6 pb-2 flex flex-col gap-2">
             {categories.length === 0 && (
               <p className="text-sm text-center py-8" style={{ color: theme.textFaint }}>
-                No categories yet. Add one below.
+                No categories yet. Tap Add to create one.
               </p>
             )}
             {categories.map((cat, idx) => (
@@ -359,37 +366,18 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
           <BackupSection onRestoreComplete={onRestoreComplete} />
         </div>
 
-        {/* Add new category */}
-        <div
-          className="px-6 py-4"
-          style={{ borderTop: `1px solid ${theme.border}`, background: theme.cardBg }}
-        >
-          <p className="text-xs uppercase tracking-wide font-medium mb-2" style={{ color: theme.textFaint }}>
-            New Category
-          </p>
-          <div className="flex items-center gap-2">
-            <InlineIconPicker selected={newIcon} onSelect={setNewIcon} theme={theme} />
-            <input
-              type="text"
-              placeholder="Category name"
-              value={newName}
-              onChange={e => setNewName(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') handleAdd() }}
-              className="flex-1 px-4 py-3 rounded-xl text-sm outline-none"
-              style={{ background: theme.inputBg, color: theme.text, border: `1px solid ${theme.border}` }}
-            />
-            <button
-              onClick={handleAdd}
-              disabled={!newName.trim()}
-              className="px-5 py-3 rounded-xl text-sm font-semibold text-white disabled:opacity-30 active:scale-95 transition-transform flex-shrink-0"
-              style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})` }}
-            >
-              Add
-            </button>
-          </div>
-        </div>
-
       </div>
+
+      {addingCategory && (
+        <AddCategoryModal
+          existingNames={categories.map(c => c.name)}
+          onSave={({ name, icon }) => {
+            persist([...categories, { id: crypto.randomUUID(), name, icon }])
+            setAddingCategory(false)
+          }}
+          onClose={() => setAddingCategory(false)}
+        />
+      )}
     </div>
   )
 }

@@ -162,8 +162,9 @@ export default function RecurringManager({ rules, categories, onChange }) {
           </div>
           <button
             onClick={() => { setEditingRule(null); setAddingNew(true) }}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold active:scale-95 transition-transform"
+            className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold active:scale-95 transition-transform"
             style={{
+              borderRadius: 'var(--r-element)',
               background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
               color: '#ffffff',
             }}
