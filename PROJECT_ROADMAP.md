@@ -87,3 +87,10 @@ Sequential log of significant changes, features, and fixes.
 ## Responsive
 
 - **Summary breakdown responsive 2-col** — category breakdown on Summary page switches to 2-column grid at `md` (768px+); stays single column on mobile to prevent text cramping
+
+## Polish & Fixes (post-roadmap session)
+
+- **Floating nav border** — added 1px `theme.border` outline to the bottom nav container for visual separation from dark cards beneath it
+- **Nav border crash fix** — hotfixed white-screen crash caused by `isDark` being out of scope in App.jsx; switched to `theme.border` which is always available
+- **Avg Daily Spend** — export stat chip changed from avg-per-entry to avg daily spend (total ÷ days elapsed this month); label updated to "Avg Daily Spend"
+- **Exclude most expensive day from avg** — most expensive day is subtracted from the daily average calculation to prevent rent day from inflating the metric
