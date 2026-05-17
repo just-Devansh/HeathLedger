@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { MoreVertical, Pencil, Trash2, Check, X } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { getIcon } from '../utils/icons'
+import { dayMonthLabel } from '../utils/dateFormat'
 
 function getDayLabel(isoDate) {
   const d = new Date(isoDate)
@@ -13,7 +14,7 @@ function getDayLabel(isoDate) {
 
   if (dayStart.getTime() === todayStart.getTime()) return 'Today'
   if (dayStart.getTime() === yesterdayStart.getTime()) return 'Yesterday'
-  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+  return dayMonthLabel(d)
 }
 
 function formatAmount(n) {

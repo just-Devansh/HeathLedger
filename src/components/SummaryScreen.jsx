@@ -3,11 +3,7 @@ import { Wallet, Download } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { getIcon } from '../utils/icons'
 import PageHeader from './PageHeader'
-
-function currentMonthLabel() {
-  const d = new Date()
-  return `${d.toLocaleDateString('en-IN', { month: 'long' })} • ${d.getFullYear()}`
-}
+import { monthYearLabel } from '../utils/dateFormat'
 
 function formatAmount(n) {
   return n.toLocaleString('en-IN')
@@ -61,7 +57,7 @@ export default function SummaryScreen({ expenses, categories }) {
         animate
         label="Heath Ledger ✦"
         title="Phirse Kharcha?"
-        subtitle={currentMonthLabel()}
+        subtitle={monthYearLabel(new Date())}
         right={
           <button
             onClick={handleDownload}

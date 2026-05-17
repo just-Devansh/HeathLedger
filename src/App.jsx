@@ -9,6 +9,7 @@ import CategoryManager from './components/CategoryManager'
 import RadialMenu from './components/RadialMenu'
 import HistoryScreen from './components/HistoryScreen'
 import PageHeader from './components/PageHeader'
+import { monthYearLabel } from './utils/dateFormat'
 
 const FILTERS = ['Today', 'Week', 'Month']
 
@@ -27,8 +28,7 @@ function filterExpenses(expenses, filter) {
 }
 
 function currentMonth() {
-  const d = new Date()
-  return `${d.toLocaleDateString('en-IN', { month: 'long' })} • ${d.getFullYear()}`
+  return monthYearLabel(new Date())
 }
 
 function ListIcon({ active, color, muted }) {

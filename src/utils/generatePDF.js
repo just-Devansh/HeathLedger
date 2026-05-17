@@ -1,20 +1,13 @@
 import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
+import { monthYearLabel, monthName, fullDateLabel } from './dateFormat'
 
 function fmt(n) {
   return '₹' + Math.round(n).toLocaleString('en-IN')
 }
 
-function monthLabel(date) {
-  return `${date.toLocaleDateString('en-IN', { month: 'long' })} • ${date.getFullYear()}`
-}
-
 function monthSlug(date) {
-  return (
-    date.toLocaleDateString('en-IN', { month: 'long' }).toLowerCase() +
-    '-' +
-    date.getFullYear()
-  )
+  return monthName(date).toLowerCase() + '-' + date.getFullYear()
 }
 
 function buildTemplate({ breakdown, total, monthExpenses, theme, now }) {
@@ -34,9 +27,7 @@ function buildTemplate({ breakdown, total, monthExpenses, theme, now }) {
   const pjs = `'Plus Jakarta Sans', system-ui, sans-serif`
   const sg  = `'Space Grotesk', system-ui, sans-serif`
 
-  const genDate = now.toLocaleDateString('en-IN', {
-    day: 'numeric', month: 'long', year: 'numeric',
-  })
+  const genDate = fullDateLabel(now)
 
   const avgPerEntry = monthExpenses.length > 0
     ? fmt(total / monthExpenses.length)
@@ -168,7 +159,7 @@ function buildTemplate({ breakdown, total, monthExpenses, theme, now }) {
           font-weight: 500;
           color: ${muted};
           margin: 0;
-        ">${monthLabel(now)}</p>
+        ">${monthYearLabel(now)}</p>
       </div>
 
       <div style="height: 1px; background: ${divider}; margin-bottom: 36px;"></div>
