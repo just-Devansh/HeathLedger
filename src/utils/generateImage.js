@@ -43,7 +43,9 @@ function buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, n
   const maxDayLabel = maxDayEntry ? dayMonthLabel(maxDayEntry.date).toUpperCase() : '—'
   const maxDayAmt   = maxDayEntry ? fmt(maxDayEntry.total) : '—'
   const daysElapsed = now.getDate()
-  const avgExpense  = daysElapsed > 0 ? fmt(total / daysElapsed) : '—'
+  const avgExpense  = daysElapsed > 1
+    ? fmt((total - (maxDayEntry?.total ?? 0)) / (daysElapsed - 1))
+    : '—'
 
   function statChip({ topLabel, value, sub }) {
     return `
