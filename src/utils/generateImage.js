@@ -19,8 +19,9 @@ function buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, n
   const divider = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)'
   const barBg   = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'
 
-  const pjs = `'Plus Jakarta Sans', system-ui, sans-serif`
-  const sg  = `'Space Grotesk', system-ui, sans-serif`
+  // Use only system fonts — Google Fonts may not load in off-screen DOM
+  const pjs = `'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`
+  const sg  = `'Space Grotesk', system-ui, -apple-system, sans-serif`
 
   const avgPerEntry = monthExpenses.length > 0 ? fmt(total / monthExpenses.length) : '—'
   const genDate = fullDateLabel(now)
@@ -34,7 +35,7 @@ function buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, n
       flex: 1;
       background: ${cardBg};
       border-radius: 14px;
-      padding: 18px 12px;
+      padding: 18px 12px 20px;
       border: 1px solid ${border};
       text-align: center;
       box-sizing: border-box;
@@ -43,62 +44,70 @@ function buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, n
         font-family: ${sg};
         font-size: 22px;
         font-weight: 700;
+        line-height: 1.3;
         color: ${text};
         margin: 0;
         letter-spacing: -0.025em;
-        line-height: 1;
       ">${value}</p>
       <p style="
         font-family: ${pjs};
         font-size: 9px;
         font-weight: 600;
+        line-height: 1.4;
         color: ${muted};
-        margin: 7px 0 0;
+        margin: 8px 0 0;
         letter-spacing: 0.08em;
         text-transform: uppercase;
       ">${label}</p>
     </div>
   `).join('')
 
+  // Category name uses a wrapper div for overflow-hidden so the <p> itself is never clipped
   const categoryRows = breakdown.map(({ name, amount, percentage }) => `
     <div style="
-      padding: 16px 18px;
+      padding: 18px 18px 20px;
       background: ${cardBg};
       border-radius: 14px;
       border: 1px solid ${border};
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       box-sizing: border-box;
     ">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <div style="min-width: 0; flex: 1; margin-right: 12px;">
-          <p style="
-            font-family: ${pjs};
-            font-size: 13px;
-            font-weight: 700;
-            color: ${text};
-            margin: 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-          ">${name}</p>
+      <div style="
+        display: table;
+        width: 100%;
+        table-layout: fixed;
+        margin-bottom: 12px;
+      ">
+        <div style="display: table-cell; vertical-align: middle; width: 100%;">
+          <div style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
+            <span style="
+              font-family: ${pjs};
+              font-size: 14px;
+              font-weight: 700;
+              line-height: 1.5;
+              color: ${text};
+              letter-spacing: -0.01em;
+            ">${name}</span>
+          </div>
           <p style="
             font-family: ${pjs};
             font-size: 10px;
             font-weight: 500;
+            line-height: 1.5;
             color: ${muted};
-            margin: 3px 0 0;
+            margin: 2px 0 0;
           ">${percentage.toFixed(1)}%</p>
         </div>
-        <p style="
-          font-family: ${sg};
-          font-size: 14px;
-          font-weight: 700;
-          color: ${accent};
-          margin: 0;
-          white-space: nowrap;
-          flex-shrink: 0;
-          letter-spacing: -0.01em;
-        ">${fmt(amount)}</p>
+        <div style="display: table-cell; vertical-align: middle; white-space: nowrap; padding-left: 14px; width: 1%;">
+          <span style="
+            font-family: ${sg};
+            font-size: 15px;
+            font-weight: 700;
+            line-height: 1.4;
+            color: ${accent};
+            letter-spacing: -0.01em;
+          ">${fmt(amount)}</span>
+        </div>
       </div>
       <div style="height: 3px; background: ${barBg}; border-radius: 999px; overflow: hidden;">
         <div style="
@@ -116,7 +125,7 @@ function buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, n
       background: ${bg};
       width: 540px;
       box-sizing: border-box;
-      padding: 52px 46px 48px;
+      padding: 52px 46px 52px;
       font-family: ${pjs};
       position: relative;
     ">
@@ -127,6 +136,7 @@ function buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, n
           font-family: ${pjs};
           font-size: 9px;
           font-weight: 700;
+          line-height: 1.5;
           letter-spacing: 0.18em;
           color: ${accent};
           text-transform: uppercase;
@@ -136,27 +146,28 @@ function buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, n
           font-family: ${sg};
           font-size: 36px;
           font-weight: 800;
+          line-height: 1.1;
           color: ${text};
-          margin: 0 0 8px;
+          margin: 0 0 10px;
           letter-spacing: -0.03em;
-          line-height: 1.05;
         ">Phirse Kharcha?</h1>
         <p style="
           font-family: ${pjs};
           font-size: 13px;
           font-weight: 500;
+          line-height: 1.5;
           color: ${muted};
           margin: 0;
         ">${monthYearLabel(now)}</p>
       </div>
 
-      <div style="height: 1px; background: ${divider}; margin-bottom: 24px;"></div>
+      <div style="height: 1px; background: ${divider}; margin-bottom: 26px;"></div>
 
       <!-- Hero total card -->
       <div style="
         background: ${gradientBg};
         border-radius: 20px;
-        padding: 38px 32px;
+        padding: 38px 32px 40px;
         margin-bottom: 16px;
         text-align: center;
       ">
@@ -164,6 +175,7 @@ function buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, n
           font-family: ${pjs};
           font-size: 9px;
           font-weight: 700;
+          line-height: 1.5;
           letter-spacing: 0.14em;
           color: rgba(255,255,255,0.55);
           text-transform: uppercase;
@@ -173,18 +185,19 @@ function buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, n
           font-family: ${sg};
           font-size: 54px;
           font-weight: 700;
+          line-height: 1.1;
           color: #ffffff;
           margin: 0;
           letter-spacing: -0.025em;
-          line-height: 1;
         ">${fmt(total)}</p>
         ${breakdown[0] ? `
           <p style="
             font-family: ${pjs};
             font-size: 11px;
             font-weight: 500;
+            line-height: 1.5;
             color: rgba(255,255,255,0.55);
-            margin: 14px 0 0;
+            margin: 16px 0 0;
             letter-spacing: 0.01em;
           ">Biggest: ${breakdown[0].name} — ${fmt(breakdown[0].amount)}</p>
         ` : ''}
@@ -202,6 +215,7 @@ function buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, n
           font-family: ${pjs};
           font-size: 9px;
           font-weight: 700;
+          line-height: 1.5;
           letter-spacing: 0.14em;
           color: ${muted};
           text-transform: uppercase;
@@ -213,25 +227,31 @@ function buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, n
 
       <!-- Footer -->
       <div style="height: 1px; background: ${divider}; margin-bottom: 18px;"></div>
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <p style="
-          font-family: ${pjs};
-          font-size: 10px;
-          font-weight: 500;
-          color: ${faint};
-          margin: 0;
-          letter-spacing: 0.02em;
-        ">Generated on ${genDate}</p>
-        <p style="
-          font-family: ${pjs};
-          font-size: 9px;
-          font-weight: 700;
-          color: ${accent};
-          margin: 0;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          opacity: 0.7;
-        ">Heath Ledger</p>
+      <div style="display: table; width: 100%;">
+        <div style="display: table-cell; vertical-align: middle;">
+          <p style="
+            font-family: ${pjs};
+            font-size: 10px;
+            font-weight: 500;
+            line-height: 1.5;
+            color: ${faint};
+            margin: 0;
+            letter-spacing: 0.02em;
+          ">Generated on ${genDate}</p>
+        </div>
+        <div style="display: table-cell; vertical-align: middle; text-align: right;">
+          <p style="
+            font-family: ${pjs};
+            font-size: 9px;
+            font-weight: 700;
+            line-height: 1.5;
+            color: ${accent};
+            margin: 0;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            opacity: 0.7;
+          ">Heath Ledger</p>
+        </div>
       </div>
 
     </div>
@@ -277,6 +297,10 @@ export async function generateMonthlyImage({ expenses, categories, theme, isDark
 
   try {
     const el = container.firstElementChild
+
+    // Wait a tick for layout to settle before measuring
+    await new Promise(r => setTimeout(r, 50))
+
     const canvas = await html2canvas(el, {
       scale: 2,
       useCORS: true,
@@ -284,7 +308,9 @@ export async function generateMonthlyImage({ expenses, categories, theme, isDark
       backgroundColor: bgColor,
       logging: false,
       width: 540,
-      height: el.offsetHeight || 800,
+      height: el.scrollHeight,
+      windowWidth: 540,
+      windowHeight: el.scrollHeight,
     })
 
     const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
