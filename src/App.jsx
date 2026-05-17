@@ -480,7 +480,7 @@ export default function App() {
           WebkitBackdropFilter: 'blur(12px)',
           borderRadius: 'var(--r-shell)',
           boxShadow: theme.glassShadow,
-          border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.07)'}`,
+          border: `1px solid ${theme.border}`,
         }}
       >
         <button
