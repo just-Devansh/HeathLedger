@@ -1,5 +1,5 @@
 import html2canvas from 'html2canvas'
-import { monthYearLabel, fullDateLabel } from './dateFormat'
+import { monthYearLabel, fullDateLabel, dayMonthLabel } from './dateFormat'
 
 function fmt(n) {
   return '₹' + Math.round(n).toLocaleString('en-IN')
@@ -26,51 +26,77 @@ function buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, n
   const pjs = `'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`
   const sg  = `'Space Grotesk', system-ui, -apple-system, sans-serif`
 
-  const avgPerEntry = monthExpenses.length > 0 ? fmt(total / monthExpenses.length) : '—'
   const genDate = fullDateLabel(now)
 
   // Switch to 2-column grid when there are many categories
   const twoCol = breakdown.length > 5
 
+  // Most expensive day
+  const byDay = {}
+  for (const exp of monthExpenses) {
+    const d = new Date(exp.date)
+    const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+    if (!byDay[key]) byDay[key] = { date: d, total: 0 }
+    byDay[key].total += exp.amount
+  }
+  const maxDayEntry = Object.values(byDay).sort((a, b) => b.total - a.total)[0]
+  const maxDayLabel = maxDayEntry ? dayMonthLabel(maxDayEntry.date).toUpperCase() : '—'
+  const maxDayAmt   = maxDayEntry ? fmt(maxDayEntry.total) : '—'
+  const avgExpense  = monthExpenses.length > 0 ? fmt(total / monthExpenses.length) : '—'
+
+  function statChip({ topLabel, value, sub }) {
+    return `
+      <div style="
+        flex: 1;
+        background: ${cardBg};
+        border-radius: 14px;
+        padding: 16px 14px 18px;
+        border: 1px solid ${border};
+        text-align: center;
+        box-sizing: border-box;
+      ">
+        <p style="
+          font-family: ${pjs};
+          font-size: 8px;
+          font-weight: 700;
+          line-height: 1.4;
+          color: ${muted};
+          margin: 0 0 8px;
+          padding-bottom: 2px;
+          letter-spacing: 0.10em;
+          text-transform: uppercase;
+          display: block;
+        ">${topLabel}</p>
+        <p style="
+          font-family: ${sg};
+          font-size: 20px;
+          font-weight: 700;
+          line-height: 1.3;
+          color: ${text};
+          margin: 0;
+          padding-bottom: 4px;
+          letter-spacing: -0.02em;
+          display: block;
+        ">${value}</p>
+        ${sub ? `<p style="
+          font-family: ${sg};
+          font-size: 13px;
+          font-weight: 700;
+          line-height: 1.4;
+          color: ${accent};
+          margin: 3px 0 0;
+          padding-bottom: 4px;
+          letter-spacing: -0.01em;
+          display: block;
+        ">${sub}</p>` : ''}
+      </div>
+    `
+  }
+
   const statChips = [
-    { value: monthExpenses.length, label: 'Entries' },
-    { value: breakdown.length,     label: 'Categories' },
-    { value: avgPerEntry,          label: 'Avg/Entry' },
-  ].map(({ value, label }) => `
-    <div style="
-      flex: 1;
-      background: ${cardBg};
-      border-radius: 14px;
-      padding: 18px 12px 22px;
-      border: 1px solid ${border};
-      text-align: center;
-      box-sizing: border-box;
-    ">
-      <p style="
-        font-family: ${sg};
-        font-size: 22px;
-        font-weight: 700;
-        line-height: 1.6;
-        color: ${text};
-        margin: 0;
-        padding-bottom: 4px;
-        letter-spacing: -0.025em;
-        display: block;
-      ">${value}</p>
-      <p style="
-        font-family: ${pjs};
-        font-size: 9px;
-        font-weight: 600;
-        line-height: 1.6;
-        color: ${muted};
-        margin: 4px 0 0;
-        padding-bottom: 4px;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        display: block;
-      ">${label}</p>
-    </div>
-  `).join('')
+    statChip({ topLabel: 'Most Expensive Day', value: maxDayLabel, sub: maxDayAmt }),
+    statChip({ topLabel: 'Avg Expense',        value: avgExpense,  sub: null    }),
+  ].join('')
 
   /*
    * Category card:
@@ -226,12 +252,12 @@ function buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, n
           font-family: ${pjs};
           font-size: 9px;
           font-weight: 700;
-          line-height: 1.6;
+          line-height: 1.2;
           letter-spacing: 0.14em;
           color: rgba(255,255,255,0.80);
           text-transform: uppercase;
-          margin: 0 0 8px;
-          padding-bottom: 4px;
+          margin: 0 0 2px;
+          padding-bottom: 2px;
           display: block;
         ">This month's damage</p>
         <p style="
