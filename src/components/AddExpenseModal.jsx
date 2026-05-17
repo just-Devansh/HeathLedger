@@ -18,17 +18,18 @@ function fmtDateDisplay(isoDate) {
   return `${dd}/${mm}/${yyyy}`
 }
 
-// Collapse "Zepto / Blinkit" and "Zepto/Blinkit" to the same key
-function normCat(name) {
-  return name.toLowerCase().replace(/\s*\/\s*/g, '/').trim()
+function normName(n) {
+  return (n || '').toLowerCase().replace(/\s*\/\s*/g, '/').trim()
 }
 
-// Find the actual stored category name that matches `name` after normalization.
-// Returns the stored name (with its original formatting) or falls back to `name`.
-function resolveCategory(name, categories) {
-  if (!name) return name
-  const key = normCat(name)
-  return categories.find(c => normCat(c.name) === key)?.name ?? name
+// Resolve a category name string or ID to a stable category ID.
+// Accepts both old name strings (from quick actions / localStorage) and new IDs.
+function resolveCatId(nameOrId, categories) {
+  if (!nameOrId) return null
+  const byId = categories.find(c => c.id === nameOrId)
+  if (byId) return byId.id
+  const byName = categories.find(c => normName(c.name) === normName(nameOrId))
+  return byName?.id ?? null
 }
 
 export default function AddExpenseModal({ categories, onSave, onClose, editExpense, initialCategory, initialNote }) {
@@ -38,12 +39,14 @@ export default function AddExpenseModal({ categories, onSave, onClose, editExpen
   const [amount, setAmount] = useState(() =>
     isEditing ? String(editExpense.amount) : ''
   )
-  const [category, setCategory] = useState(() => {
-    if (isEditing) return editExpense.category
+  const [categoryId, setCategoryId] = useState(() => {
+    if (isEditing) {
+      return editExpense.categoryId ?? resolveCatId(editExpense.category ?? '', categories)
+    }
     // initialCategory != null covers both null and undefined (loose inequality)
-    // Quick actions pass a string; Custom passes ''; no prefill passes undefined → use localStorage
-    if (initialCategory != null) return resolveCategory(initialCategory, categories)
-    return resolveCategory(localStorage.getItem('heath_ledger_last_category') || '', categories)
+    // Quick actions pass a name string; Custom passes ''; no prefill passes undefined → use localStorage
+    if (initialCategory != null) return resolveCatId(initialCategory, categories)
+    return resolveCatId(localStorage.getItem('heath_ledger_last_category') || '', categories)
   })
   const [note, setNote] = useState(() => isEditing ? editExpense.note : (initialNote || ''))
   const [date, setDate] = useState(() =>
@@ -54,17 +57,17 @@ export default function AddExpenseModal({ categories, onSave, onClose, editExpen
     const val = e.target.value
     setNote(val)
     const inferred = inferCategory(val)
-    if (inferred && !category) setCategory(resolveCategory(inferred, categories))
+    if (inferred && !categoryId) setCategoryId(resolveCatId(inferred, categories))
   }
 
   function handleSubmit(e) {
     e.preventDefault()
-    if (!amount || !category) return
-    if (!isEditing) localStorage.setItem('heath_ledger_last_category', category)
+    if (!amount || !categoryId) return
+    if (!isEditing) localStorage.setItem('heath_ledger_last_category', categoryId)
     onSave({
       id: isEditing ? editExpense.id : crypto.randomUUID(),
       amount: parseFloat(amount),
-      category,
+      categoryId,
       note: note.trim(),
       date: new Date(date).toISOString(),
     })
@@ -148,17 +151,17 @@ export default function AddExpenseModal({ categories, onSave, onClose, editExpen
               <div className="flex flex-wrap gap-2">
                 {categories.map(cat => (
                   <button
-                    key={cat.name}
+                    key={cat.id}
                     type="button"
-                    onClick={() => setCategory(cat.name)}
+                    onClick={() => setCategoryId(cat.id)}
                     className="px-3 py-2 rounded-full text-sm font-medium border transition-colors active:scale-95 flex items-center gap-1.5"
                     style={
-                      category === cat.name
+                      categoryId === cat.id
                         ? { background: theme.primary, color: '#ffffff', borderColor: theme.primary }
                         : { background: theme.surface, color: theme.primary, borderColor: theme.border }
                     }
                   >
-                    {getIcon(cat.icon, { size: 14, color: category === cat.name ? '#ffffff' : theme.primary })}
+                    {getIcon(cat.icon, { size: 14, color: categoryId === cat.id ? '#ffffff' : theme.primary })}
                     {cat.name}
                   </button>
                 ))}
@@ -176,7 +179,7 @@ export default function AddExpenseModal({ categories, onSave, onClose, editExpen
 
             <button
               type="submit"
-              disabled={!amount || !category}
+              disabled={!amount || !categoryId}
               className="py-3.5 rounded-xl text-base font-semibold text-white disabled:opacity-30 active:scale-95 transition-transform"
               style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})` }}
             >

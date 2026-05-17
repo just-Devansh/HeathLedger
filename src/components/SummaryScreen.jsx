@@ -11,14 +11,13 @@ function formatAmount(n) {
 
 export default function SummaryScreen({ expenses, categories }) {
   const { theme, isDark } = useTheme()
-  const iconMap = Object.fromEntries((categories ?? []).map(c => [c.name, c.icon]))
   const [generating, setGenerating] = useState(false)
 
   async function handleDownload() {
     setGenerating(true)
     try {
       const { generateMonthlySummaryPDF } = await import('../utils/generatePDF')
-      await generateMonthlySummaryPDF({ expenses, theme })
+      await generateMonthlySummaryPDF({ expenses, categories, theme })
     } finally {
       setGenerating(false)
     }
@@ -35,19 +34,26 @@ export default function SummaryScreen({ expenses, categories }) {
 
     const byCategory = {}
     for (const exp of monthExpenses) {
-      byCategory[exp.category] = (byCategory[exp.category] || 0) + exp.amount
+      // Group by categoryId for migrated expenses; fall back to category string for legacy.
+      const key = exp.categoryId ?? exp.category ?? 'Unknown'
+      byCategory[key] = (byCategory[key] || 0) + exp.amount
     }
 
+    const catById = Object.fromEntries((categories ?? []).map(c => [c.id, c]))
     const breakdown = Object.entries(byCategory)
-      .map(([name, amount]) => ({
-        name,
-        amount,
-        percentage: total > 0 ? (amount / total) * 100 : 0,
-      }))
+      .map(([key, amount]) => {
+        const cat = catById[key]
+        return {
+          name: cat?.name ?? key,
+          icon: cat?.icon ?? 'box',
+          amount,
+          percentage: total > 0 ? (amount / total) * 100 : 0,
+        }
+      })
       .sort((a, b) => b.amount - a.amount)
 
     return { total, breakdown }
-  }, [expenses])
+  }, [expenses, categories])
 
   const biggest = breakdown[0]
 
@@ -133,7 +139,7 @@ export default function SummaryScreen({ expenses, categories }) {
             Where it all went
           </p>
           <div className="flex flex-col gap-3">
-            {breakdown.map(({ name, amount, percentage }) => {
+            {breakdown.map(({ name, icon, amount, percentage }) => {
               const barBg = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'
               return (
                 <div
@@ -152,7 +158,7 @@ export default function SummaryScreen({ expenses, categories }) {
                         className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0"
                         style={{ background: theme.surface }}
                       >
-                        {getIcon(iconMap[name] ?? 'box', { size: 18, color: theme.primary })}
+                        {getIcon(icon, { size: 18, color: theme.primary })}
                       </span>
                       <div className="min-w-0">
                         <p

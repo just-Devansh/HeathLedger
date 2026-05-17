@@ -40,7 +40,7 @@ function groupByDate(expenses) {
 
 export default function ExpenseList({ expenses, categories, onEdit, onDelete }) {
   const { theme } = useTheme()
-  const iconMap = Object.fromEntries((categories ?? []).map(c => [c.name, c.icon]))
+  const idToCategory = Object.fromEntries((categories ?? []).map(c => [c.id, c]))
   const groups = useMemo(() => groupByDate(expenses), [expenses])
   const tabTotal = useMemo(() => expenses.reduce((sum, e) => sum + e.amount, 0), [expenses])
   const [openMenuId, setOpenMenuId] = useState(null)
@@ -139,11 +139,11 @@ export default function ExpenseList({ expenses, categories, onEdit, onDelete }) 
                       className="w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0"
                       style={{ background: theme.surface }}
                     >
-                      {getIcon(iconMap[exp.category] ?? 'box', { size: 18, color: theme.primary })}
+                      {getIcon(idToCategory[exp.categoryId]?.icon ?? 'box', { size: 18, color: theme.primary })}
                     </span>
                     <div className="min-w-0">
                       <p className="font-semibold text-sm truncate" style={{ color: theme.heading }}>
-                        {exp.category}
+                        {idToCategory[exp.categoryId]?.name ?? exp.category ?? 'Unknown'}
                       </p>
                       {exp.note && (
                         <p className="text-xs mt-0.5 truncate" style={{ color: theme.textMuted }}>{exp.note}</p>

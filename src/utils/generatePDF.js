@@ -240,8 +240,9 @@ function buildTemplate({ breakdown, total, monthExpenses, theme, now }) {
   `
 }
 
-export async function generateMonthlySummaryPDF({ expenses, theme }) {
+export async function generateMonthlySummaryPDF({ expenses, categories, theme }) {
   const now = new Date()
+  const idToCategory = Object.fromEntries((categories ?? []).map(c => [c.id, c]))
 
   const monthExpenses = expenses.filter(exp => {
     const d = new Date(exp.date)
@@ -252,15 +253,19 @@ export async function generateMonthlySummaryPDF({ expenses, theme }) {
 
   const byCategory = {}
   for (const exp of monthExpenses) {
-    byCategory[exp.category] = (byCategory[exp.category] || 0) + exp.amount
+    const key = exp.categoryId ?? exp.category ?? 'Unknown'
+    byCategory[key] = (byCategory[key] || 0) + exp.amount
   }
 
   const breakdown = Object.entries(byCategory)
-    .map(([name, amount]) => ({
-      name,
-      amount,
-      percentage: total > 0 ? (amount / total) * 100 : 0,
-    }))
+    .map(([key, amount]) => {
+      const cat = idToCategory[key]
+      return {
+        name: cat?.name ?? key,
+        amount,
+        percentage: total > 0 ? (amount / total) * 100 : 0,
+      }
+    })
     .sort((a, b) => b.amount - a.amount)
 
   const container = document.createElement('div')

@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { Settings, Clock } from 'lucide-react'
-import { loadExpenses, saveExpenses, loadCategories } from './utils/storage'
+import { loadExpenses, saveExpenses, loadCategories, saveCategories, migrateExpensesToCategoryIds } from './utils/storage'
 import { useTheme } from './context/ThemeContext'
 import AddExpenseModal from './components/AddExpenseModal'
 import ExpenseList from './components/ExpenseList'
@@ -56,6 +56,16 @@ export default function App() {
   const { theme, setTheme, setDark } = useTheme()
   const [expenses, setExpenses] = useState(() => loadExpenses())
   const [categories, setCategories] = useState(() => loadCategories())
+
+  // One-time migration: assign categoryId to expenses that only have a category string.
+  useEffect(() => {
+    const cats = loadCategories()
+    const { expenses: migrated, changed } = migrateExpensesToCategoryIds(loadExpenses(), cats)
+    if (changed) {
+      saveExpenses(migrated)
+      setExpenses(migrated)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const [showModal, setShowModal] = useState(false)
   const [editExpense, setEditExpense] = useState(null)
   const [prefillData, setPrefillData] = useState(null)
@@ -191,7 +201,8 @@ export default function App() {
       : [expense, ...expenses]
     setExpenses(updated)
     saveExpenses(updated)
-    showToast(`${isUpdate ? 'Updated' : 'Added'} ₹${expense.amount} to ${expense.category}`)
+    const catName = categories.find(c => c.id === expense.categoryId)?.name ?? expense.category ?? ''
+    showToast(`${isUpdate ? 'Updated' : 'Added'} ₹${expense.amount} to ${catName}`)
   }
 
   function handleDeleteExpense(id) {
@@ -518,8 +529,15 @@ export default function App() {
         <CategoryManager
           onClose={() => { setCategories(loadCategories()); setShowCategoryManager(false); syncHistoryBack() }}
           onRestoreComplete={(data) => {
-            setExpenses(data.expenses)
-            setCategories(data.categories)
+            // Ensure restored categories have stable IDs, then migrate expenses.
+            const catsWithIds = data.categories.map(c =>
+              c.id ? c : { id: crypto.randomUUID(), ...c }
+            )
+            const { expenses: migratedExpenses } = migrateExpensesToCategoryIds(data.expenses, catsWithIds)
+            saveCategories(catsWithIds)
+            saveExpenses(migratedExpenses)
+            setExpenses(migratedExpenses)
+            setCategories(catsWithIds)
             if (data.settings?.theme) setTheme(data.settings.theme)
             if (data.settings?.darkMode != null) setDark(data.settings.darkMode === 'true')
             setShowCategoryManager(false)

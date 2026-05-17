@@ -23,6 +23,10 @@ const DEFAULT_CATEGORIES = [
   { name: 'Miscellaneous', icon: 'box' },
 ]
 
+function normName(n) {
+  return (n || '').toLowerCase().replace(/\s*\/\s*/g, '/').trim()
+}
+
 export function loadExpenses() {
   try {
     const data = localStorage.getItem(KEY)
@@ -44,22 +48,39 @@ export function loadCategories() {
     if (raw !== null) {
       const parsed = JSON.parse(raw)
       if (!Array.isArray(parsed)) throw new Error('corrupt')
-      return parsed.map(c => {
-        if (typeof c === 'string') return { name: c, icon: 'box' }
-        if (c.emoji && !c.icon) return { name: c.name, icon: EMOJI_TO_ICON[c.emoji] ?? 'box' }
-        return c
+      let changed = false
+      const result = parsed.map(c => {
+        let cat = c
+        if (typeof c === 'string') { cat = { name: c, icon: 'box' }; changed = true }
+        else if (c.emoji && !c.icon) { cat = { name: c.name, icon: EMOJI_TO_ICON[c.emoji] ?? 'box' }; changed = true }
+        if (!cat.id) { cat = { id: crypto.randomUUID(), ...cat }; changed = true }
+        return cat
       })
+      if (changed) localStorage.setItem(CATEGORIES_KEY, JSON.stringify(result))
+      return result
     }
   } catch {}
-  // First launch (or corrupt data) — seed defaults once and persist immediately
-  // so every future read goes through the stored path above, never here again.
-  const seed = DEFAULT_CATEGORIES.map(c => ({ ...c }))
+  // First launch (or corrupt data) — seed defaults with stable IDs and persist immediately.
+  const seed = DEFAULT_CATEGORIES.map(c => ({ id: crypto.randomUUID(), ...c }))
   localStorage.setItem(CATEGORIES_KEY, JSON.stringify(seed))
   return seed
 }
 
 export function saveCategories(categories) {
   localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories))
+}
+
+// Converts expenses that reference categories by name string to reference by categoryId.
+// Safe to call multiple times — skips expenses that already have a categoryId.
+export function migrateExpensesToCategoryIds(expenses, categories) {
+  const nameToId = Object.fromEntries(categories.map(c => [normName(c.name), c.id]))
+  let changed = false
+  const migrated = expenses.map(exp => {
+    if (exp.categoryId != null) return exp
+    changed = true
+    return { ...exp, categoryId: nameToId[normName(exp.category ?? '')] ?? null }
+  })
+  return { expenses: migrated, changed }
 }
 
 const BACKUP_THEME_KEY = 'heath_ledger_theme'
@@ -83,7 +104,7 @@ export function exportBackup() {
 export function validateBackup(data) {
   if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('invalid')
   if (typeof data.version !== 'number') throw new Error('invalid')
-  if (data.version > 1) throw new Error('version')
+  if (data.version > 2) throw new Error('version')
   if (!Array.isArray(data.expenses)) throw new Error('invalid')
   if (!Array.isArray(data.categories)) throw new Error('invalid')
 }

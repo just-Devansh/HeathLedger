@@ -103,7 +103,7 @@ export default function CategoryManager({ onClose, onRestoreComplete }) {
   function handleAdd() {
     const name = newName.trim()
     if (!name || categories.some(c => c.name === name)) return
-    persist([...categories, { name, icon: newIcon }])
+    persist([...categories, { id: crypto.randomUUID(), name, icon: newIcon }])
     setNewName('')
     setNewIcon('box')
   }
@@ -124,7 +124,8 @@ export default function CategoryManager({ onClose, onRestoreComplete }) {
     const name = editName.trim()
     if (!name) { setEditingIdx(null); return }
     const updated = [...categories]
-    updated[idx] = { name, icon: editIcon }
+    // Preserve the stable id so categoryId references in expenses remain valid.
+    updated[idx] = { ...categories[idx], name, icon: editIcon }
     persist(updated)
     setEditingIdx(null)
   }
