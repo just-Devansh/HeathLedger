@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Pencil, Trash2, Check, X, Moon, Sun, Plus, MoreVertical, ChevronDown, ChevronUp } from 'lucide-react'
-import { loadCategories, saveCategories, loadQuickActionIds, saveQuickActionIds } from '../utils/storage'
+import { loadCategories, saveCategories, loadQuickActions, saveQuickActions } from '../utils/storage'
 import { useTheme } from '../context/ThemeContext'
 import { THEME_META } from '../utils/theme'
 import { CATEGORY_ICONS, ICON_OPTIONS, getIcon } from '../utils/icons'
@@ -97,9 +97,10 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
   const [openMenuIdx, setOpenMenuIdx] = useState(null)
   const [addingCategory, setAddingCategory] = useState(false)
   const [showAllCategories, setShowAllCategories] = useState(false)
-  const [quickIds, setQuickIds] = useState(() => loadQuickActionIds())
-  const [quickPickerOpen, setQuickPickerOpen] = useState(false)
-  const quickPickerRef = useRef(null)
+  const [quickActions, setQuickActions] = useState(() => loadQuickActions())
+  const [addingQuick, setAddingQuick] = useState(false)
+  const [quickFormName, setQuickFormName] = useState('')
+  const [quickFormCatId, setQuickFormCatId] = useState('')
 
   const CATEGORY_PREVIEW = 3
   const visibleCategories = showAllCategories ? categories : categories.slice(0, CATEGORY_PREVIEW)
@@ -110,23 +111,18 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
     saveCategories(cats)
   }
 
-  function persistQuick(ids) {
-    setQuickIds(ids)
-    saveQuickActionIds(ids)
+  function persistQuick(actions) {
+    setQuickActions(actions)
+    saveQuickActions(actions)
   }
 
-  useEffect(() => {
-    if (!quickPickerOpen) return
-    function handleOutside(e) {
-      if (quickPickerRef.current && !quickPickerRef.current.contains(e.target)) setQuickPickerOpen(false)
-    }
-    document.addEventListener('mousedown', handleOutside)
-    document.addEventListener('touchstart', handleOutside)
-    return () => {
-      document.removeEventListener('mousedown', handleOutside)
-      document.removeEventListener('touchstart', handleOutside)
-    }
-  }, [quickPickerOpen])
+  function submitQuickForm() {
+    const name = quickFormName.trim()
+    if (!name || !quickFormCatId) return
+    persistQuick([...quickActions, { name, categoryId: quickFormCatId }])
+    setAddingQuick(false)
+    setQuickFormName('')
+  }
 
   function handleDelete(idx) {
     persist(categories.filter((_, i) => i !== idx))
@@ -446,81 +442,97 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
               Quick Actions
             </p>
 
-            <div className="flex flex-wrap gap-2">
-              {quickIds.map(id => {
-                const cat = categories.find(c => c.id === id)
-                if (!cat) return null
-                return (
-                  <div
-                    key={id}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-full"
-                    style={{ background: theme.primary, color: '#fff' }}
-                  >
-                    {getIcon(cat.icon, { size: 13, color: '#fff' })}
-                    <span className="text-sm font-medium" style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {cat.name}
-                    </span>
-                    <button
-                      onClick={() => persistQuick(quickIds.filter(q => q !== id))}
-                      className="flex items-center justify-center active:scale-75 transition-transform"
-                      style={{ color: 'rgba(255,255,255,0.75)', marginLeft: 2, flexShrink: 0 }}
-                      aria-label={`Remove ${cat.name} from quick actions`}
-                    >
-                      <X size={13} />
-                    </button>
-                  </div>
-                )
-              })}
+            <div className="flex flex-col gap-2">
+              {/* Existing quick action chips */}
+              {quickActions.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {quickActions.map((action, idx) => {
+                    const cat = categories.find(c => c.id === action.categoryId)
+                    if (!cat) return null
+                    const label = action.name ?? cat.name
+                    return (
+                      <div
+                        key={idx}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-full"
+                        style={{ background: theme.primary, color: '#fff' }}
+                      >
+                        {getIcon(cat.icon, { size: 13, color: '#fff' })}
+                        <span className="text-sm font-medium" style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {label}
+                        </span>
+                        <button
+                          onClick={() => persistQuick(quickActions.filter((_, i) => i !== idx))}
+                          className="flex items-center justify-center active:scale-75 transition-transform"
+                          style={{ color: 'rgba(255,255,255,0.75)', marginLeft: 2, flexShrink: 0 }}
+                          aria-label={`Remove ${label}`}
+                        >
+                          <X size={13} />
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
 
-              {quickIds.length < 4 && (
-                <div ref={quickPickerRef} style={{ position: 'relative' }}>
+              {/* Add button */}
+              {quickActions.length < 4 && !addingQuick && (
+                <div>
                   <button
-                    onClick={() => setQuickPickerOpen(v => !v)}
+                    onClick={() => { setAddingQuick(true); setQuickFormName(''); setQuickFormCatId(categories[0]?.id ?? '') }}
                     className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium active:scale-95 transition-transform"
-                    style={{
-                      border: `1.5px dashed ${theme.border}`,
-                      color: theme.textMuted,
-                      background: 'transparent',
-                    }}
+                    style={{ border: `1.5px dashed ${theme.border}`, color: theme.textMuted, background: 'transparent' }}
                   >
                     <Plus size={13} />
-                    Add
+                    Add shortcut
                   </button>
+                </div>
+              )}
 
-                  {quickPickerOpen && (
-                    <div
-                      className="absolute left-0 rounded-2xl overflow-hidden"
-                      style={{
-                        bottom: 'calc(100% + 6px)',
-                        background: theme.cardBg,
-                        boxShadow: `0 4px 24px rgba(0,0,0,0.18), 0 0 0 1px ${theme.border}`,
-                        zIndex: 60,
-                        minWidth: 190,
-                        maxHeight: 220,
-                        overflowY: 'auto',
-                      }}
-                    >
-                      {categories.filter(c => !quickIds.includes(c.id)).length === 0 ? (
-                        <p className="px-4 py-3 text-sm" style={{ color: theme.textFaint }}>
-                          All categories added
-                        </p>
-                      ) : (
-                        categories
-                          .filter(c => !quickIds.includes(c.id))
-                          .map(cat => (
-                            <button
-                              key={cat.id}
-                              onClick={() => { persistQuick([...quickIds, cat.id]); setQuickPickerOpen(false) }}
-                              className="expense-menu-item w-full flex items-center gap-2.5 px-4 py-3 text-sm font-medium"
-                              style={{ color: theme.text }}
-                            >
-                              {getIcon(cat.icon, { size: 15, color: theme.primary })}
-                              {cat.name}
-                            </button>
-                          ))
-                      )}
-                    </div>
-                  )}
+              {/* Inline add form */}
+              {addingQuick && (
+                <div
+                  className="flex items-center gap-2 px-4 py-3 rounded-2xl"
+                  style={{ background: theme.cardBg, boxShadow: `0 2px 12px rgba(${theme.shadowRgb},0.08)` }}
+                >
+                  <input
+                    type="text"
+                    placeholder="Name (e.g. Lunch)"
+                    value={quickFormName}
+                    onChange={e => setQuickFormName(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') submitQuickForm(); if (e.key === 'Escape') setAddingQuick(false) }}
+                    className="flex-1 outline-none text-sm font-medium bg-transparent min-w-0"
+                    style={{ color: theme.text, borderBottom: `1px solid ${theme.border}`, padding: '4px 0' }}
+                    autoFocus
+                  />
+                  <select
+                    value={quickFormCatId}
+                    onChange={e => setQuickFormCatId(e.target.value)}
+                    className="outline-none text-sm bg-transparent flex-shrink-0"
+                    style={{ color: theme.text, borderBottom: `1px solid ${theme.border}`, padding: '4px 0', maxWidth: 110, cursor: 'pointer' }}
+                  >
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.id} style={{ background: theme.cardBg }}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={submitQuickForm}
+                    disabled={!quickFormName.trim() || !quickFormCatId}
+                    className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 active:scale-95 transition-transform disabled:opacity-40"
+                    style={{ background: '#22c55e', color: '#ffffff' }}
+                    aria-label="Add shortcut"
+                  >
+                    <Check size={18} />
+                  </button>
+                  <button
+                    onClick={() => setAddingQuick(false)}
+                    className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 active:scale-95 transition-transform"
+                    style={{ background: theme.inputBg, color: theme.textMuted }}
+                    aria-label="Cancel"
+                  >
+                    <X size={18} />
+                  </button>
                 </div>
               )}
             </div>

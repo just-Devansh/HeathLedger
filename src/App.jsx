@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { Settings, Clock } from 'lucide-react'
-import { loadExpenses, saveExpenses, loadCategories, saveCategories, migrateExpensesToCategoryIds, loadRecurringRules, saveRecurringRules, loadQuickActionIds } from './utils/storage'
+import { loadExpenses, saveExpenses, loadCategories, saveCategories, migrateExpensesToCategoryIds, loadRecurringRules, saveRecurringRules, loadQuickActions } from './utils/storage'
 import { syncRecurringExpenses } from './utils/recurringExpenses'
 import { useTheme } from './context/ThemeContext'
 import AddExpenseModal from './components/AddExpenseModal'
@@ -58,7 +58,7 @@ export default function App() {
   const [expenses, setExpenses] = useState(() => loadExpenses())
   const [categories, setCategories] = useState(() => loadCategories())
   const [recurringRules, setRecurringRules] = useState(() => loadRecurringRules())
-  const [quickActionIds, setQuickActionIds] = useState(() => loadQuickActionIds())
+  const [quickActions, setQuickActions] = useState(() => loadQuickActions())
 
   // One-time migration: assign categoryId to expenses that only have a category string.
   useEffect(() => {
@@ -507,7 +507,7 @@ export default function App() {
             onToggle={() => setRadialOpen(o => !o)}
             onActionSelect={handleRadialAction}
             onManualEntry={handleManualEntry}
-            quickActionIds={quickActionIds}
+            quickActions={quickActions}
             categories={categories}
           />
         </div>
@@ -566,7 +566,7 @@ export default function App() {
         <CategoryManager
           recurringRules={recurringRules}
           onRecurringRulesChange={handleRecurringRulesChange}
-          onClose={() => { setCategories(loadCategories()); setQuickActionIds(loadQuickActionIds()); setShowCategoryManager(false); syncHistoryBack() }}
+          onClose={() => { setCategories(loadCategories()); setQuickActions(loadQuickActions()); setShowCategoryManager(false); syncHistoryBack() }}
           onRestoreComplete={(data) => {
             // Ensure restored categories have stable IDs, then migrate expenses.
             const catsWithIds = data.categories.map(c =>

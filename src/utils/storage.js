@@ -109,22 +109,29 @@ function loadQuickActionMap() {
   }
 }
 
-// Returns an ordered array of category UUIDs (max 4) for the radial quick-action menu.
-// On first call migrates from the legacy map format, deduplicating shared UUIDs.
-export function loadQuickActionIds() {
+// Returns an ordered array of quick action objects {name, categoryId} (max 4).
+// Normalises legacy formats on read so old data keeps working.
+export function loadQuickActions() {
   try {
     const raw = localStorage.getItem(QUICK_IDS_KEY)
-    if (raw !== null) return JSON.parse(raw)
-    // Migrate from previous map format: rapido/zepto/lunch/dinner → deduplicated UUID array.
+    if (raw !== null) {
+      return JSON.parse(raw).map(item =>
+        typeof item === 'string'
+          ? { name: null, categoryId: item }   // plain UUID → nameless legacy entry
+          : item
+      )
+    }
+    // Migrate from previous map format: rapido/zepto/lunch/dinner → deduplicated array.
     const oldMap = loadQuickActionMap()
     if (Object.keys(oldMap).length) {
       const seen = new Set()
-      const ids = ['rapido', 'zepto', 'lunch', 'dinner']
+      const actions = ['rapido', 'zepto', 'lunch', 'dinner']
         .map(k => oldMap[k])
         .filter(id => id && !seen.has(id) && seen.add(id))
-      if (ids.length) {
-        localStorage.setItem(QUICK_IDS_KEY, JSON.stringify(ids))
-        return ids
+        .map(id => ({ name: null, categoryId: id }))
+      if (actions.length) {
+        localStorage.setItem(QUICK_IDS_KEY, JSON.stringify(actions))
+        return actions
       }
     }
     return []
@@ -133,8 +140,8 @@ export function loadQuickActionIds() {
   }
 }
 
-export function saveQuickActionIds(ids) {
-  localStorage.setItem(QUICK_IDS_KEY, JSON.stringify(ids.slice(0, 4)))
+export function saveQuickActions(actions) {
+  localStorage.setItem(QUICK_IDS_KEY, JSON.stringify(actions.slice(0, 4)))
 }
 
 const BACKUP_THEME_KEY = 'heath_ledger_theme'

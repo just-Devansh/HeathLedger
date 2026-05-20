@@ -17,7 +17,7 @@ function arcPos(deg) {
   return { x: RADIUS * Math.cos(r), y: RADIUS * Math.sin(r) }
 }
 
-export default function RadialMenu({ isOpen, onToggle, onActionSelect, onManualEntry, quickActionIds = [], categories = [] }) {
+export default function RadialMenu({ isOpen, onToggle, onActionSelect, onManualEntry, quickActions = [], categories = [] }) {
   const { theme, isDark } = useTheme()
 
   useEffect(() => {
@@ -27,15 +27,18 @@ export default function RadialMenu({ isOpen, onToggle, onActionSelect, onManualE
     return () => window.removeEventListener('keydown', onKey)
   }, [isOpen, onToggle])
 
-  // Resolve category objects for each stored ID (skip any that no longer exist).
-  const actions = quickActionIds
-    .map(id => categories.find(c => c.id === id))
+  // Resolve each quick action to its category object; skip any whose category was deleted.
+  const actions = quickActions
+    .map(action => {
+      const cat = categories.find(c => c.id === action.categoryId)
+      return cat ? { name: action.name, cat } : null
+    })
     .filter(Boolean)
     .slice(0, 4)
 
   // Build arc: manual always at 90°, actions at symmetric offsets around it.
   const arcItems = [{ isManual: true, angle: 90 }]
-  actions.forEach((cat, i) => arcItems.push({ cat, angle: 90 + SLOT_OFFSETS[i] }))
+  actions.forEach((action, i) => arcItems.push({ ...action, angle: 90 + SLOT_OFFSETS[i] }))
   arcItems.sort((a, b) => b.angle - a.angle)  // high angle = left side of arc
 
   const n = arcItems.length
@@ -112,8 +115,8 @@ export default function RadialMenu({ isOpen, onToggle, onActionSelect, onManualE
                 </button>
               ) : (
                 <button
-                  onClick={() => onActionSelect({ categoryId: item.cat.id, note: item.cat.name })}
-                  aria-label={item.cat.name}
+                  onClick={() => onActionSelect({ categoryId: item.cat.id, note: item.name ?? item.cat.name })}
+                  aria-label={item.name ?? item.cat.name}
                   style={{
                     width: 52, height: 52, borderRadius: '50%',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -145,7 +148,7 @@ export default function RadialMenu({ isOpen, onToggle, onActionSelect, onManualE
                   maxWidth: 72, overflow: 'hidden', textOverflow: 'ellipsis',
                 }}
               >
-                {item.isManual ? 'Custom' : item.cat.name}
+                {item.isManual ? 'Custom' : (item.name ?? item.cat.name)}
               </span>
             </div>
           </div>
