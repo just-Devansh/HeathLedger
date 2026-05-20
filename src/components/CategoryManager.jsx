@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Pencil, Trash2, Check, X, Moon, Sun, Plus, MoreVertical, ChevronDown, ChevronUp } from 'lucide-react'
-import { loadCategories, saveCategories } from '../utils/storage'
+import { loadCategories, saveCategories, loadQuickActionIds, saveQuickActionIds } from '../utils/storage'
 import { useTheme } from '../context/ThemeContext'
 import { THEME_META } from '../utils/theme'
 import { CATEGORY_ICONS, ICON_OPTIONS, getIcon } from '../utils/icons'
@@ -97,6 +97,9 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
   const [openMenuIdx, setOpenMenuIdx] = useState(null)
   const [addingCategory, setAddingCategory] = useState(false)
   const [showAllCategories, setShowAllCategories] = useState(false)
+  const [quickIds, setQuickIds] = useState(() => loadQuickActionIds())
+  const [quickPickerOpen, setQuickPickerOpen] = useState(false)
+  const quickPickerRef = useRef(null)
 
   const CATEGORY_PREVIEW = 3
   const visibleCategories = showAllCategories ? categories : categories.slice(0, CATEGORY_PREVIEW)
@@ -106,6 +109,24 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
     setCategories(cats)
     saveCategories(cats)
   }
+
+  function persistQuick(ids) {
+    setQuickIds(ids)
+    saveQuickActionIds(ids)
+  }
+
+  useEffect(() => {
+    if (!quickPickerOpen) return
+    function handleOutside(e) {
+      if (quickPickerRef.current && !quickPickerRef.current.contains(e.target)) setQuickPickerOpen(false)
+    }
+    document.addEventListener('mousedown', handleOutside)
+    document.addEventListener('touchstart', handleOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleOutside)
+      document.removeEventListener('touchstart', handleOutside)
+    }
+  }, [quickPickerOpen])
 
   function handleDelete(idx) {
     persist(categories.filter((_, i) => i !== idx))
@@ -418,6 +439,92 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
               )}
             </button>
           )}
+
+          {/* Quick Actions */}
+          <div className="px-6 pt-5 pb-5" style={{ borderTop: `1px solid ${theme.border}` }}>
+            <p className="text-xs uppercase tracking-wide font-medium mb-3" style={{ color: theme.textFaint }}>
+              Quick Actions
+            </p>
+
+            <div className="flex flex-wrap gap-2">
+              {quickIds.map(id => {
+                const cat = categories.find(c => c.id === id)
+                if (!cat) return null
+                return (
+                  <div
+                    key={id}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-full"
+                    style={{ background: theme.primary, color: '#fff' }}
+                  >
+                    {getIcon(cat.icon, { size: 13, color: '#fff' })}
+                    <span className="text-sm font-medium" style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {cat.name}
+                    </span>
+                    <button
+                      onClick={() => persistQuick(quickIds.filter(q => q !== id))}
+                      className="flex items-center justify-center active:scale-75 transition-transform"
+                      style={{ color: 'rgba(255,255,255,0.75)', marginLeft: 2, flexShrink: 0 }}
+                      aria-label={`Remove ${cat.name} from quick actions`}
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                )
+              })}
+
+              {quickIds.length < 4 && (
+                <div ref={quickPickerRef} style={{ position: 'relative' }}>
+                  <button
+                    onClick={() => setQuickPickerOpen(v => !v)}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium active:scale-95 transition-transform"
+                    style={{
+                      border: `1.5px dashed ${theme.border}`,
+                      color: theme.textMuted,
+                      background: 'transparent',
+                    }}
+                  >
+                    <Plus size={13} />
+                    Add
+                  </button>
+
+                  {quickPickerOpen && (
+                    <div
+                      className="absolute left-0 rounded-2xl overflow-hidden"
+                      style={{
+                        bottom: 'calc(100% + 6px)',
+                        background: theme.cardBg,
+                        boxShadow: `0 4px 24px rgba(0,0,0,0.18), 0 0 0 1px ${theme.border}`,
+                        zIndex: 60,
+                        minWidth: 190,
+                        maxHeight: 220,
+                        overflowY: 'auto',
+                      }}
+                    >
+                      {categories.filter(c => !quickIds.includes(c.id)).length === 0 ? (
+                        <p className="px-4 py-3 text-sm" style={{ color: theme.textFaint }}>
+                          All categories added
+                        </p>
+                      ) : (
+                        categories
+                          .filter(c => !quickIds.includes(c.id))
+                          .map(cat => (
+                            <button
+                              key={cat.id}
+                              onClick={() => { persistQuick([...quickIds, cat.id]); setQuickPickerOpen(false) }}
+                              className="expense-menu-item w-full flex items-center gap-2.5 px-4 py-3 text-sm font-medium"
+                              style={{ color: theme.text }}
+                            >
+                              {getIcon(cat.icon, { size: 15, color: theme.primary })}
+                              {cat.name}
+                            </button>
+                          ))
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
 
           <RecurringManager
             rules={recurringRules ?? []}

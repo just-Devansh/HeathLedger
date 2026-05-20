@@ -97,9 +97,10 @@ export function migrateExpensesToCategoryIds(expenses, categories) {
   return { expenses: migrated, changed }
 }
 
-const QUICK_MAP_KEY = 'heath_ledger_quick_map'
+const QUICK_MAP_KEY = 'heath_ledger_quick_map'  // legacy — read-only for migration
+const QUICK_IDS_KEY = 'heath_ledger_quick_actions'
 
-export function loadQuickActionMap() {
+function loadQuickActionMap() {
   try {
     const data = localStorage.getItem(QUICK_MAP_KEY)
     return data ? JSON.parse(data) : {}
@@ -108,29 +109,32 @@ export function loadQuickActionMap() {
   }
 }
 
-export function saveQuickActionMap(map) {
-  localStorage.setItem(QUICK_MAP_KEY, JSON.stringify(map))
+// Returns an ordered array of category UUIDs (max 4) for the radial quick-action menu.
+// On first call migrates from the legacy map format, deduplicating shared UUIDs.
+export function loadQuickActionIds() {
+  try {
+    const raw = localStorage.getItem(QUICK_IDS_KEY)
+    if (raw !== null) return JSON.parse(raw)
+    // Migrate from previous map format: rapido/zepto/lunch/dinner → deduplicated UUID array.
+    const oldMap = loadQuickActionMap()
+    if (Object.keys(oldMap).length) {
+      const seen = new Set()
+      const ids = ['rapido', 'zepto', 'lunch', 'dinner']
+        .map(k => oldMap[k])
+        .filter(id => id && !seen.has(id) && seen.add(id))
+      if (ids.length) {
+        localStorage.setItem(QUICK_IDS_KEY, JSON.stringify(ids))
+        return ids
+      }
+    }
+    return []
+  } catch {
+    return []
+  }
 }
 
-// Resolves quick action IDs → stable category UUIDs.
-// Priority: (1) stored ID still valid, (2) exact name match, (3) prefix match
-// (e.g. "Food" resolves "Food & Drinks" so renames don't break existing mappings).
-export function resolveQuickActionMap(storedMap, categories, quickActionDefs) {
-  const result = {}
-  for (const { id, category } of quickActionDefs) {
-    const stored = storedMap[id]
-    if (stored && categories.find(c => c.id === stored)) {
-      result[id] = stored
-      continue
-    }
-    let cat = categories.find(c => normName(c.name) === normName(category))
-    if (!cat) {
-      const prefix = normName(category)
-      cat = categories.find(c => normName(c.name).startsWith(prefix))
-    }
-    result[id] = cat?.id ?? null
-  }
-  return result
+export function saveQuickActionIds(ids) {
+  localStorage.setItem(QUICK_IDS_KEY, JSON.stringify(ids.slice(0, 4)))
 }
 
 const BACKUP_THEME_KEY = 'heath_ledger_theme'
