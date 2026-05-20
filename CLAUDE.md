@@ -44,7 +44,8 @@ HeathLedger/
 └── src/
     ├── index.css                    # Tailwind base + custom animations (icon-spin, header-animate)
     ├── main.jsx                     # React entry point
-    ├── App.jsx                      # Root — holds expenses state, 3-tab nav, swipe gestures, modals
+    ├── App.jsx                      # Root — holds expenses/categories/quickActions state,
+    │                                #   3-tab nav, swipe gestures, modals, toast
     ├── context/
     │   └── ThemeContext.jsx         # Theme + dark mode state, CSS variable injection
     ├── components/
@@ -56,13 +57,14 @@ HeathLedger/
     │   ├── SummaryScreen.jsx        # Monthly summary: hero card, 2 stat chips, category breakdown
     │   ├── SummaryTable.jsx         # (stub — unused)
     │   ├── HistoryScreen.jsx        # Month-by-month history browser
-    │   ├── CategoryManager.jsx      # Settings modal: theme picker, dark mode, category CRUD, backup
-    │   ├── RecurringManager.jsx     # View/delete recurring expense rules
+    │   ├── CategoryManager.jsx      # Settings modal: appearance, themes, category CRUD,
+    │   │                            #   quick actions config, recurring rules, backup
+    │   ├── RecurringManager.jsx     # View/toggle/delete recurring expense rules
     │   ├── BackupSection.jsx        # JSON export + import for full data backup
-    │   └── RadialMenu.jsx           # Radial quick-action menu (alternative to floating + button)
+    │   └── RadialMenu.jsx           # Dynamic radial quick-action menu (FAB)
     └── utils/
-        ├── storage.js               # loadExpenses/saveExpenses, loadCategories/saveCategories,
-        │                            #   loadRecurring/saveRecurring, backup export/import
+        ├── storage.js               # All localStorage I/O: expenses, categories, recurring,
+        │                            #   quick actions, backup export/import, migration helpers
         ├── categoryMapper.js        # inferCategory(note) → category string (keyword matching)
         ├── dateFormat.js            # monthYearLabel, dayMonthLabel, fullDateLabel helpers
         ├── theme.js                 # buildTheme(), THEME_META, ACCENT_VARIANTS, PAGE_BGS
@@ -100,6 +102,48 @@ Default categories (with UUIDs on first load): Food, Commute, Zepto/Blinkit/Inst
 ```
 Auto-applied each time the app opens via `syncRecurring()`.
 
+**Quick action shortcuts** — key `heath_ledger_quick_actions`:
+```js
+[{ name: string | null, categoryId: string }]  // ordered array, max 4
+```
+- `name` is the display label shown on the radial button and pre-filled as the expense note (e.g. `"Lunch"`, `"Rapido"`). Multiple shortcuts can share the same `categoryId` (e.g. Lunch + Dinner both → Food & Drinks).
+- `name: null` means a legacy migrated entry — falls back to the category name at render time.
+- Previous format (plain UUID strings) is normalised to `{name: null, categoryId}` on load.
+- Managed in Settings → Quick Actions. Loaded into App.jsx state on mount and refreshed when Settings closes.
+
+## Category Reference Rules (IMPORTANT)
+
+**All category references use stable UUIDs, never display name strings.** This is critical:
+
+- Expenses store `categoryId` (UUID). Legacy entries with only `category` (string) are migrated on load via `migrateExpensesToCategoryIds()`.
+- Quick action shortcuts store `categoryId`. Renaming a category never breaks shortcuts.
+- `AddExpenseModal` has `resolveCatId(nameOrId, categories)` which accepts both UUIDs (direct match) and name strings (normalized match) — always passes UUIDs through unchanged.
+- When writing any new code that links to a category, store the `id`, not the `name`.
+
+## Quick Actions System
+
+`RadialMenu.jsx` renders a dynamic arc of up to 4 user-defined shortcuts plus a manual entry button.
+
+**Arc layout:**
+- Manual entry button always at 90° (top-center)
+- Shortcuts fill symmetric SLOT_OFFSETS from 90°: `[+30°, -30°, +60°, -60°]`
+- For 4 shortcuts: `[150°, 120°, manual@90°, 60°, 30°]` — identical to the original hardcoded layout
+- Fewer shortcuts degrade gracefully (arc shrinks, stays balanced)
+- RADIUS = 130px, FAB_Y = 96px from viewport bottom
+
+**Data flow:**
+1. App.jsx loads `quickActions` state from `loadQuickActions()` on mount
+2. Passes `quickActions` + `categories` to `RadialMenu`
+3. RadialMenu resolves each `{name, categoryId}` → category object for icon; skips any whose category was deleted
+4. On tap: calls `onActionSelect({ categoryId, note: action.name ?? cat.name })`
+5. `handleRadialAction` in App.jsx sets `prefillData.category = categoryId` — `AddExpenseModal` resolves by UUID
+6. On Settings close: App.jsx reloads `quickActions` from localStorage
+
+**Adding shortcuts (Settings → Quick Actions):**
+- Inline form: type a name + select a category from a `<select>` element
+- Existing shortcuts shown as removable primary-colored chips displaying `action.name ?? cat.name`
+- Add button hidden once 4 shortcuts are configured
+
 ## Theme System
 
 `src/utils/theme.js` — `buildTheme(themeName, isDark)` merges base + accent variant:
@@ -128,12 +172,11 @@ The primary export action on the Summary page. Generates a shareable PNG via htm
 
 - **Hidden off-screen canvas**: 540px DOM width, captured at `scale: 3` → **1620px PNG output**
 - **Layout**: Header → divider → hero total card → 2 stat chips → category breakdown → footer
-- **Stat chips**: "Most Expensive Day" (date + amount) + "Avg Expense"
+- **Stat chips**: "Most Expensive Day" (date + amount) + "Avg Expense" (most expensive day excluded from avg)
 - **Category layout**: single column (≤5 categories) or 2-column flex-wrap (>5 categories)
 - **Theme-aware**: respects current dark/light mode + all 7 accent colors
 - **Share**: `navigator.share({ files })` on mobile, direct download fallback on desktop
 - **Filename**: `{Month}-{Year}-Report-Heath-Ledger.png` (e.g. `May-2026-Report-Heath-Ledger.png`)
-- **html2canvas gotchas**: all text needs `line-height` + `padding-bottom: 4px` to prevent glyph clipping; `overflow:hidden` for truncation must be on a wrapper div, not the text element itself; use `position:absolute` for the amount column, NOT flexbox/table (html2canvas has layout bugs with both)
 
 ## Key html2canvas Rules (IMPORTANT)
 
@@ -164,6 +207,18 @@ Violating these causes clipping, overflow, or broken layout in the exported imag
 
 Settings header in `CategoryManager.jsx` uses identical styles — keep them in sync.
 
+## Settings Page Structure (`CategoryManager.jsx`)
+
+Sections in order, each separated by `borderTop/borderBottom`:
+1. **Appearance** — dark mode toggle
+2. **Color Theme** — 7 swatch buttons
+3. **Categories** — CRUD list with show-more toggle, inline edit row, MoreVertical menu
+4. **Quick Actions** — removable name chips + inline add form (name input + category `<select>`)
+5. **Recurring Rules** — `RecurringManager` component
+6. **Backup** — `BackupSection` component (JSON export + import)
+
+CategoryManager manages its own local `categories` and `quickActions` state, persisting immediately to localStorage on every mutation. App.jsx reloads both on Settings close.
+
 ## Product Constraints
 
 **Do not build**:
@@ -171,6 +226,7 @@ Settings header in `CategoryManager.jsx` uses identical styles — keep them in 
 - Bank integrations or credit/debit accounting
 - AI insights or complex analytics
 - Nested category systems
+- Budget limits or alerts
 
 **Intentional non-goals**:
 - Backend / cloud sync
@@ -200,3 +256,7 @@ Settings header in `CategoryManager.jsx` uses identical styles — keep them in 
 | Horizontal scroll filter tabs | Done |
 | Settings header consistency | Done |
 | Responsive 2-col summary breakdown (tablet+) | Done |
+| Category rename — all references stay consistent | Done |
+| Customizable radial quick-action shortcuts | Done |
+| Named shortcuts with per-shortcut category tagging | Done |
+| Quick action rename-resilience (UUID-based references) | Done |

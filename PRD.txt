@@ -1,216 +1,159 @@
-You are building a fast, minimal, mobile-first web application for personal expense tracking.
-
-This is NOT a generic finance app. It is a highly opinionated, single-user tool optimized for speed and simplicity.
-
-----------------------------------------
-🧠 CORE PRODUCT IDEA
-----------------------------------------
-
-The user currently tracks expenses in raw text format like:
-
-"1 Apr - 236 (Biriyani) + 45 (Rapido)"
-
-Multiple expenses can exist in one line, separated by "+".
-
-Each expense has:
-- Amount
-- A label (inside brackets), which may include:
-  - Category (implicit)
-  - Vendor (e.g. Zepto, Rapido, Netflix)
-  - Notes (e.g. Lunch, Dinner, Lucky, etc.)
-
-The app must replicate and IMPROVE this workflow digitally.
+HEATH LEDGER — PROJECT ROADMAP
+================================
+Last updated: May 2026
 
 ----------------------------------------
-🎯 PRIMARY GOAL
+PRODUCT VISION
 ----------------------------------------
 
-Allow user to log an expense in under 5 seconds on mobile.
+A fast, minimal, mobile-first PWA expense tracker for a single user.
+Replaces a raw text workflow ("1 Apr - 236 (Biriyani) + 45 (Rapido)")
+with a structured but equally fast UI.
+
+PRIMARY GOAL: Log an expense in under 5 seconds on mobile.
+
+Core principles:
+- Speed over features
+- Personal, opinionated, not generic
+- No backend, no auth, no complexity
+- localStorage only — data stays on device
+- Installable PWA — works offline
 
 ----------------------------------------
-⚡ CORE FEATURES (STRICT MVP)
+WHAT'S BEEN BUILT (SHIPPED)
 ----------------------------------------
 
-1. ADD EXPENSE (MOST IMPORTANT)
+FOUNDATION
+  [x] Vite + React 18 + Tailwind CSS v3 scaffold
+  [x] localStorage persistence (expenses, categories, recurring rules)
+  [x] PWA — installable on Android/iOS, offline-capable via Workbox
+  [x] Browser back-button / history API integration for all modals
 
-- Large "+" floating button
-- On click → open minimal input form
+EXPENSE LOGGING
+  [x] Add Expense bottom-sheet modal
+        - Amount input (autofocused, number pad on mobile)
+        - Category chip selection
+        - Optional note field
+        - Date picker (defaults to today)
+        - Auto-infer category from note keyword (categoryMapper.js)
+        - Remembers last-used category
+  [x] Edit expense (tap any expense in the list)
+  [x] Delete expense (swipe action in list)
+  [x] Expense list with Today / Week / Month filter tabs
+  [x] Swipe gesture to switch filter tabs
 
-Fields:
-- Amount (number, required)
-- Category (required, dropdown or quick select)
-- Note (optional, free text)
-- Date (default = today)
+CATEGORY SYSTEM
+  [x] Default categories with stable UUIDs: Food, Commute,
+      Zepto/Blinkit/Instamart, Transport, Rent/Fixed,
+      Social/Going Out, Shopping, Travel, Miscellaneous
+  [x] Custom category CRUD (add, rename, delete) with icon picker
+  [x] 50+ lucide icons available in picker
+  [x] Category renames reflected everywhere (expenses, summary,
+      radial menu) — all references use stable UUIDs, not name strings
+  [x] Migration: old name-string references migrated to UUIDs on load
 
-UX requirements:
-- Minimal typing
-- Fast interaction
-- Mobile-first design
+RADIAL QUICK-ACTION MENU
+  [x] FAB button opens radial arc with up to 4 shortcuts + manual entry
+  [x] Shortcuts are fully user-configurable (Settings → Quick Actions)
+  [x] Each shortcut has a custom name (e.g. "Lunch") and is tagged to
+      a category — multiple shortcuts can share one category
+      (e.g. Lunch + Dinner both → Food & Drinks)
+  [x] Tapping a shortcut pre-fills note + auto-selects category in modal
+  [x] Arc layout is dynamic — adjusts to however many shortcuts are set
+  [x] Rename-safe: shortcuts reference category by UUID, not display name
+  [x] Manual entry button always present at top-center of arc
 
-----------------------------------------
+SUMMARY & HISTORY
+  [x] Monthly summary screen — hero total, category breakdown
+  [x] Stat chips: most expensive day + average daily spend
+      (most expensive day excluded from avg calculation)
+  [x] Month-by-month history browser
+  [x] Responsive 2-column breakdown on tablet/desktop (>5 categories)
 
-2. CATEGORY SYSTEM
+IMAGE EXPORT
+  [x] Share-ready PNG export of monthly summary (1620px wide @3x)
+  [x] Theme-aware (dark/light + all accent colors)
+  [x] navigator.share on mobile, download fallback on desktop
+  [x] Filename: {Month}-{Year}-Report-Heath-Ledger.png
 
-Use simple predefined categories:
+RECURRING EXPENSES
+  [x] Define recurring rules (amount, category, note, day of month)
+  [x] Auto-applied on every app open (syncRecurring)
+  [x] Rules can be paused or deleted
 
-- Rent / Fixed
-- Food
-- Transport
-- Social / Going Out
-- Shopping
-- Travel
-- Miscellaneous
+APPEARANCE & SETTINGS
+  [x] 7 accent color themes: blue, green, black, red, blood, pink, orange
+  [x] Dark mode toggle (defaults to system preference)
+  [x] Full-screen Settings modal with: appearance, themes, categories,
+      quick actions, recurring rules, backup
 
-IMPORTANT:
-- DO NOT overcomplicate categories
-- DO NOT build nested systems yet
-- Mapping from real-world labels:
-    - "Rapido" → Transport
-    - "Zepto", "Blinkit" → Food or Misc (user decides)
-    - "Netflix", "JioFiber" → Fixed
-    - "Lunch", "Dinner" → Food
-    - "To Lucky" → Misc or Transfers (keep simple: Misc)
-
-----------------------------------------
-
-3. TRANSACTION LIST VIEW
-
-- Show all expenses (reverse chronological)
-- Each item shows:
-    - Amount
-    - Category
-    - Note
-    - Date
-
-----------------------------------------
-
-4. MONTHLY SUMMARY (MOST IMPORTANT OUTPUT)
-
-For selected month:
-
-A. Total Spend (top)
-
-B. Category Breakdown Table:
-
-| Category | Total |
-|----------|-------|
-| Food     | ₹X    |
-| Transport| ₹X    |
-| ...      | ...   |
-
-C. (Optional) percentage share
-
-----------------------------------------
-
-5. DATA STORAGE
-
-Start SIMPLE:
-
-Option 1 (preferred MVP):
-- Use browser LocalStorage
-
-No backend required initially.
+DATA BACKUP
+  [x] Full JSON export (expenses + categories + recurring + settings)
+  [x] JSON import / restore
+  [x] Backup version validation
 
 ----------------------------------------
-
-6. DATA MODEL
-
-Expense object:
-
-{
-  id: string,
-  amount: number,
-  category: string,
-  note: string,
-  date: ISO string
-}
-
+ARCHITECTURE DECISIONS (LOCKED IN)
 ----------------------------------------
 
-7. UI REQUIREMENTS
+- Category references: always by UUID (categoryId), never by name string.
+  Legacy entries (category string only) are migrated on load.
 
-- Mobile-first (primary use case)
-- Clean, minimal UI
-- Large tap targets
-- Floating "+" button always visible
-- Fast load time
+- Quick action shortcuts: stored as [{name, categoryId}] in
+  heath_ledger_quick_actions. name is the display label (e.g. "Rapido"),
+  categoryId is the stable UUID. name=null means legacy migrated entry,
+  falls back to category name at render time.
 
-----------------------------------------
+- No Redux / no Zustand. State lives in App.jsx and flows down as props.
+  CategoryManager manages its own local state and persists on every mutation.
 
-8. NON-GOALS (DO NOT BUILD)
-
-- No authentication
-- No multi-user support
-- No bank integrations
-- No credit/debit accounting
-- No AI insights
-- No complex analytics
+- html2canvas export: all layout uses position:absolute for right-aligned
+  values (flexbox and table are unreliable). Every text element needs
+  explicit line-height and padding-bottom to prevent clipping.
 
 ----------------------------------------
-
-9. NICE-TO-HAVE (IF EASY)
-
-- Quick-add chips (e.g. "Rapido", "Lunch", "Zepto")
-- Auto-fill category based on note
-- Export monthly data as CSV
-
+NON-GOALS (DO NOT BUILD)
 ----------------------------------------
 
-10. TECH STACK (SIMPLE + FAST)
-
-- Frontend: React (or Next.js)
-- Styling: Tailwind CSS
-- State: useState/useReducer
-- Storage: LocalStorage
-
-----------------------------------------
-
-11. FILE STRUCTURE (SUGGESTED)
-
-- /components
-  - AddExpenseModal
-  - ExpenseList
-  - SummaryTable
-- /utils
-  - storage.js
-  - categoryMapper.js
-- /pages or /app
-  - main page
+- Authentication or multi-user support
+- Bank integrations or credit/debit accounting
+- AI insights or complex analytics
+- Nested / hierarchical categories
+- CSV export (JSON backup already exists)
+- Backend or cloud sync
+- Budget limits or alerts
+- Recurring income tracking
 
 ----------------------------------------
-
-12. SUCCESS CRITERIA
-
-The app is successful if:
-- User logs expense in <5 seconds
-- Monthly summary gives instant clarity
-- User prefers this over notes app
-
+POTENTIAL FUTURE IMPROVEMENTS
 ----------------------------------------
 
-13. IMPORTANT BEHAVIORAL INSIGHT
+These are not committed — evaluate on merit when the time comes.
 
-User currently logs data like:
-"multiple expenses per line", "implicit categories", "vendor-based tracking"
+UX / SPEED
+  [ ] Haptic feedback on quick action tap (navigator.vibrate)
+  [ ] Swipe-to-delete gesture on expense list items
+  [ ] Recent notes autocomplete in the note field
+  [ ] Long-press on a quick action to edit/rename it inline
 
-Your job is NOT to replicate that UI,
-but to make logging EVEN FASTER and STRUCTURED.
+SUMMARY & ANALYTICS
+  [ ] Week-over-week spend comparison in History
+  [ ] Per-category monthly trend sparkline
+  [ ] Highest spend category badge on summary
+
+DATA
+  [ ] iCloud / Google Drive backup option (no backend, just file sync)
+  [ ] Import from raw text format (the original "1 Apr - 236 (Biriyani)" workflow)
+
+QUICK ACTIONS
+  [ ] Reorder quick action shortcuts via drag-handle in Settings
+  [ ] Quick action pre-fill amount (for truly fixed expenses like a coffee)
 
 ----------------------------------------
+SUCCESS CRITERIA (UNCHANGED)
+----------------------------------------
 
-Build the MVP with clean, readable code and minimal dependencies.
-Do not over-engineer.
-Focus on speed, clarity, and usability.
-
-
-Current Categories:
-1. Subscriptions
-2. Rent /⚡
-3. Food
-4. Social Animal
-5. Travel
-6. Commute
-7. Shopping
-8. Miscellaneous
-9. Zepto/Blinkit/Instamart
-10. Medical
+The app succeeds if:
+1. User logs an expense in under 5 seconds
+2. Monthly summary gives instant clarity without mental math
+3. User prefers this over the raw text notes workflow
