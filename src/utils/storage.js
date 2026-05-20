@@ -97,6 +97,42 @@ export function migrateExpensesToCategoryIds(expenses, categories) {
   return { expenses: migrated, changed }
 }
 
+const QUICK_MAP_KEY = 'heath_ledger_quick_map'
+
+export function loadQuickActionMap() {
+  try {
+    const data = localStorage.getItem(QUICK_MAP_KEY)
+    return data ? JSON.parse(data) : {}
+  } catch {
+    return {}
+  }
+}
+
+export function saveQuickActionMap(map) {
+  localStorage.setItem(QUICK_MAP_KEY, JSON.stringify(map))
+}
+
+// Resolves quick action IDs → stable category UUIDs.
+// Priority: (1) stored ID still valid, (2) exact name match, (3) prefix match
+// (e.g. "Food" resolves "Food & Drinks" so renames don't break existing mappings).
+export function resolveQuickActionMap(storedMap, categories, quickActionDefs) {
+  const result = {}
+  for (const { id, category } of quickActionDefs) {
+    const stored = storedMap[id]
+    if (stored && categories.find(c => c.id === stored)) {
+      result[id] = stored
+      continue
+    }
+    let cat = categories.find(c => normName(c.name) === normName(category))
+    if (!cat) {
+      const prefix = normName(category)
+      cat = categories.find(c => normName(c.name).startsWith(prefix))
+    }
+    result[id] = cat?.id ?? null
+  }
+  return result
+}
+
 const BACKUP_THEME_KEY = 'heath_ledger_theme'
 const BACKUP_DARK_KEY = 'heath_ledger_dark'
 

@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { Settings, Clock } from 'lucide-react'
-import { loadExpenses, saveExpenses, loadCategories, saveCategories, migrateExpensesToCategoryIds, loadRecurringRules, saveRecurringRules } from './utils/storage'
+import { loadExpenses, saveExpenses, loadCategories, saveCategories, migrateExpensesToCategoryIds, loadRecurringRules, saveRecurringRules, loadQuickActionMap, saveQuickActionMap, resolveQuickActionMap } from './utils/storage'
 import { syncRecurringExpenses } from './utils/recurringExpenses'
 import { useTheme } from './context/ThemeContext'
 import AddExpenseModal from './components/AddExpenseModal'
@@ -13,6 +13,15 @@ import PageHeader from './components/PageHeader'
 import { monthYearLabel } from './utils/dateFormat'
 
 const FILTERS = ['Today', 'Week', 'Month']
+
+// Canonical quick action definitions — category is the original default name used for
+// initial resolution only; stable UUIDs are persisted in localStorage after first resolve.
+const QUICK_ACTIONS_META = [
+  { id: 'rapido', category: 'Commute' },
+  { id: 'zepto',  category: 'Zepto/Blinkit/Instamart' },
+  { id: 'lunch',  category: 'Food' },
+  { id: 'dinner', category: 'Food' },
+]
 
 function filterExpenses(expenses, filter) {
   const now = new Date()
@@ -58,6 +67,9 @@ export default function App() {
   const [expenses, setExpenses] = useState(() => loadExpenses())
   const [categories, setCategories] = useState(() => loadCategories())
   const [recurringRules, setRecurringRules] = useState(() => loadRecurringRules())
+  const [quickActionMap, setQuickActionMap] = useState(() =>
+    resolveQuickActionMap(loadQuickActionMap(), loadCategories(), QUICK_ACTIONS_META)
+  )
 
   // One-time migration: assign categoryId to expenses that only have a category string.
   useEffect(() => {
@@ -68,6 +80,15 @@ export default function App() {
       setExpenses(migrated)
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Re-resolve quick action → category ID map whenever categories change (e.g. after rename).
+  useEffect(() => {
+    setQuickActionMap(prev => {
+      const resolved = resolveQuickActionMap(prev, categories, QUICK_ACTIONS_META)
+      saveQuickActionMap(resolved)
+      return resolved
+    })
+  }, [categories]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // On every app open: backfill any missing recurring expense entries.
   // Reads directly from localStorage to avoid stale-closure issues with initial state.
@@ -506,7 +527,7 @@ export default function App() {
             onToggle={() => setRadialOpen(o => !o)}
             onActionSelect={handleRadialAction}
             onManualEntry={handleManualEntry}
-            categories={categories}
+            quickActionMap={quickActionMap}
           />
         </div>
 

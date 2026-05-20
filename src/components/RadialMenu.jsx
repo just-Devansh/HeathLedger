@@ -35,11 +35,7 @@ function arcPos(deg) {
   return { x: RADIUS * Math.cos(r), y: RADIUS * Math.sin(r) }
 }
 
-function normName(n) {
-  return (n || '').toLowerCase().replace(/\s*\/\s*/g, '/').trim()
-}
-
-export default function RadialMenu({ isOpen, onToggle, onActionSelect, onManualEntry, categories = [] }) {
+export default function RadialMenu({ isOpen, onToggle, onActionSelect, onManualEntry, quickActionMap = {} }) {
   const { theme, isDark } = useTheme()
 
   // Close on Escape
@@ -152,10 +148,7 @@ export default function RadialMenu({ isOpen, onToggle, onActionSelect, onManualE
               ) : (
                 // Quick-action — glassmorphism style
                 <button
-                  onClick={() => {
-                    const matched = categories.find(c => normName(c.name) === normName(item.category))
-                    onActionSelect({ ...item, categoryId: matched?.id ?? null })
-                  }}
+                  onClick={() => onActionSelect({ ...item, categoryId: quickActionMap[item.id] ?? null })}
                   aria-label={item.label}
                   style={{
                     width: 52,
