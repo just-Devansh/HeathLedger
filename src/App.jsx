@@ -259,7 +259,7 @@ export default function App() {
 
   function handleRadialAction(action) {
     setRadialOpen(false)
-    setPrefillData({ category: action.category, note: action.note })
+    setPrefillData({ category: action.categoryId ?? action.category, note: action.note })
     setShowModal(true)
     pushOverlay()
   }
@@ -506,6 +506,7 @@ export default function App() {
             onToggle={() => setRadialOpen(o => !o)}
             onActionSelect={handleRadialAction}
             onManualEntry={handleManualEntry}
+            categories={categories}
           />
         </div>
 
