@@ -101,6 +101,23 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
   const [addingQuick, setAddingQuick] = useState(false)
   const [quickFormName, setQuickFormName] = useState('')
   const [quickFormCatId, setQuickFormCatId] = useState('')
+  const [catPickerOpen, setCatPickerOpen] = useState(false)
+  const catPickerRef = useRef(null)
+
+  useEffect(() => {
+    if (!catPickerOpen) return
+    function handleOutside(e) {
+      if (catPickerRef.current && !catPickerRef.current.contains(e.target)) {
+        setCatPickerOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutside)
+    document.addEventListener('touchstart', handleOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleOutside)
+      document.removeEventListener('touchstart', handleOutside)
+    }
+  }, [catPickerOpen])
 
   const CATEGORY_PREVIEW = 3
   const visibleCategories = showAllCategories ? categories : categories.slice(0, CATEGORY_PREVIEW)
@@ -122,6 +139,7 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
     persistQuick([...quickActions, { name, categoryId: quickFormCatId }])
     setAddingQuick(false)
     setQuickFormName('')
+    setCatPickerOpen(false)
   }
 
   function handleDelete(idx) {
@@ -478,7 +496,7 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
               {quickActions.length < 4 && !addingQuick && (
                 <div>
                   <button
-                    onClick={() => { setAddingQuick(true); setQuickFormName(''); setQuickFormCatId(categories[0]?.id ?? '') }}
+                    onClick={() => { setAddingQuick(true); setQuickFormName(''); setQuickFormCatId(categories[0]?.id ?? ''); setCatPickerOpen(false) }}
                     className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium active:scale-95 transition-transform"
                     style={{ border: `1.5px dashed ${theme.border}`, color: theme.textMuted, background: 'transparent' }}
                   >
@@ -516,7 +534,7 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
                       <Check size={18} />
                     </button>
                     <button
-                      onClick={() => setAddingQuick(false)}
+                      onClick={() => { setAddingQuick(false); setCatPickerOpen(false) }}
                       className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 active:scale-95 transition-transform"
                       style={{ background: theme.inputBg, color: theme.textMuted }}
                       aria-label="Cancel"
@@ -525,21 +543,101 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
                     </button>
                   </div>
 
-                  {/* Row 2: category selector, full width so long names truncate gracefully */}
+                  {/* Row 2: custom category picker */}
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-medium flex-shrink-0" style={{ color: theme.textFaint }}>Category</span>
-                    <select
-                      value={quickFormCatId}
-                      onChange={e => setQuickFormCatId(e.target.value)}
-                      className="flex-1 outline-none text-sm bg-transparent min-w-0"
-                      style={{ color: theme.text, borderBottom: `1px solid ${theme.border}`, padding: '4px 0', cursor: 'pointer' }}
-                    >
-                      {categories.map(cat => (
-                        <option key={cat.id} value={cat.id} style={{ background: theme.cardBg }}>
-                          {cat.name}
-                        </option>
-                      ))}
-                    </select>
+                    <div ref={catPickerRef} className="relative flex-1 min-w-0">
+                      {/* Trigger button */}
+                      <button
+                        type="button"
+                        onClick={() => setCatPickerOpen(v => !v)}
+                        className="w-full flex items-center gap-2 text-left outline-none"
+                        style={{
+                          borderBottom: `1px solid ${catPickerOpen ? theme.primary : theme.border}`,
+                          padding: '4px 0',
+                          background: 'transparent',
+                          transition: 'border-color 0.15s ease',
+                        }}
+                        aria-haspopup="listbox"
+                        aria-expanded={catPickerOpen}
+                      >
+                        {(() => {
+                          const cat = categories.find(c => c.id === quickFormCatId)
+                          return cat ? (
+                            <>
+                              <span className="flex-shrink-0" style={{ color: theme.primary }}>
+                                {getIcon(cat.icon, { size: 14 })}
+                              </span>
+                              <span className="flex-1 text-sm font-medium min-w-0 truncate" style={{ color: theme.text }}>
+                                {cat.name}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="flex-1 text-sm" style={{ color: theme.textFaint }}>Select category</span>
+                          )
+                        })()}
+                        <ChevronDown
+                          size={14}
+                          style={{
+                            flexShrink: 0,
+                            color: theme.textMuted,
+                            transform: catPickerOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                            transition: 'transform 0.2s ease',
+                          }}
+                        />
+                      </button>
+
+                      {/* Floating category list */}
+                      <div
+                        role="listbox"
+                        style={{
+                          position: 'absolute',
+                          bottom: 'calc(100% + 10px)',
+                          left: 0,
+                          right: 0,
+                          zIndex: 60,
+                          borderRadius: '1rem',
+                          border: `1px solid ${theme.border}`,
+                          boxShadow: `0 8px 32px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.12)`,
+                          overflow: 'hidden',
+                          opacity: catPickerOpen ? 1 : 0,
+                          transform: catPickerOpen ? 'scale(1) translateY(0px)' : 'scale(0.96) translateY(6px)',
+                          pointerEvents: catPickerOpen ? 'auto' : 'none',
+                          transition: 'opacity 0.16s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1)',
+                          transformOrigin: 'bottom center',
+                        }}
+                      >
+                        <div style={{ maxHeight: 220, overflowY: 'auto', background: theme.cardBg }}>
+                          {categories.map((cat, i) => {
+                            const isSelected = cat.id === quickFormCatId
+                            return (
+                              <button
+                                key={cat.id}
+                                type="button"
+                                role="option"
+                                aria-selected={isSelected}
+                                onClick={() => { setQuickFormCatId(cat.id); setCatPickerOpen(false) }}
+                                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left active:opacity-70 transition-opacity"
+                                style={{
+                                  background: isSelected ? `${theme.primary}18` : 'transparent',
+                                  borderTop: i > 0 ? `1px solid ${theme.border}` : 'none',
+                                  color: isSelected ? theme.primary : theme.text,
+                                  fontWeight: isSelected ? 600 : 400,
+                                }}
+                              >
+                                <span style={{ flexShrink: 0, color: isSelected ? theme.primary : theme.textMuted }}>
+                                  {getIcon(cat.icon, { size: 15 })}
+                                </span>
+                                <span className="flex-1 min-w-0 truncate">{cat.name}</span>
+                                {isSelected && (
+                                  <Check size={13} style={{ flexShrink: 0, color: theme.primary }} />
+                                )}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
