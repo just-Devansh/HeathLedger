@@ -491,48 +491,56 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
               {/* Inline add form */}
               {addingQuick && (
                 <div
-                  className="flex items-center gap-2 px-4 py-3 rounded-2xl"
+                  className="flex flex-col gap-3 px-4 py-3 rounded-2xl"
                   style={{ background: theme.cardBg, boxShadow: `0 2px 12px rgba(${theme.shadowRgb},0.08)` }}
                 >
-                  <input
-                    type="text"
-                    placeholder="Name (e.g. Lunch)"
-                    value={quickFormName}
-                    onChange={e => setQuickFormName(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') submitQuickForm(); if (e.key === 'Escape') setAddingQuick(false) }}
-                    className="flex-1 outline-none text-sm font-medium bg-transparent min-w-0"
-                    style={{ color: theme.text, borderBottom: `1px solid ${theme.border}`, padding: '4px 0' }}
-                    autoFocus
-                  />
-                  <select
-                    value={quickFormCatId}
-                    onChange={e => setQuickFormCatId(e.target.value)}
-                    className="outline-none text-sm bg-transparent flex-shrink-0"
-                    style={{ color: theme.text, borderBottom: `1px solid ${theme.border}`, padding: '4px 0', maxWidth: 110, cursor: 'pointer' }}
-                  >
-                    {categories.map(cat => (
-                      <option key={cat.id} value={cat.id} style={{ background: theme.cardBg }}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={submitQuickForm}
-                    disabled={!quickFormName.trim() || !quickFormCatId}
-                    className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 active:scale-95 transition-transform disabled:opacity-40"
-                    style={{ background: '#22c55e', color: '#ffffff' }}
-                    aria-label="Add shortcut"
-                  >
-                    <Check size={18} />
-                  </button>
-                  <button
-                    onClick={() => setAddingQuick(false)}
-                    className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 active:scale-95 transition-transform"
-                    style={{ background: theme.inputBg, color: theme.textMuted }}
-                    aria-label="Cancel"
-                  >
-                    <X size={18} />
-                  </button>
+                  {/* Row 1: name input + action buttons */}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="Name (e.g. Lunch)"
+                      value={quickFormName}
+                      onChange={e => setQuickFormName(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') submitQuickForm(); if (e.key === 'Escape') setAddingQuick(false) }}
+                      className="flex-1 outline-none text-sm font-medium bg-transparent min-w-0"
+                      style={{ color: theme.text, borderBottom: `1px solid ${theme.border}`, padding: '4px 0' }}
+                      autoFocus
+                    />
+                    <button
+                      onClick={submitQuickForm}
+                      disabled={!quickFormName.trim() || !quickFormCatId}
+                      className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 active:scale-95 transition-transform disabled:opacity-40"
+                      style={{ background: '#22c55e', color: '#ffffff' }}
+                      aria-label="Add shortcut"
+                    >
+                      <Check size={18} />
+                    </button>
+                    <button
+                      onClick={() => setAddingQuick(false)}
+                      className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 active:scale-95 transition-transform"
+                      style={{ background: theme.inputBg, color: theme.textMuted }}
+                      aria-label="Cancel"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  {/* Row 2: category selector, full width so long names truncate gracefully */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium flex-shrink-0" style={{ color: theme.textFaint }}>Category</span>
+                    <select
+                      value={quickFormCatId}
+                      onChange={e => setQuickFormCatId(e.target.value)}
+                      className="flex-1 outline-none text-sm bg-transparent min-w-0"
+                      style={{ color: theme.text, borderBottom: `1px solid ${theme.border}`, padding: '4px 0', cursor: 'pointer' }}
+                    >
+                      {categories.map(cat => (
+                        <option key={cat.id} value={cat.id} style={{ background: theme.cardBg }}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               )}
             </div>
