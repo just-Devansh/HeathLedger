@@ -10,10 +10,22 @@ function formatAmount(n) {
   return n.toLocaleString('en-IN')
 }
 
-export default function SummaryScreen({ expenses, categories }) {
+export default function SummaryScreen({ expenses, categories, onDrilldownOpen, onDrilldownClose, onRegisterDrilldownClose }) {
   const { theme, isDark } = useTheme()
   const [generating, setGenerating] = useState(false)
   const [drilldownCat, setDrilldownCat] = useState(null)
+
+  function openDrilldown(cat) {
+    setDrilldownCat(cat)
+    onDrilldownOpen?.()
+    onRegisterDrilldownClose?.(() => setDrilldownCat(null))
+  }
+
+  function closeDrilldown() {
+    setDrilldownCat(null)
+    onRegisterDrilldownClose?.(null)
+    onDrilldownClose?.()
+  }
 
   async function handleDownload() {
     setGenerating(true)
@@ -160,7 +172,7 @@ export default function SummaryScreen({ expenses, categories }) {
                       boxShadow: `0 2px 14px rgba(${theme.shadowRgb}, 0.09)`,
                       cursor: 'pointer',
                     }}
-                    onClick={() => setDrilldownCat({ key, name, icon, amount, percentage })}
+                    onClick={() => openDrilldown({ key, name, icon, amount, percentage })}
                   >
                     <div className={`flex items-start justify-between mb-2.5 ${twoCol ? 'gap-3 md:gap-1.5' : 'gap-3'}`}>
                       <div className={`flex items-center min-w-0 ${twoCol ? 'gap-2.5 md:gap-2' : 'gap-2.5'}`}>
@@ -211,7 +223,7 @@ export default function SummaryScreen({ expenses, categories }) {
         <CategoryDrilldownSheet
           category={drilldownCat}
           monthExpenses={monthExpenses}
-          onClose={() => setDrilldownCat(null)}
+          onClose={closeDrilldown}
         />
       )}
     </div>

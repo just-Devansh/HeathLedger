@@ -127,7 +127,8 @@ export default function App() {
   const overlayDepth      = useRef(0)
   const isManualBack      = useRef(false)
   const stateRef          = useRef({})
-  const historyScreenBackRef = useRef(null)
+  const historyScreenBackRef     = useRef(null)
+  const summaryDrilldownCloseRef = useRef(null)
 
   // Swipe navigation (expenses tab)
   const expensesContainerRef = useRef(null)
@@ -156,6 +157,10 @@ export default function App() {
         setShowCategoryManager(false)
       } else if (s.activeTab === 'history' && historyScreenBackRef.current) {
         historyScreenBackRef.current()
+      } else if (s.activeTab === 'summary' && summaryDrilldownCloseRef.current) {
+        const close = summaryDrilldownCloseRef.current
+        summaryDrilldownCloseRef.current = null
+        close()
       } else if (s.activeTab !== 'expenses') {
         setActiveTab('expenses')
       }
@@ -447,7 +452,13 @@ export default function App() {
       )}
 
       {activeTab === 'summary' && (
-        <SummaryScreen expenses={expenses} categories={categories} />
+        <SummaryScreen
+          expenses={expenses}
+          categories={categories}
+          onDrilldownOpen={pushOverlay}
+          onDrilldownClose={syncHistoryBack}
+          onRegisterDrilldownClose={fn => { summaryDrilldownCloseRef.current = fn }}
+        />
       )}
 
       {activeTab === 'history' && (
