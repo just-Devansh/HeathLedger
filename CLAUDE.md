@@ -15,7 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Framework**: React 18 (Vite)
 - **Styling**: Tailwind CSS v3
 - **State**: `useState` / `useMemo` — no Redux
-- **Storage**: Browser `localStorage` — no backend, no auth
+- **Storage**: IndexedDB via **Dexie.js** — no backend, no auth
 - **Icons**: `lucide-react`
 - **Image export**: `html2canvas` (PNG generation)
 - **PDF export**: `jspdf` + `html2canvas` (kept as internal fallback, not exposed in UI)
@@ -63,53 +63,83 @@ HeathLedger/
     │   ├── BackupSection.jsx        # JSON export + import for full data backup
     │   └── RadialMenu.jsx           # Dynamic radial quick-action menu (FAB)
     └── utils/
-        ├── storage.js               # All localStorage I/O: expenses, categories, recurring,
-        │                            #   quick actions, backup export/import, migration helpers
+        ├── db.js                    # Dexie instance + schema (expenses, categories, recurringRules, settings)
+        ├── migration.js             # One-time localStorage → IndexedDB migration; runs before React mounts
+        ├── storage.js               # All async IndexedDB I/O: expenses, categories, recurring,
+        │                            #   quick actions, backup export/import, category migration helper
         ├── categoryMapper.js        # inferCategory(note) → category string (keyword matching)
         ├── dateFormat.js            # monthYearLabel, dayMonthLabel, fullDateLabel helpers
         ├── theme.js                 # buildTheme(), THEME_META, ACCENT_VARIANTS, PAGE_BGS
         ├── icons.jsx                # getIcon(name, props) — maps icon slug → lucide component
-        ├── recurringExpenses.js     # syncRecurring() — auto-applies recurring rules on app open
+        ├── recurringExpenses.js     # syncRecurringExpenses() — pure logic, no DB side effects
         ├── generateImage.js         # PNG export: html2canvas-based dedicated off-screen canvas
         └── generatePDF.js           # PDF export: html2canvas + jsPDF (internal fallback only)
 ```
 
-## Data Models (localStorage)
+## Storage Architecture
 
-**Expenses** — key `heath_ledger_expenses`:
+All app data lives in **IndexedDB** via Dexie.js. Database name: `HeathLedgerDB`.
+
+### Object stores
+
+| Store | Primary key | Indexes | Contents |
+|---|---|---|---|
+| `expenses` | `id` (UUID) | `date`, `categoryId` | All expense entries |
+| `categories` | `id` (UUID) | — | All categories |
+| `recurringRules` | `id` (UUID) | — | Recurring expense rules |
+| `settings` | `key` (string) | — | Key-value: `theme`, `darkMode`, `quickActions`, `migrated` |
+
+### localStorage (residual — do not remove)
+
+Two keys remain in localStorage intentionally — they feed the **flash-prevention script** in `index.html` that sets the correct background color before React mounts, preventing a white flash on dark mode:
+
+- `heath_ledger_theme` — kept in sync when user changes theme
+- `heath_ledger_dark` — kept in sync when user toggles dark mode
+- `heath_ledger_last_category` — UI convenience only (remembers last category in AddExpenseModal)
+
+**Do not use localStorage for any new data.** All new persistent state goes in `settings` store.
+
+### Migration
+
+`src/utils/migration.js` runs once before React mounts (awaited in `main.jsx`). It reads all legacy localStorage keys, writes them to IndexedDB in a single transaction, and sets `settings.migrated = true`. On all subsequent launches the function exits immediately after reading the flag.
+
+### Data Models (IndexedDB)
+
+**Expenses** — store `expenses`:
 ```js
 {
-  id: string,           // uuid
+  id: string,           // uuid — primary key
   amount: number,
-  categoryId: string,   // uuid ref to category — primary key for grouping
-  category: string,     // legacy string name (still present on old entries)
+  categoryId: string,   // uuid ref to category
+  category: string,     // legacy string name (present on old migrated entries only)
   note: string,
   date: ISO string,
 }
 ```
 > Always group by `exp.categoryId ?? exp.category` to handle both migrated and legacy entries.
 
-**Categories** — key `categories`:
+**Categories** — store `categories`:
 ```js
 { id: string, name: string, icon: string }  // icon is a lucide slug e.g. "utensils"
 ```
 
-Default categories (with UUIDs on first load): Food, Commute, Zepto/Blinkit/Instamart, Transport, Rent/Fixed, Social/Going Out, Shopping, Travel, Miscellaneous.
+Default categories seeded on first launch (9 defaults): Food, Commute, Zepto/Blinkit/Instamart, Transport, Rent/Fixed, Social/Going Out, Shopping, Travel, Miscellaneous.
 
-**Recurring rules** — key `heath_ledger_recurring`:
+Seeding uses a Dexie transaction with an inner `count()` check so React StrictMode's double-invocation of effects cannot produce duplicates.
+
+**Recurring rules** — store `recurringRules`:
 ```js
-{ id: string, amount: number, categoryId: string, note: string, dayOfMonth: number }
+{ id: string, amount: number, categoryId: string, note: string, recurrenceType: string, recurrenceValue: string, startDate: string, active: boolean }
 ```
-Auto-applied each time the app opens via `syncRecurring()`.
+Auto-applied each time the app opens via `syncRecurringExpenses()` (pure logic in `recurringExpenses.js`).
 
-**Quick action shortcuts** — key `heath_ledger_quick_actions`:
+**Quick action shortcuts** — `settings` store, key `quickActions`:
 ```js
 [{ name: string | null, categoryId: string }]  // ordered array, max 4
 ```
-- `name` is the display label shown on the radial button and pre-filled as the expense note (e.g. `"Lunch"`, `"Rapido"`). Multiple shortcuts can share the same `categoryId` (e.g. Lunch + Dinner both → Food & Drinks).
+- `name` is the display label shown on the radial button and pre-filled as the expense note (e.g. `"Lunch"`, `"Rapido"`). Multiple shortcuts can share the same `categoryId`.
 - `name: null` means a legacy migrated entry — falls back to the category name at render time.
-- Previous format (plain UUID strings) is normalised to `{name: null, categoryId}` on load.
-- Managed in Settings → Quick Actions. Loaded into App.jsx state on mount and refreshed when Settings closes.
+- Managed in Settings → Quick Actions. Changes propagate to App.jsx via `onQuickActionsChange` callback.
 
 ## Category Reference Rules (IMPORTANT)
 
@@ -132,12 +162,12 @@ Auto-applied each time the app opens via `syncRecurring()`.
 - RADIUS = 130px, FAB_Y = 96px from viewport bottom
 
 **Data flow:**
-1. App.jsx loads `quickActions` state from `loadQuickActions()` on mount
+1. App.jsx loads `quickActions` state from `loadQuickActions()` (IndexedDB) on mount
 2. Passes `quickActions` + `categories` to `RadialMenu`
 3. RadialMenu resolves each `{name, categoryId}` → category object for icon; skips any whose category was deleted
 4. On tap: calls `onActionSelect({ categoryId, note: action.name ?? cat.name })`
 5. `handleRadialAction` in App.jsx sets `prefillData.category = categoryId` — `AddExpenseModal` resolves by UUID
-6. On Settings close: App.jsx reloads `quickActions` from localStorage
+6. Changes in Settings propagate to App.jsx immediately via `onQuickActionsChange` callback (no DB re-read on close)
 
 **Adding shortcuts (Settings → Quick Actions):**
 - Inline form: type a name + select a category from a `<select>` element
@@ -156,7 +186,7 @@ Key theme tokens: `pageBg`, `cardBg`, `surface`, `inputBg`, `primary`, `accent`,
 
 CSS variables set on `document.root`: `--card-bg`, `--input-bg`, `--border`, `--text`, `--text-muted`, `--danger-surface`.
 
-localStorage keys: `heath_ledger_theme` (default `blue`), `heath_ledger_dark` (default: system preference).
+localStorage keys `heath_ledger_theme` and `heath_ledger_dark` are kept as a cache for the flash-prevention script. The authoritative copies live in the `settings` IndexedDB store. `ThemeContext.jsx` writes to both on every change.
 
 ## Navigation
 
@@ -217,7 +247,7 @@ Sections in order, each separated by `borderTop/borderBottom`:
 5. **Recurring Rules** — `RecurringManager` component
 6. **Backup** — `BackupSection` component (JSON export + import)
 
-CategoryManager manages its own local `categories` and `quickActions` state, persisting immediately to localStorage on every mutation. App.jsx reloads both on Settings close.
+CategoryManager receives `initialCategories` and `initialQuickActions` as props from App.jsx (already loaded). It manages local state and fires individual async DB ops (`saveCategory`, `deleteCategory`, `saveQuickActions`) on each mutation. Changes propagate to App.jsx immediately via `onCategoriesChange` and `onQuickActionsChange` callbacks — no DB re-read on close.
 
 ## Product Constraints
 
@@ -237,7 +267,8 @@ CategoryManager manages its own local `categories` and `quickActions` state, per
 | Feature | Status |
 |---|---|
 | Vite + React + Tailwind scaffold | Done |
-| localStorage persistence | Done |
+| IndexedDB persistence (Dexie.js) | Done |
+| localStorage → IndexedDB migration (silent, one-time) | Done |
 | Add Expense modal (bottom-sheet) | Done |
 | Category chip selection | Done |
 | Expense list (Today/Week/Month filters) | Done |

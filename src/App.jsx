@@ -1,6 +1,10 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { Settings, Clock } from 'lucide-react'
-import { loadExpenses, saveExpenses, loadCategories, saveCategories, migrateExpensesToCategoryIds, loadRecurringRules, saveRecurringRules, loadQuickActions } from './utils/storage'
+import {
+  loadExpenses, loadCategories, loadRecurringRules, loadQuickActions,
+  saveExpense, deleteExpense, bulkAddExpenses,
+  saveRecurringRules, migrateExpensesToCategoryIds,
+} from './utils/storage'
 import { syncRecurringExpenses } from './utils/recurringExpenses'
 import { useTheme } from './context/ThemeContext'
 import AddExpenseModal from './components/AddExpenseModal'
@@ -55,130 +59,116 @@ function ChartIcon({ active, primary, secondary, gradEnd, muted }) {
 
 export default function App() {
   const { theme, setTheme, setDark } = useTheme()
-  const [expenses, setExpenses] = useState(() => loadExpenses())
-  const [categories, setCategories] = useState(() => loadCategories())
-  const [recurringRules, setRecurringRules] = useState(() => loadRecurringRules())
-  const [quickActions, setQuickActions] = useState(() => loadQuickActions())
 
-  // One-time migration: assign categoryId to expenses that only have a category string.
+  // All data starts empty; populated async from IndexedDB.
+  const [isLoading, setIsLoading]       = useState(true)
+  const [expenses, setExpenses]         = useState([])
+  const [categories, setCategories]     = useState([])
+  const [recurringRules, setRecurringRules] = useState([])
+  const [quickActions, setQuickActions] = useState([])
+
+  // Load everything from IndexedDB on mount.
   useEffect(() => {
-    const cats = loadCategories()
-    const { expenses: migrated, changed } = migrateExpensesToCategoryIds(loadExpenses(), cats)
-    if (changed) {
-      saveExpenses(migrated)
-      setExpenses(migrated)
+    async function loadAll() {
+      const [cats, exps, rules, actions] = await Promise.all([
+        loadCategories(),
+        loadExpenses(),
+        loadRecurringRules(),
+        loadQuickActions(),
+      ])
+
+      // One-time data migration: assign categoryId to legacy expenses that only have a name string.
+      const { expenses: migrated, changed } = migrateExpensesToCategoryIds(exps, cats)
+      if (changed) await bulkAddExpenses(migrated)
+
+      // Auto-generate any recurring entries that are overdue.
+      const generated = syncRecurringExpenses(rules, migrated)
+      let finalExpenses = migrated
+      if (generated.length > 0) {
+        finalExpenses = [...generated, ...migrated]
+        await bulkAddExpenses(generated)
+      }
+
+      setCategories(cats)
+      setExpenses(finalExpenses)
+      setRecurringRules(rules)
+      setQuickActions(actions)
+      setIsLoading(false)
     }
+    loadAll()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // On every app open: backfill any missing recurring expense entries.
-  // Reads directly from localStorage to avoid stale-closure issues with initial state.
-  useEffect(() => {
-    const rules = loadRecurringRules()
-    if (!rules.length) return
-    const current = loadExpenses()
-    const generated = syncRecurringExpenses(rules, current)
-    if (generated.length > 0) {
-      const merged = [...generated, ...current]
-      saveExpenses(merged)
-      setExpenses(merged)
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-  const [showModal, setShowModal] = useState(false)
-  const [editExpense, setEditExpense] = useState(null)
-  const [prefillData, setPrefillData] = useState(null)
-  const [radialOpen, setRadialOpen] = useState(false)
+  const [showModal, setShowModal]               = useState(false)
+  const [editExpense, setEditExpense]           = useState(null)
+  const [prefillData, setPrefillData]           = useState(null)
+  const [radialOpen, setRadialOpen]             = useState(false)
   const [showCategoryManager, setShowCategoryManager] = useState(false)
-  const [filter, setFilter] = useState('Today')
-  const [activeTab, setActiveTab] = useState('expenses')
-  const [toast, setToast] = useState({ visible: false, message: '' })
+  const [filter, setFilter]                     = useState('Today')
+  const [activeTab, setActiveTab]               = useState('expenses')
+  const [toast, setToast]                       = useState({ visible: false, message: '' })
 
   // ── Browser history / back-button management ────────────────────────────────
-  // overlayDepth tracks how many history entries we've pushed so we can call
-  // history.back() from X-buttons to keep the browser stack in sync.
-  const overlayDepth = useRef(0)
-  // Set to true by X-button close helpers before calling history.back() so the
-  // popstate handler knows the close was already handled and skips re-closing.
-  const isManualBack = useRef(false)
-  // Mirror of current React state used inside the popstate handler to avoid
-  // stale-closure reads (effects re-register the handler on every state change).
-  const stateRef = useRef({})
-  // When HistoryScreen is active it registers its own back handler here so the
-  // centralized popstate below can delegate to it.
+  const overlayDepth      = useRef(0)
+  const isManualBack      = useRef(false)
+  const stateRef          = useRef({})
   const historyScreenBackRef = useRef(null)
 
   // Swipe navigation (expenses tab)
-  const expensesContainerRef = useRef(null) // non-passive touchmove target
-  const swipeTrackRef        = useRef(null) // DOM-manipulated during gesture
-  const pillRef              = useRef(null) // filter pill — DOM-manipulated during gesture
-  const touchStartRef        = useRef(null) // { x, y } of current touch
-  const isHorizontalRef      = useRef(null) // null=undecided, true=horizontal, false=vertical
-  const filterIndexRef       = useRef(0)    // mirror of filterIndex state for gesture handlers
+  const expensesContainerRef = useRef(null)
+  const swipeTrackRef        = useRef(null)
+  const pillRef              = useRef(null)
+  const touchStartRef        = useRef(null)
+  const isHorizontalRef      = useRef(null)
+  const filterIndexRef       = useRef(0)
 
-  // Keep stateRef current so the popstate handler always reads fresh state.
   useEffect(() => {
     stateRef.current = { showModal, editExpense, radialOpen, showCategoryManager, activeTab }
   }, [showModal, editExpense, radialOpen, showCategoryManager, activeTab])
 
-  // Centralized popstate handler — fires when Android/browser back is pressed.
   useEffect(() => {
     function handlePopState() {
-      // If an X-button called syncHistoryBack() it already closed the overlay
-      // and set isManualBack. Skip so we don't double-close.
       if (isManualBack.current) {
         isManualBack.current = false
         return
       }
       const s = stateRef.current
-      // Priority: modal > settings > history tab (delegated) > other tabs.
       if (s.showModal || s.editExpense) {
         setShowModal(false)
         setEditExpense(null)
         setPrefillData(null)
       } else if (s.showCategoryManager) {
-        setCategories(loadCategories())
         setShowCategoryManager(false)
       } else if (s.activeTab === 'history' && historyScreenBackRef.current) {
-        // HistoryScreen handles its internal levels; calls onClose when done.
         historyScreenBackRef.current()
       } else if (s.activeTab !== 'expenses') {
         setActiveTab('expenses')
       }
-      // else: nothing open — browser navigates back naturally.
       if (overlayDepth.current > 0) overlayDepth.current--
     }
 
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
-  }, []) // stable — reads all state via refs
+  }, [])
 
-  // Keep filterIndexRef in sync so gesture closures never read stale state.
   useEffect(() => {
     filterIndexRef.current = FILTERS.indexOf(filter)
   }, [filter])
 
-  // touch-action: pan-y on the container tells the browser to handle vertical
-  // scrolling natively without fighting our horizontal swipe — no addEventListener
-  // override or e.preventDefault() needed, so this can be a plain React handler.
   function handleTouchMove(e) {
     if (!touchStartRef.current) return
     const dx = e.touches[0].clientX - touchStartRef.current.x
     const dy = e.touches[0].clientY - touchStartRef.current.y
-
-    // Direction lock: commit after 8px of movement.
     if (isHorizontalRef.current === null) {
       if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
         isHorizontalRef.current = Math.abs(dx) > Math.abs(dy)
       }
     }
     if (!isHorizontalRef.current) return
-
-    const idx = filterIndexRef.current
-    const W   = window.innerWidth
-    const atStart  = idx === 0 && dx > 0
-    const atEnd    = idx === FILTERS.length - 1 && dx < 0
+    const idx       = filterIndexRef.current
+    const W         = window.innerWidth
+    const atStart   = idx === 0 && dx > 0
+    const atEnd     = idx === FILTERS.length - 1 && dx < 0
     const clampedDx = (atStart || atEnd) ? dx * 0.18 : dx
-
-    // px units so React's re-render (same value) never restarts the transition.
     if (swipeTrackRef.current) {
       swipeTrackRef.current.style.transition = 'none'
       swipeTrackRef.current.style.transform  = `translateX(${-idx * W + clampedDx}px)`
@@ -196,8 +186,6 @@ export default function App() {
     history.pushState({ heathLedger: true, depth: overlayDepth.current }, '')
   }
 
-  // Called by X-buttons: close is already handled by React state above; this
-  // just consumes the pushed history entry so the browser stack stays in sync.
   function syncHistoryBack() {
     if (overlayDepth.current > 0) {
       overlayDepth.current--
@@ -206,21 +194,17 @@ export default function App() {
     }
   }
 
-  function applyGeneratedExpenses(generated) {
-    if (generated.length === 0) return
-    setExpenses(prev => {
-      const merged = [...generated, ...prev]
-      saveExpenses(merged)
-      return merged
-    })
-  }
-
   function handleRecurringRulesChange(newRules) {
     setRecurringRules(newRules)
     saveRecurringRules(newRules)
-    // Sync immediately so new/re-enabled rules generate entries right away.
-    // `expenses` is fresh from the current render.
-    applyGeneratedExpenses(syncRecurringExpenses(newRules, expenses))
+    const generated = syncRecurringExpenses(newRules, expenses)
+    if (generated.length > 0) {
+      setExpenses(prev => {
+        const merged = [...generated, ...prev]
+        bulkAddExpenses(generated)
+        return merged
+      })
+    }
   }
 
   function showToast(message) {
@@ -234,15 +218,14 @@ export default function App() {
       ? expenses.map(e => e.id === expense.id ? expense : e)
       : [expense, ...expenses]
     setExpenses(updated)
-    saveExpenses(updated)
+    saveExpense(expense)
     const catName = categories.find(c => c.id === expense.categoryId)?.name ?? expense.category ?? ''
     showToast(`${isUpdate ? 'Updated' : 'Added'} ₹${expense.amount} to ${catName}`)
   }
 
   function handleDeleteExpense(id) {
-    const updated = expenses.filter(e => e.id !== id)
-    setExpenses(updated)
-    saveExpenses(updated)
+    setExpenses(prev => prev.filter(e => e.id !== id))
+    deleteExpense(id)
     showToast('Expense deleted')
   }
 
@@ -267,7 +250,7 @@ export default function App() {
 
   function handleManualEntry() {
     setRadialOpen(false)
-    setPrefillData({ category: '', note: '' })  // explicit empty — no localStorage fallback
+    setPrefillData({ category: '', note: '' })
     setShowModal(true)
     pushOverlay()
   }
@@ -307,7 +290,6 @@ export default function App() {
   }
 
   function handleTouchCancel() {
-    // Finger lifted abnormally (e.g. incoming call) — snap back to current tab.
     if (touchStartRef.current && isHorizontalRef.current) {
       const idx  = filterIndexRef.current
       const ease = 'transform 0.32s cubic-bezier(0.4, 0, 0.2, 1)'
@@ -324,12 +306,15 @@ export default function App() {
     isHorizontalRef.current = null
   }
 
-  // All three tab lists computed simultaneously so pages are always mounted
-  // (preserves each tab's scroll position during swipes).
   const todayExpenses = useMemo(() => filterExpenses(expenses, 'Today'), [expenses])
   const weekExpenses  = useMemo(() => filterExpenses(expenses, 'Week'),  [expenses])
   const monthExpenses = useMemo(() => filterExpenses(expenses, 'Month'), [expenses])
   const filterIndex   = FILTERS.indexOf(filter)
+
+  // Invisible splash while IndexedDB loads — same bg as app so there is no flash.
+  if (isLoading) {
+    return <div className="fixed inset-0" style={{ background: theme.pageBg }} />
+  }
 
   return (
     <div className="min-h-screen" style={{ background: theme.pageBg }}>
@@ -343,7 +328,6 @@ export default function App() {
           onTouchEnd={handleTouchEnd}
           onTouchCancel={handleTouchCancel}
         >
-          {/* Fixed header — sits above the swipeable content area */}
           <div className="flex-shrink-0" style={{ maxWidth: '480px', margin: '0 auto', width: '100%', padding: '0 1rem' }}>
             <PageHeader
               animate
@@ -381,7 +365,6 @@ export default function App() {
                   borderRadius: 'var(--r-card)',
                 }}
               >
-                {/* Pill: ref lets gesture handler move it without re-renders */}
                 <div
                   ref={pillRef}
                   style={{
@@ -415,7 +398,6 @@ export default function App() {
             </PageHeader>
           </div>
 
-          {/* Swipeable content — clips the 300%-wide track */}
           <div style={{ flex: 1, overflow: 'hidden' }}>
             <div
               ref={swipeTrackRef}
@@ -564,27 +546,19 @@ export default function App() {
 
       {showCategoryManager && (
         <CategoryManager
+          initialCategories={categories}
+          initialQuickActions={quickActions}
+          onCategoriesChange={setCategories}
+          onQuickActionsChange={setQuickActions}
           recurringRules={recurringRules}
           onRecurringRulesChange={handleRecurringRulesChange}
-          onClose={() => { setCategories(loadCategories()); setQuickActions(loadQuickActions()); setShowCategoryManager(false); syncHistoryBack() }}
-          onRestoreComplete={(data) => {
-            // Ensure restored categories have stable IDs, then migrate expenses.
-            const catsWithIds = data.categories.map(c =>
-              c.id ? c : { id: crypto.randomUUID(), ...c }
-            )
-            const { expenses: migratedExpenses } = migrateExpensesToCategoryIds(data.expenses, catsWithIds)
-            const restoredRules = Array.isArray(data.recurringRules) ? data.recurringRules : []
-            // Generate any recurring entries the backup may have been missing.
-            const generated = syncRecurringExpenses(restoredRules, migratedExpenses)
-            const finalExpenses = generated.length ? [...generated, ...migratedExpenses] : migratedExpenses
-            saveCategories(catsWithIds)
-            saveExpenses(finalExpenses)
-            saveRecurringRules(restoredRules)
-            setExpenses(finalExpenses)
-            setCategories(catsWithIds)
-            setRecurringRules(restoredRules)
-            if (data.settings?.theme) setTheme(data.settings.theme)
-            if (data.settings?.darkMode != null) setDark(data.settings.darkMode === 'true')
+          onClose={() => { setShowCategoryManager(false); syncHistoryBack() }}
+          onRestoreComplete={({ expenses: exps, categories: cats, recurringRules: rules, settings }) => {
+            setExpenses(exps)
+            setCategories(cats)
+            setRecurringRules(rules)
+            if (settings?.theme)    setTheme(settings.theme)
+            if (settings?.darkMode != null) setDark(settings.darkMode === 'true')
             setShowCategoryManager(false)
             showToast('Backup restored.')
           }}

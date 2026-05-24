@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Pencil, Trash2, Check, X, Moon, Sun, Plus, MoreVertical, ChevronDown, ChevronUp } from 'lucide-react'
-import { loadCategories, saveCategories, loadQuickActions, saveQuickActions } from '../utils/storage'
+import { saveCategory, deleteCategory, saveQuickActions } from '../utils/storage'
 import { useTheme } from '../context/ThemeContext'
 import { THEME_META } from '../utils/theme'
 import { CATEGORY_ICONS, ICON_OPTIONS, getIcon } from '../utils/icons'
@@ -19,9 +19,7 @@ function InlineIconPicker({ selected, onSelect, theme }) {
   useEffect(() => {
     if (!open) return
     function handleOutside(e) {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
-        setOpen(false)
-      }
+      if (containerRef.current && !containerRef.current.contains(e.target)) setOpen(false)
     }
     document.addEventListener('mousedown', handleOutside)
     document.addEventListener('touchstart', handleOutside)
@@ -87,29 +85,39 @@ function InlineIconPicker({ selected, onSelect, theme }) {
   )
 }
 
-export default function CategoryManager({ onClose, onRestoreComplete, recurringRules, onRecurringRulesChange }) {
+export default function CategoryManager({
+  initialCategories,
+  initialQuickActions,
+  onCategoriesChange,
+  onQuickActionsChange,
+  onClose,
+  onRestoreComplete,
+  recurringRules,
+  onRecurringRulesChange,
+}) {
   const { theme, themeName, setTheme, isDark, toggleDark } = useTheme()
-  const [categories, setCategories] = useState(() => loadCategories())
-  const [editingIdx, setEditingIdx] = useState(null)
-  const [editName, setEditName] = useState('')
-  const [editIcon, setEditIcon] = useState('box')
+
+  // Local state initialized from parent's already-loaded data.
+  const [categories, setCategories] = useState(initialCategories)
+  const [editingIdx, setEditingIdx]             = useState(null)
+  const [editName, setEditName]                 = useState('')
+  const [editIcon, setEditIcon]                 = useState('box')
   const [confirmDeleteIdx, setConfirmDeleteIdx] = useState(null)
-  const [openMenuIdx, setOpenMenuIdx] = useState(null)
-  const [addingCategory, setAddingCategory] = useState(false)
+  const [openMenuIdx, setOpenMenuIdx]           = useState(null)
+  const [addingCategory, setAddingCategory]     = useState(false)
   const [showAllCategories, setShowAllCategories] = useState(false)
-  const [quickActions, setQuickActions] = useState(() => loadQuickActions())
-  const [addingQuick, setAddingQuick] = useState(false)
-  const [quickFormName, setQuickFormName] = useState('')
+
+  const [quickActions, setQuickActions] = useState(initialQuickActions)
+  const [addingQuick, setAddingQuick]   = useState(false)
+  const [quickFormName, setQuickFormName]   = useState('')
   const [quickFormCatId, setQuickFormCatId] = useState('')
-  const [catPickerOpen, setCatPickerOpen] = useState(false)
+  const [catPickerOpen, setCatPickerOpen]   = useState(false)
   const catPickerRef = useRef(null)
 
   useEffect(() => {
     if (!catPickerOpen) return
     function handleOutside(e) {
-      if (catPickerRef.current && !catPickerRef.current.contains(e.target)) {
-        setCatPickerOpen(false)
-      }
+      if (catPickerRef.current && !catPickerRef.current.contains(e.target)) setCatPickerOpen(false)
     }
     document.addEventListener('mousedown', handleOutside)
     document.addEventListener('touchstart', handleOutside)
@@ -123,27 +131,33 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
   const visibleCategories = showAllCategories ? categories : categories.slice(0, CATEGORY_PREVIEW)
   const hiddenCount = categories.length - CATEGORY_PREVIEW
 
-  function persist(cats) {
-    setCategories(cats)
-    saveCategories(cats)
+  // Sync local state to parent and persist to DB.
+  function updateCategories(newCats) {
+    setCategories(newCats)
+    onCategoriesChange?.(newCats)
   }
 
-  function persistQuick(actions) {
-    setQuickActions(actions)
-    saveQuickActions(actions)
+  function updateQuickActions(newActions) {
+    const normalized = newActions.slice(0, 4)
+    setQuickActions(normalized)
+    onQuickActionsChange?.(normalized)
+    saveQuickActions(normalized)
   }
 
   function submitQuickForm() {
     const name = quickFormName.trim()
     if (!name || !quickFormCatId) return
-    persistQuick([...quickActions, { name, categoryId: quickFormCatId }])
+    updateQuickActions([...quickActions, { name, categoryId: quickFormCatId }])
     setAddingQuick(false)
     setQuickFormName('')
     setCatPickerOpen(false)
   }
 
   function handleDelete(idx) {
-    persist(categories.filter((_, i) => i !== idx))
+    const toDelete = categories[idx]
+    const newCats = categories.filter((_, i) => i !== idx)
+    updateCategories(newCats)
+    deleteCategory(toDelete.id)
     setConfirmDeleteIdx(null)
   }
 
@@ -158,10 +172,11 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
   function handleEditSave(idx) {
     const name = editName.trim()
     if (!name) { setEditingIdx(null); return }
-    const updated = [...categories]
-    // Preserve the stable id so categoryId references in expenses remain valid.
-    updated[idx] = { ...categories[idx], name, icon: editIcon }
-    persist(updated)
+    const updatedCat = { ...categories[idx], name, icon: editIcon }
+    const newCats = [...categories]
+    newCats[idx] = updatedCat
+    updateCategories(newCats)
+    saveCategory(updatedCat)
     setEditingIdx(null)
   }
 
@@ -187,13 +202,7 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
             <p className="text-xs font-semibold uppercase" style={{ color: theme.accent, letterSpacing: '0.13em' }}>Heath Ledger ✦</p>
             <h2
               className="font-display mt-2"
-              style={{
-                color: theme.heading,
-                fontSize: '2.35rem',
-                fontWeight: 800,
-                lineHeight: 1.0,
-                letterSpacing: '-0.035em',
-              }}
+              style={{ color: theme.heading, fontSize: '2.35rem', fontWeight: 800, lineHeight: 1.0, letterSpacing: '-0.035em' }}
             >Settings</h2>
           </div>
           <button
@@ -215,10 +224,7 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
             </p>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                {isDark
-                  ? <Moon size={18} color={theme.primary} />
-                  : <Sun size={18} color={theme.primary} />
-                }
+                {isDark ? <Moon size={18} color={theme.primary} /> : <Sun size={18} color={theme.primary} />}
                 <span className="text-sm font-medium" style={{ color: theme.text }}>Dark Mode</span>
               </div>
               <button
@@ -312,7 +318,7 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
             )}
             {visibleCategories.map((cat, idx) => (
               <li
-                key={idx}
+                key={cat.id}
                 className="flex flex-col px-4 py-3 rounded-2xl"
                 style={{
                   background: theme.cardBg,
@@ -331,7 +337,7 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
                       value={editName}
                       onChange={e => setEditName(e.target.value)}
                       onKeyDown={e => {
-                        if (e.key === 'Enter') handleEditSave(idx)
+                        if (e.key === 'Enter')  handleEditSave(idx)
                         if (e.key === 'Escape') setEditingIdx(null)
                       }}
                       autoFocus
@@ -441,15 +447,9 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
               style={{ color: theme.textFaint }}
             >
               {showAllCategories ? (
-                <>
-                  <ChevronUp size={13} />
-                  <span className="text-xs font-medium">Show less</span>
-                </>
+                <><ChevronUp size={13} /><span className="text-xs font-medium">Show less</span></>
               ) : (
-                <>
-                  <ChevronDown size={13} />
-                  <span className="text-xs font-medium">See all {categories.length} categories</span>
-                </>
+                <><ChevronDown size={13} /><span className="text-xs font-medium">See all {categories.length} categories</span></>
               )}
             </button>
           )}
@@ -461,7 +461,6 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
             </p>
 
             <div className="flex flex-col gap-2">
-              {/* Existing quick action chips */}
               {quickActions.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {quickActions.map((action, idx) => {
@@ -479,7 +478,7 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
                           {label}
                         </span>
                         <button
-                          onClick={() => persistQuick(quickActions.filter((_, i) => i !== idx))}
+                          onClick={() => updateQuickActions(quickActions.filter((_, i) => i !== idx))}
                           className="flex items-center justify-center active:scale-75 transition-transform"
                           style={{ color: 'rgba(255,255,255,0.75)', marginLeft: 2, flexShrink: 0 }}
                           aria-label={`Remove ${label}`}
@@ -492,7 +491,6 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
                 </div>
               )}
 
-              {/* Add button */}
               {quickActions.length < 4 && !addingQuick && (
                 <div>
                   <button
@@ -506,13 +504,11 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
                 </div>
               )}
 
-              {/* Inline add form */}
               {addingQuick && (
                 <div
                   className="flex flex-col gap-3 px-4 py-3 rounded-2xl"
                   style={{ background: theme.cardBg, boxShadow: `0 2px 12px rgba(${theme.shadowRgb},0.08)` }}
                 >
-                  {/* Row 1: name input + action buttons */}
                   <div className="flex items-center gap-2">
                     <input
                       type="text"
@@ -543,11 +539,9 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
                     </button>
                   </div>
 
-                  {/* Row 2: custom category picker */}
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-medium flex-shrink-0" style={{ color: theme.textFaint }}>Category</span>
                     <div ref={catPickerRef} className="relative flex-1 min-w-0">
-                      {/* Trigger button */}
                       <button
                         type="button"
                         onClick={() => setCatPickerOpen(v => !v)}
@@ -587,7 +581,6 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
                         />
                       </button>
 
-                      {/* Floating category list */}
                       <div
                         role="listbox"
                         style={{
@@ -629,9 +622,7 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
                                   {getIcon(cat.icon, { size: 15 })}
                                 </span>
                                 <span className="flex-1 min-w-0 truncate">{cat.name}</span>
-                                {isSelected && (
-                                  <Check size={13} style={{ flexShrink: 0, color: theme.primary }} />
-                                )}
+                                {isSelected && <Check size={13} style={{ flexShrink: 0, color: theme.primary }} />}
                               </button>
                             )
                           })}
@@ -659,7 +650,10 @@ export default function CategoryManager({ onClose, onRestoreComplete, recurringR
         <AddCategoryModal
           existingNames={categories.map(c => c.name)}
           onSave={({ name, icon }) => {
-            persist([...categories, { id: crypto.randomUUID(), name, icon }])
+            const newCat = { id: crypto.randomUUID(), name, icon }
+            const newCats = [...categories, newCat]
+            updateCategories(newCats)
+            saveCategory(newCat)
             setAddingCategory(false)
           }}
           onClose={() => setAddingCategory(false)}

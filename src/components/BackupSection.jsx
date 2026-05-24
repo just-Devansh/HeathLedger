@@ -8,15 +8,16 @@ export default function BackupSection({ onRestoreComplete }) {
   const fileInputRef = useRef(null)
   const [pendingData, setPendingData] = useState(null)
   const [toast, setToast] = useState({ visible: false, message: '', error: false })
+  const [restoring, setRestoring] = useState(false)
 
   function showToast(message, error = false) {
     setToast({ visible: true, message, error })
     setTimeout(() => setToast({ visible: false, message: '', error: false }), 2500)
   }
 
-  function handleExport() {
+  async function handleExport() {
     try {
-      const json = exportBackup()
+      const json = await exportBackup()
       const blob = new Blob([json], { type: 'application/json' })
       const url = URL.createObjectURL(blob)
       const today = new Date().toISOString().split('T')[0]
@@ -54,14 +55,17 @@ export default function BackupSection({ onRestoreComplete }) {
     reader.readAsText(file)
   }
 
-  function handleConfirmRestore() {
+  async function handleConfirmRestore() {
+    setRestoring(true)
     try {
-      applyBackup(pendingData)
-      onRestoreComplete(pendingData)
+      const processed = await applyBackup(pendingData)
+      onRestoreComplete(processed)
       setPendingData(null)
     } catch {
       setPendingData(null)
       showToast('Could not restore backup.', true)
+    } finally {
+      setRestoring(false)
     }
   }
 
@@ -129,12 +133,11 @@ export default function BackupSection({ onRestoreComplete }) {
         />
       </div>
 
-      {/* Confirm restore modal */}
       {pendingData && (
         <div
           className="fixed inset-0 flex items-end justify-center z-[60] px-4 pb-8"
           style={{ background: theme.modalBg }}
-          onClick={e => { if (e.target === e.currentTarget) setPendingData(null) }}
+          onClick={e => { if (e.target === e.currentTarget && !restoring) setPendingData(null) }}
         >
           <div
             className="w-full max-w-sm rounded-3xl p-6"
@@ -152,27 +155,28 @@ export default function BackupSection({ onRestoreComplete }) {
             <div className="flex gap-3">
               <button
                 onClick={() => setPendingData(null)}
-                className="flex-1 py-3.5 rounded-2xl text-sm font-semibold transition-opacity active:opacity-70"
+                disabled={restoring}
+                className="flex-1 py-3.5 rounded-2xl text-sm font-semibold transition-opacity active:opacity-70 disabled:opacity-40"
                 style={{ background: theme.inputBg, color: theme.textMuted }}
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmRestore}
-                className="flex-1 py-3.5 rounded-2xl text-sm font-semibold text-white transition-opacity active:opacity-70"
+                disabled={restoring}
+                className="flex-1 py-3.5 rounded-2xl text-sm font-semibold text-white transition-opacity active:opacity-70 disabled:opacity-60"
                 style={{
                   background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
                   boxShadow: `0 4px 16px rgba(${theme.shadowRgb},0.35)`,
                 }}
               >
-                Restore
+                {restoring ? 'Restoring…' : 'Restore'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Local toast for export/import feedback */}
       {toast.visible && (
         <div
           className="fixed left-0 right-0 flex justify-center pointer-events-none"
