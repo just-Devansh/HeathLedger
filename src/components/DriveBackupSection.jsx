@@ -276,14 +276,7 @@ export default function DriveBackupSection({ onRestoreComplete }) {
 
   return (
     <div style={toggleOnStyle}>
-      <div className="flex items-center gap-2 mb-3">
-        <Cloud size={13} color={theme.textFaint} />
-        <p className="text-xs uppercase tracking-wide font-medium" style={{ color: theme.textFaint }}>
-          Google Drive
-        </p>
-      </div>
-
-      <div className="rounded-2xl overflow-hidden" style={cardStyle}>
+      <div className="rounded-2xl overflow-hidden mt-3" style={cardStyle}>
 
         {/* ── Idle (disabled) ───────────────────────────────────────────────── */}
         {!enabled && !connecting && (
