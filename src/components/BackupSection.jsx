@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { Download, Upload, Shield } from 'lucide-react'
+import { Download, Upload, Shield, ChevronDown } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { exportBackup, validateBackup, applyBackup } from '../utils/storage'
 import DriveBackupSection from './DriveBackupSection'
@@ -7,6 +7,7 @@ import DriveBackupSection from './DriveBackupSection'
 export default function BackupSection({ onRestoreComplete }) {
   const { theme } = useTheme()
   const fileInputRef = useRef(null)
+  const [advancedOpen, setAdvancedOpen] = useState(false)
   const [pendingData, setPendingData] = useState(null)
   const [toast, setToast] = useState({ visible: false, message: '', error: false })
   const [restoring, setRestoring] = useState(false)
@@ -39,7 +40,6 @@ export default function BackupSection({ onRestoreComplete }) {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
-
     const reader = new FileReader()
     reader.onload = (ev) => {
       try {
@@ -75,67 +75,105 @@ export default function BackupSection({ onRestoreComplete }) {
       className="px-6 pt-5 pb-8"
       style={{ borderTop: `1px solid ${theme.border}` }}
     >
-      <div className="flex items-center gap-2 mb-4">
+      {/* Section label */}
+      <div className="flex items-center gap-2 mb-1">
         <Shield size={13} color={theme.textFaint} />
         <p className="text-xs uppercase tracking-wide font-medium" style={{ color: theme.textFaint }}>
-          Data & Backup
+          Backup
         </p>
       </div>
 
-      <div
-        className="rounded-2xl overflow-hidden"
-        style={{
-          background: theme.cardBg,
-          border: `1px solid ${theme.border}`,
-          boxShadow: `0 2px 12px rgba(${theme.shadowRgb},0.07)`,
-        }}
-      >
-        <button
-          onClick={handleExport}
-          className="w-full flex items-center gap-4 px-5 py-4 transition-opacity active:opacity-60"
-          style={{ borderBottom: `1px solid ${theme.border}` }}
-        >
-          <span
-            className="w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0"
-            style={{ background: theme.surface }}
-          >
-            <Download size={18} color={theme.primary} />
-          </span>
-          <div className="flex-1 text-left">
-            <p className="text-sm font-semibold" style={{ color: theme.text }}>Export Backup</p>
-            <p className="text-xs mt-0.5" style={{ color: theme.textMuted }}>Download all data as JSON</p>
-          </div>
-        </button>
-
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="w-full flex items-center gap-4 px-5 py-4 transition-opacity active:opacity-60"
-        >
-          <span
-            className="w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0"
-            style={{ background: theme.surface }}
-          >
-            <Upload size={18} color={theme.primary} />
-          </span>
-          <div className="flex-1 text-left">
-            <p className="text-sm font-semibold" style={{ color: theme.text }}>Import Backup</p>
-            <p className="text-xs mt-0.5" style={{ color: theme.textMuted }}>Restore from a backup file</p>
-          </div>
-        </button>
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".json,application/json"
-          className="sr-only"
-          onChange={handleFileChange}
-          aria-hidden="true"
-          tabIndex={-1}
-        />
-      </div>
-
+      {/* Primary: Google Drive */}
       <DriveBackupSection onRestoreComplete={onRestoreComplete} />
 
+      {/* Advanced Backup — collapsible */}
+      <div className="mt-5">
+        <button
+          onClick={() => setAdvancedOpen(v => !v)}
+          className="w-full flex items-center justify-between py-1 active:opacity-60 transition-opacity"
+          aria-expanded={advancedOpen}
+        >
+          <span
+            className="text-xs uppercase tracking-wide font-medium"
+            style={{ color: theme.textFaint }}
+          >
+            Advanced Backup
+          </span>
+          <ChevronDown
+            size={14}
+            color={theme.textFaint}
+            style={{
+              transform: advancedOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: 'transform 0.25s cubic-bezier(0.4,0,0.2,1)',
+            }}
+          />
+        </button>
+
+        <div
+          style={{
+            overflow: 'hidden',
+            maxHeight: advancedOpen ? '200px' : '0px',
+            opacity: advancedOpen ? 1 : 0,
+            transition: 'max-height 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease',
+          }}
+        >
+          <div className="pt-3">
+            <div
+              className="rounded-2xl overflow-hidden"
+              style={{
+                background: theme.cardBg,
+                border: `1px solid ${theme.border}`,
+                boxShadow: `0 2px 12px rgba(${theme.shadowRgb},0.07)`,
+              }}
+            >
+              <button
+                onClick={handleExport}
+                className="w-full flex items-center gap-4 px-5 py-4 transition-opacity active:opacity-60"
+                style={{ borderBottom: `1px solid ${theme.border}` }}
+              >
+                <span
+                  className="w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0"
+                  style={{ background: theme.surface }}
+                >
+                  <Download size={18} color={theme.primary} />
+                </span>
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-semibold" style={{ color: theme.text }}>Export Backup</p>
+                  <p className="text-xs mt-0.5" style={{ color: theme.textMuted }}>Download all data as JSON</p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full flex items-center gap-4 px-5 py-4 transition-opacity active:opacity-60"
+              >
+                <span
+                  className="w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0"
+                  style={{ background: theme.surface }}
+                >
+                  <Upload size={18} color={theme.primary} />
+                </span>
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-semibold" style={{ color: theme.text }}>Import Backup</p>
+                  <p className="text-xs mt-0.5" style={{ color: theme.textMuted }}>Restore from a backup file</p>
+                </div>
+              </button>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json,application/json"
+                className="sr-only"
+                onChange={handleFileChange}
+                aria-hidden="true"
+                tabIndex={-1}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Import confirm sheet */}
       {pendingData && (
         <div
           className="fixed inset-0 flex items-end justify-center z-[60] px-4 pb-8"
