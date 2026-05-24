@@ -25,7 +25,13 @@ export default function CategoryDrilldownSheet({ category, monthExpenses, onClos
 
   const entries = [...monthExpenses]
     .filter(e => (e.categoryId ?? e.category) === category.key)
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .sort((a, b) => {
+      const aD = new Date(a.date), bD = new Date(b.date)
+      const aDayMs = new Date(aD.getFullYear(), aD.getMonth(), aD.getDate()).getTime()
+      const bDayMs = new Date(bD.getFullYear(), bD.getMonth(), bD.getDate()).getTime()
+      if (bDayMs !== aDayMs) return bDayMs - aDayMs  // newer day first
+      return aD.getTime() - bD.getTime()              // earlier-logged first within the same day
+    })
 
   useEffect(() => {
     const prev = document.body.style.overflow

@@ -64,12 +64,17 @@ export default function AddExpenseModal({ categories, onSave, onClose, editExpen
     e.preventDefault()
     if (!amount || !categoryId) return
     if (!isEditing) localStorage.setItem('heath_ledger_last_category', categoryId)
+    // Use real wall-clock time for today; midnight local for any other date.
+    const isoDate = date === todayString()
+      ? new Date().toISOString()
+      : new Date(date + 'T00:00:00').toISOString()
+
     onSave({
       id: isEditing ? editExpense.id : crypto.randomUUID(),
       amount: parseFloat(amount),
       categoryId,
       note: note.trim(),
-      date: new Date(date).toISOString(),
+      date: isoDate,
     })
     onClose()
   }
