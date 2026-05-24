@@ -16,6 +16,7 @@ import CategoryManager from './components/CategoryManager'
 import RadialMenu from './components/RadialMenu'
 import HistoryScreen from './components/HistoryScreen'
 import PageHeader from './components/PageHeader'
+import MonthCategoryFilter from './components/MonthCategoryFilter'
 import { monthYearLabel } from './utils/dateFormat'
 
 const FILTERS = ['Today', 'Week', 'Month']
@@ -122,6 +123,7 @@ export default function App() {
   const [filter, setFilter]                     = useState('Today')
   const [activeTab, setActiveTab]               = useState('expenses')
   const [toast, setToast]                       = useState({ visible: false, message: '' })
+  const [monthCatFilter, setMonthCatFilter]     = useState(null)
 
   // ── Browser history / back-button management ────────────────────────────────
   const overlayDepth      = useRef(0)
@@ -426,21 +428,45 @@ export default function App() {
                 willChange: 'transform',
               }}
             >
-              {[todayExpenses, weekExpenses, monthExpenses].map((exps, i) => (
-                <div
-                  key={i}
-                  style={{ width: '33.333%', flexShrink: 0, height: '100%', overflowY: 'auto' }}
-                >
-                  <div className="max-w-[480px] mx-auto px-4 pb-[100px]">
-                    <ExpenseList
-                      expenses={exps}
-                      categories={categories}
-                      onEdit={openEdit}
-                      onDelete={handleDeleteExpense}
-                    />
+              {[todayExpenses, weekExpenses, monthExpenses].map((exps, i) => {
+                const isMonth = i === 2
+                const displayExpenses = isMonth && monthCatFilter
+                  ? exps.filter(e => (e.categoryId ?? e.category) === monthCatFilter)
+                  : exps
+                return (
+                  <div
+                    key={i}
+                    style={{ width: '33.333%', flexShrink: 0, height: '100%', overflowY: 'auto' }}
+                  >
+                    <div className="max-w-[480px] mx-auto px-4 pb-[100px]">
+                      {isMonth && (
+                        <div
+                          style={{
+                            position: 'sticky',
+                            top: 0,
+                            zIndex: 5,
+                            paddingBottom: '2px',
+                            background: theme.pageBg,
+                          }}
+                        >
+                          <MonthCategoryFilter
+                            categories={categories}
+                            monthExpenses={exps}
+                            value={monthCatFilter}
+                            onChange={setMonthCatFilter}
+                          />
+                        </div>
+                      )}
+                      <ExpenseList
+                        expenses={displayExpenses}
+                        categories={categories}
+                        onEdit={openEdit}
+                        onDelete={handleDeleteExpense}
+                      />
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         </div>

@@ -3,6 +3,7 @@ import { Wallet, ImageDown } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { getIcon } from '../utils/icons'
 import PageHeader from './PageHeader'
+import CategoryDrilldownSheet from './CategoryDrilldownSheet'
 import { monthYearLabel } from '../utils/dateFormat'
 
 function formatAmount(n) {
@@ -12,6 +13,7 @@ function formatAmount(n) {
 export default function SummaryScreen({ expenses, categories }) {
   const { theme, isDark } = useTheme()
   const [generating, setGenerating] = useState(false)
+  const [drilldownCat, setDrilldownCat] = useState(null)
 
   async function handleDownload() {
     setGenerating(true)
@@ -23,7 +25,7 @@ export default function SummaryScreen({ expenses, categories }) {
     }
   }
 
-  const { total, breakdown } = useMemo(() => {
+  const { total, breakdown, monthExpenses } = useMemo(() => {
     const now = new Date()
     const monthExpenses = expenses.filter(exp => {
       const d = new Date(exp.date)
@@ -44,6 +46,7 @@ export default function SummaryScreen({ expenses, categories }) {
       .map(([key, amount]) => {
         const cat = catById[key]
         return {
+          key,
           name: cat?.name ?? key,
           icon: cat?.icon ?? 'box',
           amount,
@@ -52,7 +55,7 @@ export default function SummaryScreen({ expenses, categories }) {
       })
       .sort((a, b) => b.amount - a.amount)
 
-    return { total, breakdown }
+    return { total, breakdown, monthExpenses }
   }, [expenses, categories])
 
   const biggest = breakdown[0]
@@ -147,15 +150,17 @@ export default function SummaryScreen({ expenses, categories }) {
                 ? 'flex flex-col gap-3 md:grid md:grid-cols-2 md:gap-2.5'
                 : 'flex flex-col gap-3'
               }>
-                {breakdown.map(({ name, icon, amount, percentage }) => (
+                {breakdown.map(({ key, name, icon, amount, percentage }) => (
                   <div
-                    key={name}
-                    className={twoCol ? 'p-4 rounded-2xl md:p-3' : 'p-4 rounded-2xl'}
+                    key={key}
+                    className={`${twoCol ? 'p-4 rounded-2xl md:p-3' : 'p-4 rounded-2xl'} active:scale-[0.97] transition-transform`}
                     style={{
                       background: theme.cardBg,
                       border: `1px solid rgba(${theme.shadowRgb}, 0.18)`,
                       boxShadow: `0 2px 14px rgba(${theme.shadowRgb}, 0.09)`,
+                      cursor: 'pointer',
                     }}
+                    onClick={() => setDrilldownCat({ key, name, icon, amount, percentage })}
                   >
                     <div className={`flex items-start justify-between mb-2.5 ${twoCol ? 'gap-3 md:gap-1.5' : 'gap-3'}`}>
                       <div className={`flex items-center min-w-0 ${twoCol ? 'gap-2.5 md:gap-2' : 'gap-2.5'}`}>
@@ -200,6 +205,14 @@ export default function SummaryScreen({ expenses, categories }) {
             )
           })()}
         </>
+      )}
+
+      {drilldownCat && (
+        <CategoryDrilldownSheet
+          category={drilldownCat}
+          monthExpenses={monthExpenses}
+          onClose={() => setDrilldownCat(null)}
+        />
       )}
     </div>
   )
