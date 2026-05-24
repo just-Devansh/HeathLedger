@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { Download, Upload, Shield } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { exportBackup, validateBackup, applyBackup } from '../utils/storage'
+import DriveBackupSection from './DriveBackupSection'
 
 export default function BackupSection({ onRestoreComplete }) {
   const { theme } = useTheme()
@@ -132,6 +133,8 @@ export default function BackupSection({ onRestoreComplete }) {
           tabIndex={-1}
         />
       </div>
+
+      <DriveBackupSection onRestoreComplete={onRestoreComplete} />
 
       {pendingData && (
         <div

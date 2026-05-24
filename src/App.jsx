@@ -6,6 +6,8 @@ import {
   saveRecurringRules, migrateExpensesToCategoryIds,
 } from './utils/storage'
 import { syncRecurringExpenses } from './utils/recurringExpenses'
+import { getDriveEnabled, getLastBackupTime, getStoredToken, isTokenValid } from './utils/driveAuth'
+import { performBackup as drivePerformBackup } from './utils/driveBackup'
 import { useTheme } from './context/ThemeContext'
 import AddExpenseModal from './components/AddExpenseModal'
 import ExpenseList from './components/ExpenseList'
@@ -94,6 +96,20 @@ export default function App() {
       setRecurringRules(rules)
       setQuickActions(actions)
       setIsLoading(false)
+
+      // Auto-backup: silently upload to Drive if >7 days since last backup and token is valid.
+      // Runs after UI renders so it never blocks the app.
+      ;(async () => {
+        try {
+          const [isDriveOn, lastBt, token] = await Promise.all([
+            getDriveEnabled(), getLastBackupTime(), getStoredToken(),
+          ])
+          if (!isDriveOn || !isTokenValid(token)) return
+          const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000
+          if (lastBt && Date.now() - new Date(lastBt).getTime() < SEVEN_DAYS) return
+          await drivePerformBackup(token.access_token)
+        } catch { /* silent — user will see stale timestamp in Settings */ }
+      })()
     }
     loadAll()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
