@@ -188,3 +188,12 @@ body {
 .fade-in {
   animation: fadeIn 0.2s ease both;
 }
+
+/* Insights screen — slides up and fades in from below */
+@keyframes insightsEnter {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.insights-enter {
+  animation: insightsEnter 0.32s cubic-bezier(0.4, 0, 0.2, 1) both;
+}

@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
-import { Wallet, ImageDown } from 'lucide-react'
+import { Wallet, ImageDown, Sparkles, ChevronRight } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { getIcon } from '../utils/icons'
 import PageHeader from './PageHeader'
 import CategoryDrilldownSheet from './CategoryDrilldownSheet'
+import InsightsScreen from './InsightsScreen'
 import { monthYearLabel } from '../utils/dateFormat'
 
 function formatAmount(n) {
@@ -14,6 +15,7 @@ export default function SummaryScreen({ expenses, categories, onDrilldownOpen, o
   const { theme, isDark } = useTheme()
   const [generating, setGenerating] = useState(false)
   const [drilldownCat, setDrilldownCat] = useState(null)
+  const [showInsights, setShowInsights] = useState(false)
 
   function openDrilldown(cat) {
     setDrilldownCat(cat)
@@ -23,6 +25,18 @@ export default function SummaryScreen({ expenses, categories, onDrilldownOpen, o
 
   function closeDrilldown() {
     setDrilldownCat(null)
+    onRegisterDrilldownClose?.(null)
+    onDrilldownClose?.()
+  }
+
+  function openInsights() {
+    setShowInsights(true)
+    onDrilldownOpen?.()
+    onRegisterDrilldownClose?.(() => setShowInsights(false))
+  }
+
+  function closeInsights() {
+    setShowInsights(false)
     onRegisterDrilldownClose?.(null)
     onDrilldownClose?.()
   }
@@ -137,6 +151,34 @@ export default function SummaryScreen({ expenses, categories, onDrilldownOpen, o
         )}
       </div>
 
+      {/* Insights entry point */}
+      <button
+        onClick={openInsights}
+        className="w-full flex items-center gap-3 px-4 py-4 mb-5 active:scale-[0.98] transition-transform"
+        style={{
+          background: theme.surface,
+          borderRadius: 'var(--r-card)',
+          border: `1px solid rgba(${theme.shadowRgb}, 0.10)`,
+          boxShadow: `0 2px 12px rgba(${theme.shadowRgb}, 0.06)`,
+        }}
+      >
+        <div
+          className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0"
+          style={{ background: `rgba(${theme.shadowRgb}, 0.08)` }}
+        >
+          <Sparkles size={16} color={theme.primary} />
+        </div>
+        <div className="flex-1 text-left">
+          <p className="text-sm font-bold leading-tight" style={{ color: theme.heading }}>
+            Insights
+          </p>
+          <p className="text-xs mt-0.5" style={{ color: theme.textFaint }}>
+            Track your spending behaviours
+          </p>
+        </div>
+        <ChevronRight size={16} color={theme.textFaint} />
+      </button>
+
       {breakdown.length === 0 ? (
         <div className="text-center py-16" style={{ color: theme.textFaint }}>
           <div className="flex justify-center mb-3">
@@ -224,6 +266,14 @@ export default function SummaryScreen({ expenses, categories, onDrilldownOpen, o
           category={drilldownCat}
           monthExpenses={monthExpenses}
           onClose={closeDrilldown}
+        />
+      )}
+
+      {showInsights && (
+        <InsightsScreen
+          expenses={expenses}
+          categories={categories}
+          onClose={closeInsights}
         />
       )}
     </div>
