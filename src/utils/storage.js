@@ -40,6 +40,28 @@ export function bulkAddExpenses(expenses) {
   return db.expenses.bulkPut(expenses)
 }
 
+// ── Trips ─────────────────────────────────────────────────────────────────────
+
+export async function loadTrips() {
+  const trips = await db.trips.toArray()
+  return trips.sort((a, b) => new Date(b.startDate) - new Date(a.startDate))
+}
+
+export function saveTrip(trip) {
+  return db.trips.put(trip)
+}
+
+export function deleteTrip(id) {
+  return db.trips.delete(id)
+}
+
+export async function replaceAllTrips(trips) {
+  await db.transaction('rw', db.trips, async () => {
+    await db.trips.clear()
+    if (trips.length) await db.trips.bulkPut(trips)
+  })
+}
+
 export async function replaceAllExpenses(expenses) {
   await db.transaction('rw', db.expenses, async () => {
     await db.expenses.clear()
@@ -125,22 +147,24 @@ export function migrateExpensesToCategoryIds(expenses, categories) {
 // ── Backup export / import ────────────────────────────────────────────────────
 
 export async function exportBackup() {
-  const [expenses, categories, recurringRules, quickActions, themeRow, darkRow] = await Promise.all([
+  const [expenses, categories, recurringRules, quickActions, trips, themeRow, darkRow] = await Promise.all([
     loadExpenses(),
     loadCategories(),
     loadRecurringRules(),
     loadQuickActions(),
+    loadTrips(),
     db.settings.get('theme'),
     db.settings.get('darkMode'),
   ])
   return JSON.stringify({
-    version: 2,
+    version: 3,
     exportedAt: new Date().toISOString(),
     appName: 'HeathLedger',
     expenses,
     categories,
     recurringRules,
     quickActions,
+    trips,
     settings: {
       theme:    themeRow?.value ?? 'blue',
       darkMode: darkRow?.value  ?? null,
@@ -151,7 +175,7 @@ export async function exportBackup() {
 export function validateBackup(data) {
   if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('invalid')
   if (typeof data.version !== 'number')   throw new Error('invalid')
-  if (data.version > 2)                   throw new Error('version')
+  if (data.version > 3)                   throw new Error('version')
   if (!Array.isArray(data.expenses))      throw new Error('invalid')
   if (!Array.isArray(data.categories))    throw new Error('invalid')
 }
@@ -164,12 +188,13 @@ export async function applyBackup(data) {
   )
   const { expenses: migratedExpenses } = migrateExpensesToCategoryIds(data.expenses, catsWithIds)
   const restoredRules = Array.isArray(data.recurringRules) ? data.recurringRules : []
+  const restoredTrips = Array.isArray(data.trips) ? data.trips : []
   const generated     = syncRecurringExpenses(restoredRules, migratedExpenses)
   const finalExpenses = generated.length ? [...generated, ...migratedExpenses] : migratedExpenses
 
   const { theme, darkMode } = data.settings ?? {}
 
-  await db.transaction('rw', [db.expenses, db.categories, db.recurringRules, db.settings], async () => {
+  await db.transaction('rw', [db.expenses, db.categories, db.recurringRules, db.settings, db.trips], async () => {
     await db.expenses.clear()
     if (finalExpenses.length) await db.expenses.bulkPut(finalExpenses)
 
@@ -178,6 +203,9 @@ export async function applyBackup(data) {
 
     await db.recurringRules.clear()
     if (restoredRules.length) await db.recurringRules.bulkPut(restoredRules)
+
+    await db.trips.clear()
+    if (restoredTrips.length) await db.trips.bulkPut(restoredTrips)
 
     if (theme) {
       await db.settings.put({ key: 'theme', value: theme })
@@ -194,6 +222,7 @@ export async function applyBackup(data) {
     expenses:       finalExpenses,
     categories:     catsWithIds,
     recurringRules: restoredRules,
+    trips:          restoredTrips,
     settings:       data.settings ?? {},
   }
 }

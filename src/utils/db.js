@@ -8,3 +8,8 @@ db.version(1).stores({
   recurringRules: 'id',
   settings:       'key',
 })
+
+db.version(2).stores({
+  expenses: 'id, date, categoryId, tripId',
+  trips:    'id, startDate',
+})

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Wallet, ImageDown, Sparkles, ChevronRight } from 'lucide-react'
+import { Wallet, ImageDown, Sparkles, ChevronRight, Compass } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { getIcon } from '../utils/icons'
 import PageHeader from './PageHeader'
@@ -11,7 +11,7 @@ function formatAmount(n) {
   return n.toLocaleString('en-IN')
 }
 
-export default function SummaryScreen({ expenses, categories, onDrilldownOpen, onDrilldownClose, onRegisterDrilldownClose }) {
+export default function SummaryScreen({ expenses, categories, trips, onDrilldownOpen, onDrilldownClose, onRegisterDrilldownClose, onOpenTrips }) {
   const { theme, isDark } = useTheme()
   const [generating, setGenerating] = useState(false)
   const [drilldownCat, setDrilldownCat] = useState(null)
@@ -151,33 +151,62 @@ export default function SummaryScreen({ expenses, categories, onDrilldownOpen, o
         )}
       </div>
 
-      {/* Insights entry point */}
-      <button
-        onClick={openInsights}
-        className="w-full flex items-center gap-3 px-4 py-4 mb-5 active:scale-[0.98] transition-transform"
-        style={{
-          background: theme.surface,
-          borderRadius: 'var(--r-card)',
-          border: `1px solid rgba(${theme.shadowRgb}, 0.10)`,
-          boxShadow: `0 2px 12px rgba(${theme.shadowRgb}, 0.06)`,
-        }}
-      >
-        <div
-          className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0"
-          style={{ background: `rgba(${theme.shadowRgb}, 0.08)` }}
+      {/* Entry points row */}
+      <div className="flex gap-3 mb-5">
+        <button
+          onClick={openInsights}
+          className="flex-1 flex items-center gap-3 px-4 py-4 active:scale-[0.98] transition-transform"
+          style={{
+            background: theme.surface,
+            borderRadius: 'var(--r-card)',
+            border: `1px solid rgba(${theme.shadowRgb}, 0.10)`,
+            boxShadow: `0 2px 12px rgba(${theme.shadowRgb}, 0.06)`,
+          }}
         >
-          <Sparkles size={16} color={theme.primary} />
-        </div>
-        <div className="flex-1 text-left">
-          <p className="text-sm font-bold leading-tight" style={{ color: theme.heading }}>
-            Insights
-          </p>
-          <p className="text-xs mt-0.5" style={{ color: theme.textFaint }}>
-            Track your spending behaviours
-          </p>
-        </div>
-        <ChevronRight size={16} color={theme.textFaint} />
-      </button>
+          <div
+            className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0"
+            style={{ background: `rgba(${theme.shadowRgb}, 0.08)` }}
+          >
+            <Sparkles size={16} color={theme.primary} />
+          </div>
+          <div className="flex-1 text-left min-w-0">
+            <p className="text-sm font-bold leading-tight" style={{ color: theme.heading }}>
+              Insights
+            </p>
+            <p className="text-xs mt-0.5 truncate" style={{ color: theme.textFaint }}>
+              Spending patterns
+            </p>
+          </div>
+        </button>
+
+        <button
+          onClick={onOpenTrips}
+          className="flex-1 flex items-center gap-3 px-4 py-4 active:scale-[0.98] transition-transform"
+          style={{
+            background: theme.surface,
+            borderRadius: 'var(--r-card)',
+            border: `1px solid rgba(${theme.shadowRgb}, 0.10)`,
+            boxShadow: `0 2px 12px rgba(${theme.shadowRgb}, 0.06)`,
+          }}
+        >
+          <div
+            className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0"
+            style={{ background: `rgba(${theme.shadowRgb}, 0.08)` }}
+          >
+            <Compass size={16} color={theme.primary} />
+          </div>
+          <div className="flex-1 text-left min-w-0">
+            <p className="text-sm font-bold leading-tight" style={{ color: theme.heading }}>
+              Trips
+            </p>
+            <p className="text-xs mt-0.5 truncate" style={{ color: theme.textFaint }}>
+              {(trips ?? []).length > 0
+                ? `${(trips ?? []).length} ${(trips ?? []).length === 1 ? 'trip' : 'trips'}`
+                : 'Your travels'}
+            </p>
+          </div>
+        </button>
+      </div>
 
       {breakdown.length === 0 ? (
         <div className="text-center py-16" style={{ color: theme.textFaint }}>

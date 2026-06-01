@@ -32,7 +32,7 @@ function resolveCatId(nameOrId, categories) {
   return byName?.id ?? null
 }
 
-export default function AddExpenseModal({ categories, onSave, onClose, editExpense, initialCategory, initialNote }) {
+export default function AddExpenseModal({ categories, onSave, onClose, editExpense, initialCategory, initialNote, initialTripId, tripContext }) {
   const { theme, isDark } = useTheme()
   const isEditing = !!editExpense
 
@@ -52,6 +52,7 @@ export default function AddExpenseModal({ categories, onSave, onClose, editExpen
   const [date, setDate] = useState(() =>
     isEditing ? editExpense.date.split('T')[0] : todayString()
   )
+  const tripId = isEditing ? editExpense.tripId : (initialTripId ?? null)
 
   function handleNoteChange(e) {
     const val = e.target.value
@@ -69,13 +70,15 @@ export default function AddExpenseModal({ categories, onSave, onClose, editExpen
       ? new Date().toISOString()
       : new Date(date + 'T00:00:00').toISOString()
 
-    onSave({
+    const expense = {
       id: isEditing ? editExpense.id : crypto.randomUUID(),
       amount: parseFloat(amount),
       categoryId,
       note: note.trim(),
       date: isoDate,
-    })
+    }
+    if (tripId) expense.tripId = tripId
+    onSave(expense)
     onClose()
   }
 
@@ -93,9 +96,16 @@ export default function AddExpenseModal({ categories, onSave, onClose, editExpen
       >
         {/* Header is flex-shrink-0 so it always stays visible above the scrollable form */}
         <div className="flex-shrink-0 flex items-center justify-between px-6 pt-5 pb-2">
-          <h2 className="text-lg font-semibold" style={{ color: theme.text }}>
-            {isEditing ? 'Edit Expense' : 'Add Expense'}
-          </h2>
+          <div>
+            <h2 className="text-lg font-semibold" style={{ color: theme.text }}>
+              {isEditing ? 'Edit Expense' : 'Add Expense'}
+            </h2>
+            {tripContext && !isEditing && (
+              <p className="text-xs font-medium mt-0.5" style={{ color: theme.primary }}>
+                ✈ {tripContext}
+              </p>
+            )}
+          </div>
           <button
             type="button"
             onClick={onClose}

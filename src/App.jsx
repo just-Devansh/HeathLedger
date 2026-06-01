@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 import { Settings, Clock } from 'lucide-react'
 import {
   loadExpenses, loadCategories, loadRecurringRules, loadQuickActions,
+  loadTrips, saveTrip, deleteTrip,
   saveExpense, deleteExpense, bulkAddExpenses,
   saveRecurringRules, migrateExpensesToCategoryIds,
 } from './utils/storage'
@@ -15,6 +16,7 @@ import SummaryScreen from './components/SummaryScreen'
 import CategoryManager from './components/CategoryManager'
 import RadialMenu from './components/RadialMenu'
 import HistoryScreen from './components/HistoryScreen'
+import TripsScreen from './components/TripsScreen'
 import PageHeader from './components/PageHeader'
 import { monthYearLabel } from './utils/dateFormat'
 
@@ -68,15 +70,17 @@ export default function App() {
   const [categories, setCategories]     = useState([])
   const [recurringRules, setRecurringRules] = useState([])
   const [quickActions, setQuickActions] = useState([])
+  const [trips, setTrips]               = useState([])
 
   // Load everything from IndexedDB on mount.
   useEffect(() => {
     async function loadAll() {
-      const [cats, exps, rules, actions] = await Promise.all([
+      const [cats, exps, rules, actions, tripsData] = await Promise.all([
         loadCategories(),
         loadExpenses(),
         loadRecurringRules(),
         loadQuickActions(),
+        loadTrips(),
       ])
 
       // One-time data migration: assign categoryId to legacy expenses that only have a name string.
@@ -95,6 +99,7 @@ export default function App() {
       setExpenses(finalExpenses)
       setRecurringRules(rules)
       setQuickActions(actions)
+      setTrips(tripsData)
       setIsLoading(false)
 
       // Auto-backup: silently upload to Drive if >7 days since last backup and token is valid.
@@ -119,6 +124,7 @@ export default function App() {
   const [prefillData, setPrefillData]           = useState(null)
   const [radialOpen, setRadialOpen]             = useState(false)
   const [showCategoryManager, setShowCategoryManager] = useState(false)
+  const [showTrips, setShowTrips]               = useState(false)
   const [filter, setFilter]                     = useState('Today')
   const [activeTab, setActiveTab]               = useState('expenses')
   const [toast, setToast]                       = useState({ visible: false, message: '' })
@@ -129,6 +135,7 @@ export default function App() {
   const stateRef          = useRef({})
   const historyScreenBackRef     = useRef(null)
   const summaryDrilldownCloseRef = useRef(null)
+  const tripsBackRef             = useRef(null)
 
   // Swipe navigation (expenses tab)
   const expensesContainerRef = useRef(null)
@@ -139,8 +146,8 @@ export default function App() {
   const filterIndexRef       = useRef(0)
 
   useEffect(() => {
-    stateRef.current = { showModal, editExpense, radialOpen, showCategoryManager, activeTab }
-  }, [showModal, editExpense, radialOpen, showCategoryManager, activeTab])
+    stateRef.current = { showModal, editExpense, radialOpen, showCategoryManager, showTrips, activeTab }
+  }, [showModal, editExpense, radialOpen, showCategoryManager, showTrips, activeTab])
 
   useEffect(() => {
     function handlePopState() {
@@ -155,6 +162,8 @@ export default function App() {
         setPrefillData(null)
       } else if (s.showCategoryManager) {
         setShowCategoryManager(false)
+      } else if (s.showTrips && tripsBackRef.current) {
+        tripsBackRef.current()
       } else if (s.activeTab === 'history' && historyScreenBackRef.current) {
         historyScreenBackRef.current()
       } else if (s.activeTab === 'summary' && summaryDrilldownCloseRef.current) {
@@ -240,8 +249,47 @@ export default function App() {
       : [expense, ...expenses]
     setExpenses(updated)
     saveExpense(expense)
-    const catName = categories.find(c => c.id === expense.categoryId)?.name ?? expense.category ?? ''
-    showToast(`${isUpdate ? 'Updated' : 'Added'} ₹${expense.amount} to ${catName}`)
+    const catName  = categories.find(c => c.id === expense.categoryId)?.name ?? expense.category ?? ''
+    const tripName = expense.tripId ? trips.find(t => t.id === expense.tripId)?.title : null
+    const msg = isUpdate
+      ? `Updated ₹${expense.amount} in ${catName}`
+      : tripName
+        ? `Added ₹${expense.amount} · ${tripName}`
+        : `Added ₹${expense.amount} to ${catName}`
+    showToast(msg)
+  }
+
+  function handleSaveTrip(trip) {
+    const isUpdate = trips.some(t => t.id === trip.id)
+    setTrips(prev => isUpdate
+      ? prev.map(t => t.id === trip.id ? trip : t)
+      : [trip, ...prev]
+    )
+    saveTrip(trip)
+    showToast(isUpdate ? 'Trip updated' : `Trip "${trip.title}" created`)
+  }
+
+  async function handleDeleteTrip(id) {
+    // Clear tripId from expenses that belonged to this trip.
+    const orphaned = expenses.filter(e => e.tripId === id)
+    if (orphaned.length) {
+      const cleaned = orphaned.map(e => { const copy = { ...e }; delete copy.tripId; return copy })
+      await bulkAddExpenses(cleaned)
+      setExpenses(prev => prev.map(e => {
+        if (e.tripId !== id) return e
+        const copy = { ...e }; delete copy.tripId; return copy
+      }))
+    }
+    await deleteTrip(id)
+    setTrips(prev => prev.filter(t => t.id !== id))
+    showToast('Trip deleted')
+  }
+
+  function handleAddExpenseToTrip(tripId) {
+    setRadialOpen(false)
+    setPrefillData({ category: '', note: '', tripId })
+    setShowModal(true)
+    pushOverlay()
   }
 
   function handleDeleteExpense(id) {
@@ -455,9 +503,11 @@ export default function App() {
         <SummaryScreen
           expenses={expenses}
           categories={categories}
+          trips={trips}
           onDrilldownOpen={pushOverlay}
           onDrilldownClose={syncHistoryBack}
           onRegisterDrilldownClose={fn => { summaryDrilldownCloseRef.current = fn }}
+          onOpenTrips={() => { setShowTrips(true); pushOverlay() }}
         />
       )}
 
@@ -560,6 +610,21 @@ export default function App() {
         </div>
       )}
 
+      {showTrips && (
+        <TripsScreen
+          trips={trips}
+          expenses={expenses}
+          categories={categories}
+          onSaveTrip={handleSaveTrip}
+          onDeleteTrip={handleDeleteTrip}
+          onAddExpenseToTrip={handleAddExpenseToTrip}
+          onClose={() => { setShowTrips(false); syncHistoryBack() }}
+          onPushOverlay={pushOverlay}
+          onSyncBack={syncHistoryBack}
+          onRegisterBackHandler={fn => { tripsBackRef.current = fn }}
+        />
+      )}
+
       {(showModal || editExpense) && (
         <AddExpenseModal
           categories={categories}
@@ -568,6 +633,10 @@ export default function App() {
           editExpense={editExpense}
           initialCategory={!editExpense ? prefillData?.category : undefined}
           initialNote={!editExpense ? prefillData?.note : undefined}
+          initialTripId={!editExpense ? prefillData?.tripId : undefined}
+          tripContext={!editExpense && prefillData?.tripId
+            ? trips.find(t => t.id === prefillData.tripId)?.title
+            : undefined}
         />
       )}
 
@@ -580,10 +649,11 @@ export default function App() {
           recurringRules={recurringRules}
           onRecurringRulesChange={handleRecurringRulesChange}
           onClose={() => { setShowCategoryManager(false); syncHistoryBack() }}
-          onRestoreComplete={({ expenses: exps, categories: cats, recurringRules: rules, settings }) => {
+          onRestoreComplete={({ expenses: exps, categories: cats, recurringRules: rules, trips: restoredTrips, settings }) => {
             setExpenses(exps)
             setCategories(cats)
             setRecurringRules(rules)
+            setTrips(restoredTrips ?? [])
             if (settings?.theme)    setTheme(settings.theme)
             if (settings?.darkMode != null) setDark(settings.darkMode === 'true')
             setShowCategoryManager(false)
