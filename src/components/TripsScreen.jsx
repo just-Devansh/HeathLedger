@@ -210,7 +210,12 @@ export default function TripsScreen({
                       <img
                         src={trip.coverImage}
                         alt=""
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                        style={{
+                          width: '100%', height: '100%', objectFit: 'cover', display: 'block',
+                          objectPosition: trip.coverPosition
+                            ? `${trip.coverPosition.x}% ${trip.coverPosition.y}%`
+                            : 'center center',
+                        }}
                       />
                     </div>
                   ) : (

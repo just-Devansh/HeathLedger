@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useTheme } from '../context/ThemeContext'
 
 async function compressImage(file) {
@@ -28,7 +28,6 @@ function todayString() {
   return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-')
 }
 
-// Indian date format: DD/MM/YYYY
 function fmtDate(isoStr) {
   if (!isoStr) return '—'
   const [yyyy, mm, dd] = isoStr.split('-')
@@ -65,6 +64,114 @@ function DateField({ label, value, onChange, min, required, isDark, theme }) {
   )
 }
 
+// Draggable cover image — lets the user pan to frame the right part.
+// Position is stored as { x, y } in 0–100% (object-position values).
+function DraggableCover({ src, position, onPositionChange, onRemove, onReplace, compressing }) {
+  const { theme } = useTheme()
+  const divRef    = useRef(null)
+  const posRef    = useRef(position)
+  const dragRef   = useRef(null)   // null = not dragging
+
+  // Keep posRef in sync when position prop changes (e.g. new image uploaded).
+  useEffect(() => { posRef.current = position }, [position])
+
+  // Apply position directly to the DOM during drag (no React re-render = smooth).
+  function applyPos(x, y) {
+    posRef.current = { x, y }
+    if (divRef.current) divRef.current.style.backgroundPosition = `${x}% ${y}%`
+  }
+
+  const onTouchStart = useCallback(e => {
+    const t = e.touches[0]
+    dragRef.current = { sx: t.clientX, sy: t.clientY, px: posRef.current.x, py: posRef.current.y }
+  }, [])
+
+  const onTouchMove = useCallback(e => {
+    if (!dragRef.current) return
+    const t   = e.touches[0]
+    const dx  = t.clientX - dragRef.current.sx
+    const dy  = t.clientY - dragRef.current.sy
+    const SENS = 0.18
+    const nx  = Math.max(0, Math.min(100, dragRef.current.px - dx * SENS))
+    const ny  = Math.max(0, Math.min(100, dragRef.current.py - dy * SENS))
+    applyPos(nx, ny)
+  }, [])
+
+  const onTouchEnd = useCallback(() => {
+    if (!dragRef.current) return
+    dragRef.current = null
+    onPositionChange({ ...posRef.current })
+  }, [onPositionChange])
+
+  // Attach touchmove with passive:false so we can prevent page scroll while panning.
+  useEffect(() => {
+    const el = divRef.current
+    if (!el) return
+    el.addEventListener('touchmove', onTouchMove, { passive: false })
+    return () => el.removeEventListener('touchmove', onTouchMove)
+  }, [onTouchMove])
+
+  return (
+    <div className="relative rounded-xl overflow-hidden" style={{ height: '148px' }}>
+      {/* The image rendered as a background so backgroundPosition panning works */}
+      <div
+        ref={divRef}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: `url(${src})`,
+          backgroundSize: 'cover',
+          backgroundPosition: `${position.x}% ${position.y}%`,
+          cursor: 'grab',
+          touchAction: 'none',
+          userSelect: 'none',
+        }}
+      />
+
+      {/* "Drag to reposition" hint */}
+      <div
+        className="absolute bottom-2 left-1/2 flex items-center gap-1 px-2.5 py-1 rounded-full pointer-events-none"
+        style={{
+          transform: 'translateX(-50%)',
+          background: 'rgba(0,0,0,0.50)',
+          backdropFilter: 'blur(4px)',
+          WebkitBackdropFilter: 'blur(4px)',
+        }}
+      >
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+          <path d="M5 1v8M1 5h8" stroke="white" strokeWidth="1.4" strokeLinecap="round"/>
+          <path d="M3 3L5 1l2 2M3 7l2 2 2-2M1 3l2 2-2 2M7 3l2 2-2 2" stroke="white" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        <span style={{ color: 'rgba(255,255,255,0.88)', fontSize: '10px', fontWeight: 600, whiteSpace: 'nowrap' }}>
+          Drag to reposition
+        </span>
+      </div>
+
+      {/* Remove */}
+      <button
+        type="button"
+        onClick={onRemove}
+        className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full text-white text-lg leading-none active:scale-90 transition-transform"
+        style={{ background: 'rgba(0,0,0,0.55)' }}
+        aria-label="Remove cover"
+      >
+        ×
+      </button>
+
+      {/* Change */}
+      <label
+        className="absolute top-2 left-2 flex items-center gap-1 px-2.5 py-1 rounded-full text-white cursor-pointer active:scale-95 transition-transform"
+        style={{ background: 'rgba(0,0,0,0.55)', fontSize: '11px', fontWeight: 600 }}
+      >
+        {compressing ? 'Loading…' : 'Change'}
+        <input type="file" accept="image/*" className="hidden" onChange={onReplace} disabled={compressing} />
+      </label>
+    </div>
+  )
+}
+
 export default function CreateTripModal({ trip, onSave, onClose }) {
   const { theme, isDark } = useTheme()
   const isEditing = !!trip
@@ -74,14 +181,16 @@ export default function CreateTripModal({ trip, onSave, onClose }) {
   const [startDate, setStartDate]   = useState(trip?.startDate?.split('T')[0] ?? todayString())
   const [endDate, setEndDate]       = useState(trip?.endDate?.split('T')[0] ?? todayString())
   const [coverImage, setCoverImage] = useState(trip?.coverImage ?? null)
+  const [coverPos, setCoverPos]     = useState(trip?.coverPosition ?? { x: 50, y: 50 })
   const [compressing, setCompr]     = useState(false)
 
-  async function handleImageChange(e) {
-    const file = e.target.files?.[0]
+  async function loadImage(file) {
     if (!file) return
     setCompr(true)
     try {
-      setCoverImage(await compressImage(file))
+      const compressed = await compressImage(file)
+      setCoverImage(compressed)
+      setCoverPos({ x: 50, y: 50 })  // reset position for new image
     } finally {
       setCompr(false)
     }
@@ -91,13 +200,14 @@ export default function CreateTripModal({ trip, onSave, onClose }) {
     e.preventDefault()
     if (!title.trim() || !startDate || !endDate) return
     onSave({
-      id:          trip?.id ?? crypto.randomUUID(),
-      title:       title.trim(),
-      destination: destination.trim(),
-      startDate:   new Date(startDate + 'T00:00:00').toISOString(),
-      endDate:     new Date(endDate + 'T23:59:59').toISOString(),
-      coverImage:  coverImage ?? null,
-      createdAt:   trip?.createdAt ?? new Date().toISOString(),
+      id:            trip?.id ?? crypto.randomUUID(),
+      title:         title.trim(),
+      destination:   destination.trim(),
+      startDate:     new Date(startDate + 'T00:00:00').toISOString(),
+      endDate:       new Date(endDate + 'T23:59:59').toISOString(),
+      coverImage:    coverImage ?? null,
+      coverPosition: coverImage ? coverPos : null,
+      createdAt:     trip?.createdAt ?? new Date().toISOString(),
     })
     onClose()
   }
@@ -133,33 +243,14 @@ export default function CreateTripModal({ trip, onSave, onClose }) {
 
             {/* Cover image */}
             {coverImage ? (
-              <div className="relative rounded-xl overflow-hidden" style={{ height: '140px' }}>
-                <img src={coverImage} alt="" className="w-full h-full object-cover" />
-                {/* Remove button */}
-                <button
-                  type="button"
-                  onClick={() => setCoverImage(null)}
-                  className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full text-white text-lg leading-none"
-                  style={{ background: 'rgba(0,0,0,0.55)' }}
-                  aria-label="Remove cover"
-                >
-                  ×
-                </button>
-                {/* Change / replace button */}
-                <label
-                  className="absolute bottom-2 right-2 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold text-white cursor-pointer active:scale-95 transition-transform"
-                  style={{ background: 'rgba(0,0,0,0.55)' }}
-                >
-                  {compressing ? 'Compressing…' : 'Change'}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageChange}
-                    disabled={compressing}
-                  />
-                </label>
-              </div>
+              <DraggableCover
+                src={coverImage}
+                position={coverPos}
+                onPositionChange={setCoverPos}
+                onRemove={() => { setCoverImage(null); setCoverPos({ x: 50, y: 50 }) }}
+                onReplace={e => loadImage(e.target.files?.[0])}
+                compressing={compressing}
+              />
             ) : (
               <label
                 className="flex flex-col items-center justify-center rounded-xl cursor-pointer active:scale-[0.98] transition-transform"
@@ -182,7 +273,7 @@ export default function CreateTripModal({ trip, onSave, onClose }) {
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={handleImageChange}
+                  onChange={e => loadImage(e.target.files?.[0])}
                   disabled={compressing}
                 />
               </label>
@@ -220,25 +311,10 @@ export default function CreateTripModal({ trip, onSave, onClose }) {
               />
             </div>
 
-            {/* Dates — DD/MM/YYYY display, invisible native picker overlay */}
+            {/* Dates */}
             <div className="flex gap-4">
-              <DateField
-                label="Start date"
-                value={startDate}
-                onChange={setStartDate}
-                required
-                isDark={isDark}
-                theme={theme}
-              />
-              <DateField
-                label="End date"
-                value={endDate}
-                onChange={setEndDate}
-                min={startDate}
-                required
-                isDark={isDark}
-                theme={theme}
-              />
+              <DateField label="Start date" value={startDate} onChange={setStartDate} required isDark={isDark} theme={theme} />
+              <DateField label="End date"   value={endDate}   onChange={setEndDate}   min={startDate} required isDark={isDark} theme={theme} />
             </div>
 
             <button
