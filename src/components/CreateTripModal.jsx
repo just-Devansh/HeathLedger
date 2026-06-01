@@ -135,6 +135,7 @@ export default function CreateTripModal({ trip, onSave, onClose }) {
             {coverImage ? (
               <div className="relative rounded-xl overflow-hidden" style={{ height: '140px' }}>
                 <img src={coverImage} alt="" className="w-full h-full object-cover" />
+                {/* Remove button */}
                 <button
                   type="button"
                   onClick={() => setCoverImage(null)}
@@ -144,6 +145,20 @@ export default function CreateTripModal({ trip, onSave, onClose }) {
                 >
                   ×
                 </button>
+                {/* Change / replace button */}
+                <label
+                  className="absolute bottom-2 right-2 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold text-white cursor-pointer active:scale-95 transition-transform"
+                  style={{ background: 'rgba(0,0,0,0.55)' }}
+                >
+                  {compressing ? 'Compressing…' : 'Change'}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageChange}
+                    disabled={compressing}
+                  />
+                </label>
               </div>
             ) : (
               <label
