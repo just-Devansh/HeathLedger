@@ -28,6 +28,43 @@ function todayString() {
   return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-')
 }
 
+// Indian date format: DD/MM/YYYY
+function fmtDate(isoStr) {
+  if (!isoStr) return '—'
+  const [yyyy, mm, dd] = isoStr.split('-')
+  return `${dd}/${mm}/${yyyy}`
+}
+
+function DateField({ label, value, onChange, min, required, isDark, theme }) {
+  return (
+    <div className="flex-1 min-w-0">
+      <p className="text-xs uppercase tracking-wide mb-2" style={{ color: theme.textFaint }}>
+        {label}
+      </p>
+      <div className="relative border-b" style={{ borderColor: theme.border }}>
+        <div
+          className="flex items-center justify-between py-2 select-none"
+          style={{ color: theme.text }}
+        >
+          <span className="text-sm font-medium">{fmtDate(value)}</span>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+        <input
+          type="date"
+          value={value}
+          min={min}
+          onChange={e => onChange(e.target.value)}
+          required={required}
+          className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+          style={{ colorScheme: isDark ? 'dark' : 'light' }}
+        />
+      </div>
+    </div>
+  )
+}
+
 export default function CreateTripModal({ trip, onSave, onClose }) {
   const { theme, isDark } = useTheme()
   const isEditing = !!trip
@@ -91,7 +128,7 @@ export default function CreateTripModal({ trip, onSave, onClose }) {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 pb-6">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 pb-6">
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
 
             {/* Cover image */}
@@ -168,35 +205,25 @@ export default function CreateTripModal({ trip, onSave, onClose }) {
               />
             </div>
 
-            {/* Dates */}
+            {/* Dates — DD/MM/YYYY display, invisible native picker overlay */}
             <div className="flex gap-4">
-              <div className="flex-1">
-                <p className="text-xs uppercase tracking-wide mb-1.5" style={{ color: theme.textFaint }}>
-                  Start date
-                </p>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={e => setStartDate(e.target.value)}
-                  required
-                  className="w-full border-b outline-none py-2 text-sm bg-transparent"
-                  style={{ borderColor: theme.border, color: theme.text, colorScheme: isDark ? 'dark' : 'light' }}
-                />
-              </div>
-              <div className="flex-1">
-                <p className="text-xs uppercase tracking-wide mb-1.5" style={{ color: theme.textFaint }}>
-                  End date
-                </p>
-                <input
-                  type="date"
-                  value={endDate}
-                  min={startDate}
-                  onChange={e => setEndDate(e.target.value)}
-                  required
-                  className="w-full border-b outline-none py-2 text-sm bg-transparent"
-                  style={{ borderColor: theme.border, color: theme.text, colorScheme: isDark ? 'dark' : 'light' }}
-                />
-              </div>
+              <DateField
+                label="Start date"
+                value={startDate}
+                onChange={setStartDate}
+                required
+                isDark={isDark}
+                theme={theme}
+              />
+              <DateField
+                label="End date"
+                value={endDate}
+                onChange={setEndDate}
+                min={startDate}
+                required
+                isDark={isDark}
+                theme={theme}
+              />
             </div>
 
             <button

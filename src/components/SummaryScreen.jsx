@@ -152,10 +152,10 @@ export default function SummaryScreen({ expenses, categories, trips, onDrilldown
       </div>
 
       {/* Entry points row */}
-      <div className="flex gap-3 mb-5">
+      <div className="flex gap-3 mb-5 overflow-hidden">
         <button
           onClick={openInsights}
-          className="flex-1 flex items-center gap-3 px-4 py-4 active:scale-[0.98] transition-transform"
+          className="flex-1 min-w-0 flex items-center gap-2.5 px-3 py-4 active:scale-[0.98] transition-transform overflow-hidden"
           style={{
             background: theme.surface,
             borderRadius: 'var(--r-card)',
@@ -164,13 +164,13 @@ export default function SummaryScreen({ expenses, categories, trips, onDrilldown
           }}
         >
           <div
-            className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0"
+            className="w-8 h-8 flex items-center justify-center rounded-xl flex-shrink-0"
             style={{ background: `rgba(${theme.shadowRgb}, 0.08)` }}
           >
-            <Sparkles size={16} color={theme.primary} />
+            <Sparkles size={15} color={theme.primary} />
           </div>
-          <div className="flex-1 text-left min-w-0">
-            <p className="text-sm font-bold leading-tight" style={{ color: theme.heading }}>
+          <div className="min-w-0 text-left">
+            <p className="text-sm font-bold leading-tight truncate" style={{ color: theme.heading }}>
               Insights
             </p>
             <p className="text-xs mt-0.5 truncate" style={{ color: theme.textFaint }}>
@@ -181,7 +181,7 @@ export default function SummaryScreen({ expenses, categories, trips, onDrilldown
 
         <button
           onClick={onOpenTrips}
-          className="flex-1 flex items-center gap-3 px-4 py-4 active:scale-[0.98] transition-transform"
+          className="flex-1 min-w-0 flex items-center gap-2.5 px-3 py-4 active:scale-[0.98] transition-transform overflow-hidden"
           style={{
             background: theme.surface,
             borderRadius: 'var(--r-card)',
@@ -190,13 +190,13 @@ export default function SummaryScreen({ expenses, categories, trips, onDrilldown
           }}
         >
           <div
-            className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0"
+            className="w-8 h-8 flex items-center justify-center rounded-xl flex-shrink-0"
             style={{ background: `rgba(${theme.shadowRgb}, 0.08)` }}
           >
-            <Compass size={16} color={theme.primary} />
+            <Compass size={15} color={theme.primary} />
           </div>
-          <div className="flex-1 text-left min-w-0">
-            <p className="text-sm font-bold leading-tight" style={{ color: theme.heading }}>
+          <div className="min-w-0 text-left">
+            <p className="text-sm font-bold leading-tight truncate" style={{ color: theme.heading }}>
               Trips
             </p>
             <p className="text-xs mt-0.5 truncate" style={{ color: theme.textFaint }}>
