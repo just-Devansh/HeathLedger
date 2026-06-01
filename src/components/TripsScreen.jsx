@@ -10,9 +10,14 @@ function formatAmount(n) {
   return n.toLocaleString('en-IN')
 }
 
+function toLocalDate(str) {
+  if (!str) return new Date()
+  return new Date(str.length === 10 ? str + 'T00:00:00' : str)
+}
+
 function formatDateRange(startDate, endDate) {
-  const s = new Date(startDate)
-  const e = new Date(endDate)
+  const s = toLocalDate(startDate)
+  const e = toLocalDate(endDate)
   const start = `${s.getDate()} ${MONTHS_SHORT[s.getMonth()]}`
   const end   = `${e.getDate()} ${MONTHS_SHORT[e.getMonth()]}${e.getFullYear() !== s.getFullYear() ? ' ' + e.getFullYear() : ''}`
   return `${start} – ${end}`

@@ -28,6 +28,16 @@ function todayString() {
   return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-')
 }
 
+// Extract YYYY-MM-DD from a stored trip date, interpreting it in local time.
+// Stored values may be full ISO UTC strings (old data) or plain YYYY-MM-DD (new).
+// Using split('T')[0] on a UTC ISO string shifts the date one day back in IST — this avoids that.
+function localDateStr(isoStr) {
+  if (!isoStr) return null
+  if (isoStr.length === 10) return isoStr  // already YYYY-MM-DD
+  const d = new Date(isoStr)
+  return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-')
+}
+
 function fmtDate(isoStr) {
   if (!isoStr) return '—'
   const [yyyy, mm, dd] = isoStr.split('-')
@@ -178,8 +188,8 @@ export default function CreateTripModal({ trip, onSave, onClose }) {
 
   const [title, setTitle]           = useState(trip?.title ?? '')
   const [destination, setDest]      = useState(trip?.destination ?? '')
-  const [startDate, setStartDate]   = useState(trip?.startDate?.split('T')[0] ?? todayString())
-  const [endDate, setEndDate]       = useState(trip?.endDate?.split('T')[0] ?? todayString())
+  const [startDate, setStartDate]   = useState(trip?.startDate ? localDateStr(trip.startDate) : todayString())
+  const [endDate, setEndDate]       = useState(trip?.endDate   ? localDateStr(trip.endDate)   : todayString())
   const [coverImage, setCoverImage] = useState(trip?.coverImage ?? null)
   const [coverPos, setCoverPos]     = useState(trip?.coverPosition ?? { x: 50, y: 50 })
   const [compressing, setCompr]     = useState(false)
@@ -203,8 +213,8 @@ export default function CreateTripModal({ trip, onSave, onClose }) {
       id:            trip?.id ?? crypto.randomUUID(),
       title:         title.trim(),
       destination:   destination.trim(),
-      startDate:     new Date(startDate + 'T00:00:00').toISOString(),
-      endDate:       new Date(endDate + 'T23:59:59').toISOString(),
+      startDate:     startDate,
+      endDate:       endDate,
       coverImage:    coverImage ?? null,
       coverPosition: coverImage ? coverPos : null,
       createdAt:     trip?.createdAt ?? new Date().toISOString(),

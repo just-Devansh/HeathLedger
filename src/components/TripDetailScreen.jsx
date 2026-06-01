@@ -10,17 +10,25 @@ function formatAmount(n) {
   return n.toLocaleString('en-IN')
 }
 
+// Parse a date string as local time regardless of whether it's YYYY-MM-DD or a full ISO string.
+// new Date('YYYY-MM-DD') is parsed as UTC midnight which shifts the date in IST — always
+// append T00:00:00 to force local-time parsing.
+function toLocalDate(str) {
+  if (!str) return new Date()
+  return new Date(str.length === 10 ? str + 'T00:00:00' : str)
+}
+
 function formatDateRange(startDate, endDate) {
-  const s = new Date(startDate)
-  const e = new Date(endDate)
+  const s = toLocalDate(startDate)
+  const e = toLocalDate(endDate)
   const start = `${s.getDate()} ${MONTHS_SHORT[s.getMonth()]}`
   const end   = `${e.getDate()} ${MONTHS_SHORT[e.getMonth()]}${e.getFullYear() !== s.getFullYear() ? ' ' + e.getFullYear() : ''}`
   return `${start} – ${end}`
 }
 
 function dayCount(startDate, endDate) {
-  const diff = new Date(endDate) - new Date(startDate)
-  return Math.max(1, Math.ceil(diff / 86400000) + 1)
+  const diff = toLocalDate(endDate) - toLocalDate(startDate)
+  return Math.max(1, Math.round(diff / 86400000) + 1)
 }
 
 function formatEntryDate(isoDate) {
@@ -93,33 +101,35 @@ export default function TripDetailScreen({
 
   return (
     <div
-      className="fixed inset-0 overflow-y-auto insights-enter"
+      className="fixed inset-0 flex flex-col insights-enter"
       style={{ background: theme.pageBg, zIndex: 57 }}
     >
-      {/* Cover image */}
-      {hasCover && (
-        <div style={{ height: '220px', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
-          <img
-            src={trip.coverImage}
-            alt=""
-            style={{
-              width: '100%', height: '100%', objectFit: 'cover', display: 'block',
-              objectPosition: trip.coverPosition
-                ? `${trip.coverPosition.x}% ${trip.coverPosition.y}%`
-                : 'center center',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'linear-gradient(to bottom, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.62) 100%)',
-            }}
-          />
-        </div>
-      )}
+      {/* ── Scrollable body ── */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Cover image */}
+        {hasCover && (
+          <div style={{ height: '220px', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
+            <img
+              src={trip.coverImage}
+              alt=""
+              style={{
+                width: '100%', height: '100%', objectFit: 'cover', display: 'block',
+                objectPosition: trip.coverPosition
+                  ? `${trip.coverPosition.x}% ${trip.coverPosition.y}%`
+                  : 'center center',
+              }}
+            />
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'linear-gradient(to bottom, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.62) 100%)',
+              }}
+            />
+          </div>
+        )}
 
-      <div className="max-w-[480px] mx-auto px-4 pb-28">
+      <div className="max-w-[480px] mx-auto px-4 pb-6">
         {/* Action bar */}
         <div
           className="flex items-center justify-between gap-3 pt-4 pb-5"
@@ -412,24 +422,27 @@ export default function TripDetailScreen({
             </div>
           )}
         </div>
-      </div>
+      </div>{/* end max-w content */}
+      </div>{/* end scrollable body */}
 
-      {/* Add Expense FAB */}
-      <button
-        onClick={onAddExpense}
-        className="fixed bottom-6 active:scale-95 transition-transform flex items-center gap-2 px-5 py-3.5 font-semibold text-white rounded-full"
-        style={{
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
-          boxShadow: `0 6px 28px rgba(${theme.shadowRgb}, 0.45)`,
-          zIndex: 58,
-          whiteSpace: 'nowrap',
-        }}
+      {/* ── FAB pinned at bottom — outside the scroll container so it never floats mid-screen ── */}
+      <div
+        className="flex-shrink-0 flex justify-center py-5"
+        style={{ background: theme.pageBg }}
       >
-        <Plus size={16} strokeWidth={2.5} />
-        <span>Add Expense</span>
-      </button>
+        <button
+          onClick={onAddExpense}
+          className="active:scale-95 transition-transform flex items-center gap-2 px-5 py-3.5 font-semibold text-white rounded-full"
+          style={{
+            background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
+            boxShadow: `0 6px 28px rgba(${theme.shadowRgb}, 0.45)`,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <Plus size={16} strokeWidth={2.5} />
+          <span>Add Expense</span>
+        </button>
+      </div>
 
       {/* Delete confirmation sheet */}
       {showDeleteConfirm && (
