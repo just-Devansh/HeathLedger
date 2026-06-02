@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { ArrowLeft, ChevronRight, X } from 'lucide-react'
+import { ArrowLeft, ChevronRight, X, Sparkles } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import ExpenseList from './ExpenseList'
+import InsightsScreen from './InsightsScreen'
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -38,6 +39,7 @@ export default function HistoryScreen({ expenses, categories, onClose, onClosedB
   const [selectedYear, setSelectedYear] = useState(null)
   const [selectedMonth, setSelectedMonth] = useState(null)
   const [slideDir, setSlideDir] = useState('forward')
+  const [showInsights, setShowInsights] = useState(false)
 
   // Tracks how many history entries this component pushed (for internal nav).
   const histDepth = useRef(0)
@@ -156,6 +158,7 @@ export default function HistoryScreen({ expenses, categories, onClose, onClosedB
   const animClass = slideDir === 'forward' ? 'history-slide-right' : 'history-slide-left'
 
   return (
+    <>
     <div
       className="fixed inset-0 overflow-y-auto"
       style={{ background: theme.pageBg, zIndex: 50 }}
@@ -203,39 +206,55 @@ export default function HistoryScreen({ expenses, categories, onClose, onClosedB
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-3">
-              <button
-                onClick={goBack}
-                className="btn-settings w-9 h-9 flex items-center justify-center rounded-full flex-shrink-0"
-                style={{
-                  background: theme.surface,
-                  border: `1px solid ${theme.border}`,
-                  color: theme.secondary,
-                }}
-                aria-label="Go back"
-              >
-                <ArrowLeft size={18} />
-              </button>
-              <div className="min-w-0">
-                <p
-                  className="text-xs font-semibold uppercase"
-                  style={{ color: theme.accent, letterSpacing: '0.13em' }}
-                >
-                  {view === 'months' ? 'History' : selectedYear}
-                </p>
-                <h1
-                  className="font-display"
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <button
+                  onClick={goBack}
+                  className="btn-settings w-9 h-9 flex items-center justify-center rounded-full flex-shrink-0"
                   style={{
-                    color: theme.heading,
-                    fontSize: '1.85rem',
-                    fontWeight: 800,
-                    lineHeight: 1.0,
-                    letterSpacing: '-0.03em',
+                    background: theme.surface,
+                    border: `1px solid ${theme.border}`,
+                    color: theme.secondary,
                   }}
+                  aria-label="Go back"
                 >
-                  {view === 'months' ? selectedYear : MONTHS[selectedMonth]}
-                </h1>
+                  <ArrowLeft size={18} />
+                </button>
+                <div className="min-w-0">
+                  <p
+                    className="text-xs font-semibold uppercase"
+                    style={{ color: theme.accent, letterSpacing: '0.13em' }}
+                  >
+                    {view === 'months' ? 'History' : selectedYear}
+                  </p>
+                  <h1
+                    className="font-display"
+                    style={{
+                      color: theme.heading,
+                      fontSize: '1.85rem',
+                      fontWeight: 800,
+                      lineHeight: 1.0,
+                      letterSpacing: '-0.03em',
+                    }}
+                  >
+                    {view === 'months' ? selectedYear : MONTHS[selectedMonth]}
+                  </h1>
+                </div>
               </div>
+              {view === 'expenses' && monthExpenses.length > 0 && (
+                <button
+                  onClick={() => setShowInsights(true)}
+                  className="btn-settings w-9 h-9 flex items-center justify-center rounded-full flex-shrink-0"
+                  style={{
+                    background: theme.surface,
+                    border: `1px solid ${theme.border}`,
+                    color: theme.primary,
+                  }}
+                  aria-label="Insights"
+                >
+                  <Sparkles size={16} />
+                </button>
+              )}
             </div>
           )}
         </header>
@@ -357,5 +376,16 @@ export default function HistoryScreen({ expenses, categories, onClose, onClosedB
 
       </div>
     </div>
+
+    {showInsights && (
+      <InsightsScreen
+        expenses={monthExpenses}
+        categories={categories}
+        year={selectedYear}
+        month={selectedMonth}
+        onClose={() => setShowInsights(false)}
+      />
+    )}
+    </>
   )
 }

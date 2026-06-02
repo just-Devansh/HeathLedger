@@ -121,7 +121,7 @@ function BarChart({ items, maxVal, theme, isDark, animated, delayBase }) {
   )
 }
 
-export default function InsightsScreen({ expenses, categories, onClose }) {
+export default function InsightsScreen({ expenses, categories, onClose, year: yearProp, month: monthProp }) {
   const { theme, isDark } = useTheme()
   const [animated, setAnimated] = useState(false)
 
@@ -131,8 +131,8 @@ export default function InsightsScreen({ expenses, categories, onClose }) {
   }, [])
 
   const now = new Date()
-  const year = now.getFullYear()
-  const month = now.getMonth()
+  const year  = yearProp  ?? now.getFullYear()
+  const month = monthProp ?? now.getMonth()
 
   const data = useMemo(() => {
     const monthExpenses = expenses.filter(e => {
@@ -234,7 +234,7 @@ export default function InsightsScreen({ expenses, categories, onClose }) {
               Your Month
             </h1>
             <p className="text-sm font-medium mt-1" style={{ color: theme.textMuted }}>
-              {monthYearLabel(new Date())}
+              {monthYearLabel(new Date(year, month, 1))}
             </p>
           </div>
         </div>
