@@ -174,7 +174,7 @@ export default function SummaryScreen({ expenses, categories, trips, onDrilldown
               Insights
             </p>
             <p className="text-xs mt-0.5 truncate" style={{ color: theme.textFaint }}>
-              Spending patterns
+              Cool stats :p
             </p>
           </div>
         </button>
