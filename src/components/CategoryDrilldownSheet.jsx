@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { X } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { getIcon } from '../utils/icons'
+import { useLongPress } from '../hooks/useLongPress'
 
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
@@ -20,8 +21,9 @@ function formatEntryDate(isoDate) {
   return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`
 }
 
-export default function CategoryDrilldownSheet({ category, monthExpenses, onClose }) {
+export default function CategoryDrilldownSheet({ category, monthExpenses, onClose, onLongPress }) {
   const { theme } = useTheme()
+  const lp = useLongPress()
 
   const entries = [...monthExpenses]
     .filter(e => (e.categoryId ?? e.category) === category.key)
@@ -123,7 +125,16 @@ export default function CategoryDrilldownSheet({ category, monthExpenses, onClos
               {entries.map((exp, i) => (
                 <div key={exp.id}>
                   {i > 0 && <div style={{ height: '1px', background: theme.border }} />}
-                  <div className="flex items-center justify-between py-4 gap-4">
+                  <div
+                    className="flex items-center justify-between py-4 gap-4"
+                    style={{ WebkitUserSelect: 'none', userSelect: 'none' }}
+                    onPointerDown={lp.start(() => onLongPress?.(exp))}
+                    onPointerUp={lp.cancel}
+                    onPointerLeave={lp.cancel}
+                    onPointerCancel={lp.cancel}
+                    onPointerMove={lp.move}
+                    onContextMenu={e => e.preventDefault()}
+                  >
                     <div className="min-w-0 flex-1">
                       <p
                         className="font-semibold text-sm leading-snug truncate"

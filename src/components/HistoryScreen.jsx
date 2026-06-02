@@ -32,7 +32,7 @@ function EmptyState({ label }) {
   )
 }
 
-export default function HistoryScreen({ expenses, categories, onClose, onClosedByUI, onEdit, onDelete, onRegisterBackHandler }) {
+export default function HistoryScreen({ expenses, categories, onClose, onClosedByUI, onEdit, onDelete, onRegisterBackHandler, onLongPress }) {
   const { theme } = useTheme()
   const [view, setView] = useState('years')
   const [selectedYear, setSelectedYear] = useState(null)
@@ -349,6 +349,7 @@ export default function HistoryScreen({ expenses, categories, onClose, onClosedB
                   categories={categories}
                   onEdit={onEdit}
                   onDelete={onDelete}
+                  onLongPress={onLongPress}
                 />
               )
           )}

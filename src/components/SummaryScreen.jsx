@@ -11,7 +11,7 @@ function formatAmount(n) {
   return n.toLocaleString('en-IN')
 }
 
-export default function SummaryScreen({ expenses, categories, trips, onDrilldownOpen, onDrilldownClose, onRegisterDrilldownClose, onOpenTrips }) {
+export default function SummaryScreen({ expenses, categories, trips, onDrilldownOpen, onDrilldownClose, onRegisterDrilldownClose, onOpenTrips, onLongPress }) {
   const { theme, isDark } = useTheme()
   const [generating, setGenerating] = useState(false)
   const [drilldownCat, setDrilldownCat] = useState(null)
@@ -295,6 +295,7 @@ export default function SummaryScreen({ expenses, categories, trips, onDrilldown
           category={drilldownCat}
           monthExpenses={monthExpenses}
           onClose={closeDrilldown}
+          onLongPress={onLongPress}
         />
       )}
 

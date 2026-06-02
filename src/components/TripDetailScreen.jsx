@@ -3,6 +3,7 @@ import { ArrowLeft, Edit2, Trash2, Plus, MapPin, Calendar } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { getIcon } from '../utils/icons'
 import CreateTripModal from './CreateTripModal'
+import { useLongPress } from '../hooks/useLongPress'
 
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
@@ -45,9 +46,10 @@ function formatEntryDate(isoDate) {
 export default function TripDetailScreen({
   trip, expenses, categories,
   onClose, onSaveTrip, onDeleteTrip,
-  onAddExpense,
+  onAddExpense, onLongPress,
 }) {
   const { theme, isDark } = useTheme()
+  const lp = useLongPress()
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [editingTrip, setEditingTrip] = useState(null)
 
@@ -391,7 +393,16 @@ export default function TripDetailScreen({
                         style={{ height: '1px', background: theme.border, marginLeft: '60px' }}
                       />
                     )}
-                    <div className="flex items-center gap-3 px-4 py-3.5">
+                    <div
+                      className="flex items-center gap-3 px-4 py-3.5"
+                      style={{ WebkitUserSelect: 'none', userSelect: 'none' }}
+                      onPointerDown={lp.start(() => onLongPress?.(exp))}
+                      onPointerUp={lp.cancel}
+                      onPointerLeave={lp.cancel}
+                      onPointerCancel={lp.cancel}
+                      onPointerMove={lp.move}
+                      onContextMenu={e => e.preventDefault()}
+                    >
                       <span
                         className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0"
                         style={{ background: theme.surface }}

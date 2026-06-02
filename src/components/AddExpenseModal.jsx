@@ -65,10 +65,23 @@ export default function AddExpenseModal({ categories, onSave, onClose, editExpen
     e.preventDefault()
     if (!amount || !categoryId) return
     if (!isEditing) localStorage.setItem('heath_ledger_last_category', categoryId)
-    // Use real wall-clock time for today; midnight local for any other date.
-    const isoDate = date === todayString()
-      ? new Date().toISOString()
-      : new Date(date + 'T00:00:00').toISOString()
+
+    let isoDate
+    if (isEditing && date === editExpense.date.split('T')[0]) {
+      // Date unchanged — preserve the original timestamp so the card doesn't shift position.
+      isoDate = editExpense.date
+    } else if (date === todayString()) {
+      // Today — use real wall-clock time so multiple same-day expenses sort naturally.
+      isoDate = new Date().toISOString()
+    } else {
+      // Past date → end of day (appears at top of that day, as the last expense).
+      // Future date → start of day (appears at top of that day, as the first expense).
+      const expDay   = new Date(date + 'T00:00:00').getTime()
+      const todayDay = new Date(todayString() + 'T00:00:00').getTime()
+      isoDate = expDay < todayDay
+        ? new Date(date + 'T23:59:59').toISOString()
+        : new Date(date + 'T00:00:00').toISOString()
+    }
 
     const expense = {
       id: isEditing ? editExpense.id : crypto.randomUUID(),

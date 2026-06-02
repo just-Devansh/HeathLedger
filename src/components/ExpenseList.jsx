@@ -3,6 +3,7 @@ import { MoreVertical, Pencil, Trash2, Check, X, Repeat } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { getIcon } from '../utils/icons'
 import { dayMonthLabel } from '../utils/dateFormat'
+import { useLongPress } from '../hooks/useLongPress'
 
 function getDayLabel(isoDate) {
   const d = new Date(isoDate)
@@ -38,13 +39,14 @@ function groupByDate(expenses) {
   return groups
 }
 
-export default function ExpenseList({ expenses, categories, onEdit, onDelete }) {
+export default function ExpenseList({ expenses, categories, onEdit, onDelete, onLongPress }) {
   const { theme } = useTheme()
   const idToCategory = Object.fromEntries((categories ?? []).map(c => [c.id, c]))
   const groups = useMemo(() => groupByDate(expenses), [expenses])
   const tabTotal = useMemo(() => expenses.reduce((sum, e) => sum + e.amount, 0), [expenses])
   const [openMenuId, setOpenMenuId] = useState(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const lp = useLongPress()
 
   function handleConfirmDelete(id) {
     onDelete(id)
@@ -131,7 +133,15 @@ export default function ExpenseList({ expenses, categories, onEdit, onDelete }) 
                     boxShadow: `0 2px 12px rgba(${theme.shadowRgb},0.10)`,
                     position: 'relative',
                     zIndex: isMenuOpen || isConfirming ? 11 : 'auto',
+                    WebkitUserSelect: 'none',
+                    userSelect: 'none',
                   }}
+                  onPointerDown={lp.start(() => onLongPress?.(exp))}
+                  onPointerUp={lp.cancel}
+                  onPointerLeave={lp.cancel}
+                  onPointerCancel={lp.cancel}
+                  onPointerMove={lp.move}
+                  onContextMenu={e => e.preventDefault()}
                 >
                   {/* Left: icon + category name + note */}
                   <div className="flex items-center gap-3 min-w-0">

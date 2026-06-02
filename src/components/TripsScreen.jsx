@@ -42,7 +42,7 @@ export default function TripsScreen({
   onSaveTrip, onDeleteTrip,
   onAddExpenseToTrip,
   onClose, onPushOverlay, onSyncBack,
-  onRegisterBackHandler,
+  onRegisterBackHandler, onLongPress,
 }) {
   const { theme } = useTheme()
   const [selectedTrip, setSelectedTrip] = useState(null)
@@ -106,6 +106,7 @@ export default function TripsScreen({
         onSaveTrip={onSaveTrip}
         onDeleteTrip={id => { onDeleteTrip(id); closeTrip() }}
         onAddExpense={() => onAddExpenseToTrip(current.id)}
+        onLongPress={onLongPress}
       />
     )
   }

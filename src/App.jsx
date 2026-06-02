@@ -18,6 +18,7 @@ import RadialMenu from './components/RadialMenu'
 import HistoryScreen from './components/HistoryScreen'
 import TripsScreen from './components/TripsScreen'
 import PageHeader from './components/PageHeader'
+import ExpenseDetailsSheet from './components/ExpenseDetailsSheet'
 import { monthYearLabel } from './utils/dateFormat'
 
 const FILTERS = ['Today', 'Week', 'Month']
@@ -128,6 +129,7 @@ export default function App() {
   const [filter, setFilter]                     = useState('Today')
   const [activeTab, setActiveTab]               = useState('expenses')
   const [toast, setToast]                       = useState({ visible: false, message: '' })
+  const [detailsExpense, setDetailsExpense]     = useState(null)
 
   // ── Browser history / back-button management ────────────────────────────────
   const overlayDepth      = useRef(0)
@@ -490,6 +492,7 @@ export default function App() {
                       categories={categories}
                       onEdit={openEdit}
                       onDelete={handleDeleteExpense}
+                      onLongPress={setDetailsExpense}
                     />
                   </div>
                 </div>
@@ -508,6 +511,7 @@ export default function App() {
           onDrilldownClose={syncHistoryBack}
           onRegisterDrilldownClose={fn => { summaryDrilldownCloseRef.current = fn }}
           onOpenTrips={() => { setShowTrips(true); pushOverlay() }}
+          onLongPress={setDetailsExpense}
         />
       )}
 
@@ -520,6 +524,7 @@ export default function App() {
           onEdit={openEdit}
           onDelete={handleDeleteExpense}
           onRegisterBackHandler={fn => { historyScreenBackRef.current = fn }}
+          onLongPress={setDetailsExpense}
         />
       )}
 
@@ -622,6 +627,17 @@ export default function App() {
           onPushOverlay={pushOverlay}
           onSyncBack={syncHistoryBack}
           onRegisterBackHandler={fn => { tripsBackRef.current = fn }}
+          onLongPress={setDetailsExpense}
+        />
+      )}
+
+      {detailsExpense && (
+        <ExpenseDetailsSheet
+          expense={detailsExpense}
+          categories={categories}
+          trips={trips}
+          onClose={() => setDetailsExpense(null)}
+          onEdit={openEdit}
         />
       )}
 
