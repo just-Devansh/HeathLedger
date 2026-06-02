@@ -60,10 +60,17 @@ export default function TripDetailScreen({
     [expenses, trip.id]
   )
 
-  const { totalSpend, avgPerDay, biggestDay, breakdown } = useMemo(() => {
+  const { totalSpend, biggestExpense, biggestDay, breakdown } = useMemo(() => {
     const total = tripExpenses.reduce((s, e) => s + e.amount, 0)
-    const days  = dayCount(trip.startDate, trip.endDate)
-    const avg   = days > 0 ? Math.round(total / days) : 0
+
+    const topExp = tripExpenses.reduce((max, e) => (!max || e.amount > max.amount ? e : max), null)
+    const catById = Object.fromEntries((categories ?? []).map(c => [c.id, c]))
+    const biggestExpense = topExp
+      ? {
+          amount: topExp.amount,
+          label: topExp.note || catById[topExp.categoryId]?.name || 'Expense',
+        }
+      : null
 
     const byDay = {}
     for (const e of tripExpenses) {
@@ -80,7 +87,6 @@ export default function TripDetailScreen({
       const key = exp.categoryId ?? exp.category ?? 'Unknown'
       byCat[key] = (byCat[key] || 0) + exp.amount
     }
-    const catById = Object.fromEntries((categories ?? []).map(c => [c.id, c]))
     const breakdown = Object.entries(byCat)
       .map(([key, amount]) => {
         const cat = catById[key]
@@ -94,7 +100,7 @@ export default function TripDetailScreen({
       })
       .sort((a, b) => b.amount - a.amount)
 
-    return { totalSpend: total, avgPerDay: avg, biggestDay, breakdown }
+    return { totalSpend: total, biggestExpense, biggestDay, breakdown }
   }, [tripExpenses, trip, categories])
 
   const days   = dayCount(trip.startDate, trip.endDate)
@@ -240,24 +246,29 @@ export default function TripDetailScreen({
         {/* Stat chips */}
         {tripExpenses.length > 0 && (
           <div className="flex gap-3 mb-5">
-            <div
-              className="flex-1 p-4 rounded-2xl"
-              style={{
-                background: theme.cardBg,
-                border: `1px solid rgba(${theme.shadowRgb}, 0.12)`,
-                boxShadow: `0 2px 12px rgba(${theme.shadowRgb}, 0.06)`,
-              }}
-            >
-              <p className="text-xs font-medium mb-1.5" style={{ color: theme.textFaint }}>
-                Avg / day
-              </p>
-              <p
-                className="font-numeric font-bold"
-                style={{ color: theme.heading, fontSize: '1.3rem', letterSpacing: '-0.03em', lineHeight: 1 }}
+            {biggestExpense && (
+              <div
+                className="flex-1 p-4 rounded-2xl"
+                style={{
+                  background: theme.cardBg,
+                  border: `1px solid rgba(${theme.shadowRgb}, 0.12)`,
+                  boxShadow: `0 2px 12px rgba(${theme.shadowRgb}, 0.06)`,
+                }}
               >
-                ₹{formatAmount(avgPerDay)}
-              </p>
-            </div>
+                <p className="text-xs font-medium mb-1.5" style={{ color: theme.textFaint }}>
+                  Biggest expense
+                </p>
+                <p
+                  className="font-numeric font-bold"
+                  style={{ color: theme.heading, fontSize: '1.3rem', letterSpacing: '-0.03em', lineHeight: 1 }}
+                >
+                  ₹{formatAmount(biggestExpense.amount)}
+                </p>
+                <p className="text-xs mt-0.5 truncate" style={{ color: theme.textFaint }}>
+                  {biggestExpense.label}
+                </p>
+              </div>
+            )}
             {biggestDay && (
               <div
                 className="flex-1 p-4 rounded-2xl"
