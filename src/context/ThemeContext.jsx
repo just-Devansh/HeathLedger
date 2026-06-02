@@ -1,14 +1,20 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import { buildTheme, loadThemeName, saveThemeName, loadDarkMode, saveDarkMode } from '../utils/theme'
+import {
+  buildTheme, loadThemeName, saveThemeName, loadDarkMode, saveDarkMode,
+  buildPaletteTheme, loadPaletteId, savePaletteId,
+} from '../utils/theme'
 import { db } from '../utils/db'
+import { loadPalette, savePalette } from '../utils/storage'
 
 const ThemeContext = createContext(null)
 
 export function ThemeProvider({ children }) {
   const [themeName, setThemeNameState] = useState(() => loadThemeName())
   const [isDark, setIsDarkState]       = useState(() => loadDarkMode())
+  const [paletteId, setPaletteIdState] = useState(() => loadPaletteId())
 
-  const theme = buildTheme(themeName, isDark)
+  const paletteTheme = paletteId ? buildPaletteTheme(paletteId) : null
+  const theme = paletteTheme ?? buildTheme(themeName, isDark)
 
   useEffect(() => {
     const root = document.documentElement
@@ -21,8 +27,16 @@ export function ThemeProvider({ children }) {
     document.body.style.background = theme.pageBg
   }, [theme])
 
+  // Sync palette from DB on mount in case localStorage diverged
+  useEffect(() => {
+    loadPalette().then(p => {
+      if (p !== paletteId) setPaletteIdState(p)
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   function setTheme(name) {
-    saveThemeName(name)         // localStorage — keeps flash-prevention script current
+    saveThemeName(name)
     setThemeNameState(name)
     db.settings.put({ key: 'theme', value: name }).catch(() => {})
   }
@@ -40,8 +54,18 @@ export function ThemeProvider({ children }) {
     db.settings.put({ key: 'darkMode', value: String(val) }).catch(() => {})
   }
 
+  function setPalette(id) {
+    setPaletteIdState(id)
+    savePaletteId(id)
+    savePalette(id).catch(() => {})
+  }
+
+  function clearPalette() {
+    setPalette(null)
+  }
+
   return (
-    <ThemeContext.Provider value={{ theme, themeName, setTheme, isDark, toggleDark, setDark }}>
+    <ThemeContext.Provider value={{ theme, themeName, setTheme, isDark, toggleDark, setDark, paletteId, setPalette, clearPalette }}>
       {children}
     </ThemeContext.Provider>
   )

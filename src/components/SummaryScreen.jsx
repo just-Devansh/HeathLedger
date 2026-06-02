@@ -12,7 +12,7 @@ function formatAmount(n) {
 }
 
 export default function SummaryScreen({ expenses, categories, trips, onDrilldownOpen, onDrilldownClose, onRegisterDrilldownClose, onOpenTrips, onLongPress }) {
-  const { theme, isDark } = useTheme()
+  const { theme, isDark, paletteId } = useTheme()
   const [generating, setGenerating] = useState(false)
   const [drilldownCat, setDrilldownCat] = useState(null)
   const [showInsights, setShowInsights] = useState(false)
@@ -45,7 +45,7 @@ export default function SummaryScreen({ expenses, categories, trips, onDrilldown
     setGenerating(true)
     try {
       const { generateMonthlyImage } = await import('../utils/generateImage')
-      await generateMonthlyImage({ expenses, categories, theme, isDark })
+      await generateMonthlyImage({ expenses, categories, theme, isDark, paletteActive: !!paletteId })
     } finally {
       setGenerating(false)
     }
@@ -103,7 +103,7 @@ export default function SummaryScreen({ expenses, categories, trips, onDrilldown
               background: generating
                 ? `linear-gradient(rgba(0,0,0,0.22), rgba(0,0,0,0.22)), ${theme.primary}`
                 : theme.primary,
-              color: '#ffffff',
+              color: theme.primaryText,
               cursor: generating ? 'wait' : 'pointer',
               transition: 'background 0.2s ease, box-shadow 0.2s ease',
               boxShadow: generating ? 'none' : `0 4px 14px rgba(${theme.shadowRgb},0.35)`,
@@ -116,8 +116,8 @@ export default function SummaryScreen({ expenses, categories, trips, onDrilldown
                 width="14" height="14" viewBox="0 0 14 14" fill="none"
                 aria-hidden="true"
               >
-                <circle cx="7" cy="7" r="5" stroke="rgba(255,255,255,0.3)" strokeWidth="2" />
-                <path d="M7 2a5 5 0 0 1 5 5" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                <circle cx="7" cy="7" r="5" stroke="currentColor" strokeOpacity={0.35} strokeWidth="2" />
+                <path d="M7 2a5 5 0 0 1 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
             ) : (
               <ImageDown size={14} strokeWidth={2.5} />

@@ -117,7 +117,7 @@ function RuleCard({ rule, categories, onToggle, onEdit, onDelete, confirmDeletin
                 <button
                   onClick={onDelete}
                   className="expense-menu-item danger w-full flex items-center gap-2.5 px-4 py-3 text-sm font-medium"
-                  style={{ color: '#ef4444' }}
+                  style={{ color: theme.dangerColor }}
                 >
                   <Trash2 size={14} /> Delete
                 </button>
@@ -193,7 +193,7 @@ export default function RecurringManager({ rules, categories, onChange }) {
             style={{
               borderRadius: 'var(--r-element)',
               background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
-              color: '#ffffff',
+              color: theme.primaryText,
             }}
             aria-label="Add recurring expense"
           >

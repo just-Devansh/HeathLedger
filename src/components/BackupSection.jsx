@@ -205,10 +205,11 @@ export default function BackupSection({ onRestoreComplete }) {
               <button
                 onClick={handleConfirmRestore}
                 disabled={restoring}
-                className="flex-1 py-3.5 rounded-2xl text-sm font-semibold text-white transition-opacity active:opacity-70 disabled:opacity-60"
+                className="flex-1 py-3.5 rounded-2xl text-sm font-semibold transition-opacity active:opacity-70 disabled:opacity-60"
                 style={{
                   background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
                   boxShadow: `0 4px 16px rgba(${theme.shadowRgb},0.35)`,
+                  color: theme.primaryText,
                 }}
               >
                 {restoring ? 'Restoring…' : 'Restore'}

@@ -157,7 +157,7 @@ export default function TripsScreen({
             style={{
               borderRadius: 'var(--r-element)',
               background: theme.primary,
-              color: '#ffffff',
+              color: theme.primaryText,
               boxShadow: `0 4px 14px rgba(${theme.shadowRgb},0.35)`,
             }}
           >
@@ -183,9 +183,10 @@ export default function TripsScreen({
             </p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="mt-6 flex items-center gap-2 px-4 py-2.5 text-sm font-semibold active:scale-95 transition-transform text-white rounded-full"
+              className="mt-6 flex items-center gap-2 px-4 py-2.5 text-sm font-semibold active:scale-95 transition-transform rounded-full"
               style={{
                 background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
+                color: theme.primaryText,
                 boxShadow: `0 4px 16px rgba(${theme.shadowRgb},0.35)`,
               }}
             >

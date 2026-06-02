@@ -9,19 +9,19 @@ function fmt(n) {
 // Handles amounts up to ₹9,99,999 at the font sizes used below.
 const AMOUNT_COL = 90
 
-function buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, now }) {
+function buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, now, paletteActive }) {
   const accent     = theme.primary
   const gradEnd    = theme.gradEnd || theme.secondary
   const gradientBg = theme.gradientBg
 
-  const bg      = isDark ? '#0a0a0a' : theme.pageBg
-  const cardBg  = isDark ? '#151515' : '#ffffff'
-  const border  = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.08)'
-  const text    = isDark ? '#f8fafc' : '#0f172a'
-  const muted   = isDark ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.48)'
-  const faint   = isDark ? 'rgba(255,255,255,0.26)' : 'rgba(0,0,0,0.28)'
-  const divider = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)'
-  const barBg   = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'
+  const bg      = paletteActive ? theme.pageBg : (isDark ? '#0a0a0a' : theme.pageBg)
+  const cardBg  = paletteActive ? theme.cardBg : (isDark ? '#151515' : '#ffffff')
+  const border  = paletteActive ? theme.border : (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.08)')
+  const text    = paletteActive ? theme.text    : (isDark ? '#f8fafc' : '#0f172a')
+  const muted   = paletteActive ? theme.textMuted : (isDark ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.48)')
+  const faint   = paletteActive ? theme.textFaint : (isDark ? 'rgba(255,255,255,0.26)' : 'rgba(0,0,0,0.28)')
+  const divider = paletteActive ? theme.border : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)')
+  const barBg   = paletteActive ? `rgba(${theme.shadowRgb},0.18)` : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)')
 
   const pjs = `'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`
   const sg  = `'Space Grotesk', system-ui, -apple-system, sans-serif`
@@ -345,7 +345,7 @@ function buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, n
   `
 }
 
-export async function generateMonthlyImage({ expenses, categories, theme, isDark }) {
+export async function generateMonthlyImage({ expenses, categories, theme, isDark, paletteActive = false }) {
   const now = new Date()
   const idToCategory = Object.fromEntries((categories ?? []).map(c => [c.id, c]))
 
@@ -375,10 +375,10 @@ export async function generateMonthlyImage({ expenses, categories, theme, isDark
 
   const container = document.createElement('div')
   container.style.cssText = 'position:fixed;top:-9999px;left:-9999px;pointer-events:none;z-index:-999;'
-  container.innerHTML = buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, now })
+  container.innerHTML = buildExportTemplate({ breakdown, total, monthExpenses, theme, isDark, now, paletteActive })
   document.body.appendChild(container)
 
-  const bgColor = isDark ? '#0a0a0a' : theme.pageBg
+  const bgColor = paletteActive ? theme.pageBg : (isDark ? '#0a0a0a' : theme.pageBg)
   const monthName = now.toLocaleDateString('en-US', { month: 'long' })
   const filename = `${monthName}-${now.getFullYear()}-Report-Heath-Ledger.png`
 

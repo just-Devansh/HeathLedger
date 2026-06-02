@@ -456,7 +456,7 @@ export default function App() {
                     style={{
                       flex: 1,
                       padding: '7px 16px',
-                      color: filter === f ? '#ffffff' : theme.accent,
+                      color: filter === f ? theme.primaryText : theme.accent,
                       transition: 'color 0.2s ease',
                       minWidth: '72px',
                       textAlign: 'center',
@@ -604,10 +604,11 @@ export default function App() {
           style={{ bottom: 104, zIndex: 55 }}
         >
           <div
-            className="px-5 py-2.5 rounded-full text-sm font-semibold text-white toast-slide-up"
+            className="px-5 py-2.5 rounded-full text-sm font-semibold toast-slide-up"
             style={{
               background: `linear-gradient(135deg, ${theme.primary}, ${theme.gradEnd})`,
               boxShadow: `0 4px 20px rgba(${theme.shadowRgb},0.45)`,
+              color: theme.primaryText,
             }}
           >
             {toast.message}

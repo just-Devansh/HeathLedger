@@ -179,7 +179,7 @@ export default function TripDetailScreen({
               className="w-9 h-9 flex items-center justify-center rounded-full active:scale-90 transition-transform"
               style={{
                 background: hasCover ? 'rgba(0,0,0,0.45)' : theme.surface,
-                color: hasCover ? 'rgba(255,110,110,0.9)' : '#ef4444',
+                color: hasCover ? 'rgba(255,110,110,0.9)' : theme.dangerColor,
                 backdropFilter: hasCover ? 'blur(8px)' : 'none',
                 WebkitBackdropFilter: hasCover ? 'blur(8px)' : 'none',
               }}
@@ -454,9 +454,10 @@ export default function TripDetailScreen({
       >
         <button
           onClick={onAddExpense}
-          className="active:scale-95 transition-transform flex items-center gap-2 px-5 py-3.5 font-semibold text-white rounded-full"
+          className="active:scale-95 transition-transform flex items-center gap-2 px-5 py-3.5 font-semibold rounded-full"
           style={{
             background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
+            color: theme.primaryText,
             boxShadow: `0 6px 28px rgba(${theme.shadowRgb}, 0.45)`,
             whiteSpace: 'nowrap',
           }}

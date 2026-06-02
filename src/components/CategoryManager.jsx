@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Pencil, Trash2, Check, X, Moon, Sun, Plus, MoreVertical, ChevronDown, ChevronUp } from 'lucide-react'
 import { saveCategory, deleteCategory, saveQuickActions } from '../utils/storage'
 import { useTheme } from '../context/ThemeContext'
-import { THEME_META } from '../utils/theme'
+import { THEME_META, PALETTE_DEFS } from '../utils/theme'
 import { CATEGORY_ICONS, ICON_OPTIONS, getIcon } from '../utils/icons'
 import BackupSection from './BackupSection'
 import RecurringManager from './RecurringManager'
@@ -43,7 +43,7 @@ function InlineIconPicker({ selected, onSelect, theme }) {
         }}
         aria-label="Choose icon"
       >
-        <SelectedIcon size={18} color={open ? '#ffffff' : theme.primary} />
+        <SelectedIcon size={18} color={open ? theme.primaryText : theme.primary} />
       </button>
 
       {open && (
@@ -74,7 +74,7 @@ function InlineIconPicker({ selected, onSelect, theme }) {
                   }}
                   aria-label={formatIconLabel(name)}
                 >
-                  <Icon size={16} color={isSelected ? '#ffffff' : theme.textMuted} />
+                  <Icon size={16} color={isSelected ? theme.primaryText : theme.textMuted} />
                 </button>
               )
             })}
@@ -95,7 +95,7 @@ export default function CategoryManager({
   recurringRules,
   onRecurringRulesChange,
 }) {
-  const { theme, themeName, setTheme, isDark, toggleDark } = useTheme()
+  const { theme, themeName, setTheme, isDark, toggleDark, paletteId, setPalette, clearPalette } = useTheme()
 
   // Local state initialized from parent's already-loaded data.
   const [categories, setCategories] = useState(initialCategories)
@@ -222,7 +222,10 @@ export default function CategoryManager({
             <p className="text-xs uppercase tracking-wide font-medium mb-3" style={{ color: theme.textFaint }}>
               Appearance
             </p>
-            <div className="flex items-center justify-between">
+            <div
+              className="flex items-center justify-between"
+              style={{ opacity: paletteId ? 0.35 : 1, pointerEvents: paletteId ? 'none' : 'auto', transition: 'opacity 0.2s' }}
+            >
               <div className="flex items-center gap-3">
                 {isDark ? <Moon size={18} color={theme.primary} /> : <Sun size={18} color={theme.primary} />}
                 <span className="text-sm font-medium" style={{ color: theme.text }}>Dark Mode</span>
@@ -244,14 +247,20 @@ export default function CategoryManager({
                 />
               </button>
             </div>
+            {paletteId && (
+              <p className="text-xs mt-2.5" style={{ color: theme.textFaint }}>Overridden by active palette</p>
+            )}
           </div>
 
-          {/* Color theme picker */}
+          {/* Accent Color picker */}
           <div className="px-6 pt-5 pb-4" style={{ borderBottom: `1px solid ${theme.border}` }}>
             <p className="text-xs uppercase tracking-wide font-medium mb-3" style={{ color: theme.textFaint }}>
-              Color Theme
+              Accent Color
             </p>
-            <div className="flex flex-wrap gap-4">
+            <div
+              className="flex flex-wrap gap-4"
+              style={{ opacity: paletteId ? 0.35 : 1, pointerEvents: paletteId ? 'none' : 'auto', transition: 'opacity 0.2s' }}
+            >
               {THEME_META.map(({ id, label, swatch }) => {
                 const isActive = themeName === id
                 return (
@@ -286,6 +295,66 @@ export default function CategoryManager({
                 )
               })}
             </div>
+            {paletteId && (
+              <p className="text-xs mt-2.5" style={{ color: theme.textFaint }}>Overridden by active palette</p>
+            )}
+          </div>
+
+          {/* Theme Palettes */}
+          <div className="px-6 pt-5 pb-5" style={{ borderBottom: `1px solid ${theme.border}` }}>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs uppercase tracking-wide font-medium" style={{ color: theme.textFaint }}>
+                Theme Palettes
+              </p>
+              {paletteId && (
+                <button
+                  onClick={clearPalette}
+                  className="text-xs font-semibold active:opacity-60 transition-opacity"
+                  style={{ color: theme.primary }}
+                >
+                  Use Standard Theme
+                </button>
+              )}
+            </div>
+            <div className="flex flex-col gap-3">
+              {PALETTE_DEFS.map(p => {
+                const isActive = paletteId === p.id
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => isActive ? clearPalette() : setPalette(p.id)}
+                    className="flex items-center gap-3 active:scale-[0.98] transition-transform"
+                    aria-label={`${p.label} palette${isActive ? ', active' : ''}`}
+                  >
+                    <div
+                      style={{
+                        width: 48,
+                        height: 30,
+                        borderRadius: 8,
+                        overflow: 'hidden',
+                        display: 'flex',
+                        flexShrink: 0,
+                        boxShadow: isActive
+                          ? `0 0 0 2.5px ${theme.cardBg}, 0 0 0 4.5px ${p.fgColor}`
+                          : '0 2px 8px rgba(0,0,0,0.22)',
+                      }}
+                    >
+                      <div style={{ flex: 1, background: p.bgColor }} />
+                      <div style={{ flex: 1, background: p.fgColor }} />
+                    </div>
+                    <span
+                      className="flex-1 text-sm font-medium text-left"
+                      style={{ color: isActive ? theme.primary : theme.text }}
+                    >
+                      {p.label}
+                    </span>
+                    {isActive && (
+                      <Check size={15} style={{ flexShrink: 0, color: theme.primary }} />
+                    )}
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
           {/* Categories list */}
@@ -300,7 +369,7 @@ export default function CategoryManager({
                 style={{
                   borderRadius: 'var(--r-element)',
                   background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
-                  color: '#ffffff',
+                  color: theme.primaryText,
                 }}
                 aria-label="Add category"
               >
@@ -423,7 +492,7 @@ export default function CategoryManager({
                             <button
                               onClick={() => { setConfirmDeleteIdx(idx); setOpenMenuIdx(null) }}
                               className="expense-menu-item danger w-full flex items-center gap-2.5 px-4 py-3 text-sm font-medium"
-                              style={{ color: '#ef4444' }}
+                              style={{ color: theme.dangerColor }}
                             >
                               <Trash2 size={14} /> Delete
                             </button>
@@ -471,16 +540,16 @@ export default function CategoryManager({
                       <div
                         key={idx}
                         className="flex items-center gap-1.5 px-3 py-2 rounded-full"
-                        style={{ background: theme.primary, color: '#fff' }}
+                        style={{ background: theme.primary, color: theme.primaryText }}
                       >
-                        {getIcon(cat.icon, { size: 13, color: '#fff' })}
+                        {getIcon(cat.icon, { size: 13, color: theme.primaryText })}
                         <span className="text-sm font-medium" style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {label}
                         </span>
                         <button
                           onClick={() => updateQuickActions(quickActions.filter((_, i) => i !== idx))}
                           className="flex items-center justify-center active:scale-75 transition-transform"
-                          style={{ color: 'rgba(255,255,255,0.75)', marginLeft: 2, flexShrink: 0 }}
+                          style={{ color: theme.primaryText, opacity: 0.7, marginLeft: 2, flexShrink: 0 }}
                           aria-label={`Remove ${label}`}
                         >
                           <X size={13} />
