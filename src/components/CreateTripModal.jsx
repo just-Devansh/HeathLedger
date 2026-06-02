@@ -330,8 +330,8 @@ export default function CreateTripModal({ trip, onSave, onClose }) {
             <button
               type="submit"
               disabled={!title.trim() || !startDate || !endDate}
-              className="py-3.5 rounded-xl text-base font-semibold text-white disabled:opacity-30 active:scale-95 transition-transform mt-1"
-              style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})` }}
+              className="py-3.5 rounded-xl text-base font-semibold disabled:opacity-30 active:scale-95 transition-transform mt-1"
+              style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`, color: theme.primaryText }}
             >
               {isEditing ? 'Save Changes' : 'Create Trip'}
             </button>

@@ -227,7 +227,7 @@ export default function ExpenseList({ expenses, categories, onEdit, onDelete, on
                             <button
                               onClick={() => { setConfirmDeleteId(exp.id); setOpenMenuId(null) }}
                               className="expense-menu-item danger w-full flex items-center gap-2.5 px-4 py-3 text-sm font-medium"
-                              style={{ color: '#ef4444' }}
+                              style={{ color: theme.dangerColor }}
                             >
                               <Trash2 size={15} /> Delete
                             </button>

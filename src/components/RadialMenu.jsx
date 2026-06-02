@@ -18,7 +18,7 @@ function arcPos(deg) {
 }
 
 export default function RadialMenu({ isOpen, onToggle, onActionSelect, onManualEntry, quickActions = [], categories = [] }) {
-  const { theme, isDark } = useTheme()
+  const { theme, isDark, paletteId } = useTheme()
 
   useEffect(() => {
     if (!isOpen) return
@@ -43,9 +43,9 @@ export default function RadialMenu({ isOpen, onToggle, onActionSelect, onManualE
 
   const n = arcItems.length
 
-  const glassBg     = isDark ? 'rgba(22,22,22,0.92)' : 'rgba(255,255,255,0.94)'
-  const glassBorder = isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.07)'
-  const glassShadow = isDark
+  const glassBg     = (paletteId || isDark) ? 'rgba(22,22,22,0.92)' : 'rgba(255,255,255,0.94)'
+  const glassBorder = (paletteId || isDark) ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.07)'
+  const glassShadow = (paletteId || isDark)
     ? `0 6px 28px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06)`
     : `0 6px 24px rgba(0,0,0,0.11), inset 0 1px 0 rgba(255,255,255,0.75)`
 
@@ -103,7 +103,7 @@ export default function RadialMenu({ isOpen, onToggle, onActionSelect, onManualE
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     background: `linear-gradient(135deg, ${theme.primary}, ${theme.gradEnd})`,
                     boxShadow: `0 4px 20px rgba(${theme.shadowRgb},0.45), inset 0 1px 0 rgba(255,255,255,0.15)`,
-                    color: 'white', cursor: 'pointer', outline: 'none', border: 'none',
+                    color: theme.primaryText, cursor: 'pointer', outline: 'none', border: 'none',
                     WebkitTapHighlightColor: 'transparent', flexShrink: 0,
                     transition: 'transform 0.12s ease',
                   }}
@@ -140,9 +140,9 @@ export default function RadialMenu({ isOpen, onToggle, onActionSelect, onManualE
                 style={{
                   display: 'block',
                   fontSize: 10, fontWeight: 600, letterSpacing: '0.04em',
-                  color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.68)',
+                  color: (paletteId || isDark) ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.68)',
                   whiteSpace: 'nowrap', userSelect: 'none', pointerEvents: 'none',
-                  textShadow: isDark
+                  textShadow: (paletteId || isDark)
                     ? '0 1px 8px rgba(0,0,0,1)'
                     : '0 1px 6px rgba(255,255,255,1), 0 0 12px rgba(255,255,255,0.8)',
                   maxWidth: 72, overflow: 'hidden', textOverflow: 'ellipsis',
@@ -171,7 +171,7 @@ export default function RadialMenu({ isOpen, onToggle, onActionSelect, onManualE
             ? `0 6px 30px rgba(${theme.shadowRgb},0.7), 0 0 0 6px rgba(${theme.shadowRgb},0.16)`
             : `0 4px 20px rgba(${theme.shadowRgb},0.5)`,
           transition: 'box-shadow 0.3s ease',
-          position: 'relative', zIndex: 50, color: 'white', border: 'none',
+          position: 'relative', zIndex: 50, color: theme.primaryText, border: 'none',
           cursor: 'pointer', outline: 'none', WebkitTapHighlightColor: 'transparent', flexShrink: 0,
         }}
       >

@@ -131,6 +131,20 @@ export async function saveRecurringRules(rules) {
   })
 }
 
+// ── Palette ───────────────────────────────────────────────────────────────────
+
+export async function loadPalette() {
+  const row = await db.settings.get('palette')
+  return row?.value ?? null
+}
+
+export function savePalette(id) {
+  if (id === null) {
+    return db.settings.delete('palette')
+  }
+  return db.settings.put({ key: 'palette', value: id })
+}
+
 // ── Category migration helper (still pure — no DB side-effects) ────────────────
 
 export function migrateExpensesToCategoryIds(expenses, categories) {

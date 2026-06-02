@@ -139,11 +139,11 @@ export default function AddRecurringModal({ categories, onSave, onClose, editRul
                     className="px-3 py-2 rounded-full text-sm font-medium border transition-colors active:scale-95 flex items-center gap-1.5"
                     style={
                       categoryId === cat.id
-                        ? { background: theme.primary, color: '#ffffff', borderColor: theme.primary }
+                        ? { background: theme.primary, color: theme.primaryText, borderColor: theme.primary }
                         : { background: theme.surface, color: theme.primary, borderColor: theme.border }
                     }
                   >
-                    {getIcon(cat.icon, { size: 14, color: categoryId === cat.id ? '#ffffff' : theme.primary })}
+                    {getIcon(cat.icon, { size: 14, color: categoryId === cat.id ? theme.primaryText : theme.primary })}
                     {cat.name}
                   </button>
                 ))}
@@ -214,7 +214,7 @@ export default function AddRecurringModal({ categories, onSave, onClose, editRul
                           width: day === 'last' ? '46px' : '36px',
                           height: '36px',
                           background: isSelected ? theme.primary : theme.inputBg,
-                          color: isSelected ? '#ffffff' : theme.textMuted,
+                          color: isSelected ? theme.primaryText : theme.textMuted,
                           border: `1.5px solid ${isSelected ? theme.primary : 'transparent'}`,
                         }}
                       >
@@ -237,7 +237,7 @@ export default function AddRecurringModal({ categories, onSave, onClose, editRul
                           flex: 1,
                           height: '36px',
                           background: isSelected ? theme.primary : theme.inputBg,
-                          color: isSelected ? '#ffffff' : theme.textMuted,
+                          color: isSelected ? theme.primaryText : theme.textMuted,
                           border: `1.5px solid ${isSelected ? theme.primary : 'transparent'}`,
                         }}
                       >
@@ -308,8 +308,8 @@ export default function AddRecurringModal({ categories, onSave, onClose, editRul
             <button
               type="submit"
               disabled={!amount || !categoryId}
-              className="py-3.5 rounded-xl text-base font-semibold text-white disabled:opacity-30 active:scale-95 transition-transform"
-              style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})` }}
+              className="py-3.5 rounded-xl text-base font-semibold disabled:opacity-30 active:scale-95 transition-transform"
+              style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`, color: theme.primaryText }}
             >
               {isEditing ? 'Update Rule' : 'Save Rule'}
             </button>

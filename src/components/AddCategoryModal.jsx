@@ -41,7 +41,7 @@ function InlineIconPicker({ selected, onSelect, theme }) {
         }}
         aria-label="Choose icon"
       >
-        <SelectedIcon size={18} color={open ? '#ffffff' : theme.primary} />
+        <SelectedIcon size={18} color={open ? theme.primaryText : theme.primary} />
       </button>
 
       {open && (
@@ -74,7 +74,7 @@ function InlineIconPicker({ selected, onSelect, theme }) {
                   }}
                   aria-label={formatIconLabel(name)}
                 >
-                  <Icon size={16} color={isSelected ? '#ffffff' : theme.textMuted} />
+                  <Icon size={16} color={isSelected ? theme.primaryText : theme.textMuted} />
                 </button>
               )
             })}
@@ -167,10 +167,11 @@ export default function AddCategoryModal({ existingNames, onSave, onClose }) {
           <button
             onClick={handleSave}
             disabled={!canSave}
-            className="w-full py-3 text-sm font-semibold text-white flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-30"
+            className="w-full py-3 text-sm font-semibold flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-30"
             style={{
               borderRadius: 'var(--r-element)',
               background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
+              color: theme.primaryText,
             }}
           >
             <Check size={16} />
