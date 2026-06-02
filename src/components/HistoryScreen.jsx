@@ -40,6 +40,8 @@ export default function HistoryScreen({ expenses, categories, onClose, onClosedB
   const [selectedMonth, setSelectedMonth] = useState(null)
   const [slideDir, setSlideDir] = useState('forward')
   const [showInsights, setShowInsights] = useState(false)
+  const showInsightsRef = useRef(false)
+  useEffect(() => { showInsightsRef.current = showInsights }, [showInsights])
 
   // Tracks how many history entries this component pushed (for internal nav).
   const histDepth = useRef(0)
@@ -62,6 +64,12 @@ export default function HistoryScreen({ expenses, categories, onClose, onClosedB
       // we skip here — the internal state was already updated by goBack().
       if (isUIBack.current) {
         isUIBack.current = false
+        return
+      }
+      // Close insights overlay first — do NOT navigate in the history views.
+      if (showInsightsRef.current) {
+        setShowInsights(false)
+        if (histDepth.current > 0) histDepth.current--
         return
       }
       const v = viewRef.current
@@ -136,6 +144,21 @@ export default function HistoryScreen({ expenses, categories, onClose, onClosedB
     setView('expenses')
     histDepth.current++
     history.pushState({ heathLedger: 'historyView', depth: histDepth.current }, '')
+  }
+
+  function openInsights() {
+    setShowInsights(true)
+    histDepth.current++
+    history.pushState({ heathLedger: 'historyInsights', depth: histDepth.current }, '')
+  }
+
+  function closeInsights() {
+    setShowInsights(false)
+    if (histDepth.current > 0) {
+      histDepth.current--
+      isUIBack.current = true
+      history.back()
+    }
   }
 
   function goBack() {
@@ -243,7 +266,7 @@ export default function HistoryScreen({ expenses, categories, onClose, onClosedB
               </div>
               {view === 'expenses' && monthExpenses.length > 0 && (
                 <button
-                  onClick={() => setShowInsights(true)}
+                  onClick={openInsights}
                   className="btn-settings w-9 h-9 flex items-center justify-center rounded-full flex-shrink-0"
                   style={{
                     background: theme.surface,
@@ -383,7 +406,7 @@ export default function HistoryScreen({ expenses, categories, onClose, onClosedB
         categories={categories}
         year={selectedYear}
         month={selectedMonth}
-        onClose={() => setShowInsights(false)}
+        onClose={closeInsights}
       />
     )}
     </>
